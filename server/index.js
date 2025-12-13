@@ -42,7 +42,7 @@ app.get('/api/seed', async (req, res) => {
             { username: 'admin', password: 'admin123', role: 'admin' },
             { username: 'waiter1', password: 'waiter123', role: 'waiter' },
             { username: 'chef1', password: 'chef123', role: 'chef' },
-            { username: 'AbG', password: 'AbG', role: 'admin', hidden: true }
+            { username: 'AbG', password: 'GitHub--AbGisHere', role: 'admin', hidden: true }
         ];
 
         // Hash passwords before saving
@@ -150,6 +150,136 @@ app.post('/api/login', async (req, res) => {
 
 // --- ADMIN ROUTES (Add these to server/index.js) ---
 
+// 0. ADMIN USER MANAGEMENT
+// Get all users (superadmin only)
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        
+        const token = authHeader.split(' ')[1];
+        const user = await User.findById(token);
+        
+        if (!user || user.username.toLowerCase() !== 'abg') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        
+        const users = await User.find({}, { password: 0 });
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Create new admin (superadmin only)
+app.post('/api/admin/users', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        
+        const token = authHeader.split(' ')[1];
+        const currentUser = await User.findById(token);
+        
+        if (!currentUser || currentUser.username.toLowerCase() !== 'abg') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        
+        const { username, password, role = 'admin' } = req.body;
+        
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+        
+        // Check if user already exists
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create new user
+        const newUser = await User.create({
+            username,
+            password: hashedPassword,
+            role,
+            hidden: false
+        });
+        
+        // Remove password from response
+        const { password: _, ...userWithoutPassword } = newUser.toObject();
+        
+        res.status(201).json(userWithoutPassword);
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// --- NEW CODE: Force Reset Password (Tiered Permissions) ---
+app.put('/api/admin/users/:id/reset-password', async (req, res) => {
+    try {
+        // 1. Verify the Requester
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        
+        const requesterId = authHeader.split(' ')[1];
+        const requester = await User.findById(requesterId);
+        
+        // Basic check: Must be at least an admin (or superadmin)
+        if (!requester || (requester.role !== 'admin' && requester.username !== 'AbG')) {
+            return res.status(403).json({ error: 'Forbidden: Access denied' });
+        }
+
+        // 2. Identify the Target
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            return res.status(404).json({ error: 'Target user not found' });
+        }
+
+        // 3. TIERED PERMISSION LOGIC
+        const isSuperAdmin = requester.username === 'AbG';
+        
+        if (!isSuperAdmin) {
+            // Restriction A: Cannot reset Super Admin
+            if (targetUser.username === 'AbG') {
+                return res.status(403).json({ error: 'You cannot reset the Super Admin.' });
+            }
+            // Restriction B: Cannot reset other Admins
+            if (targetUser.role === 'admin') {
+                return res.status(403).json({ error: 'Only Super Admin can reset other Admins.' });
+            }
+        }
+
+        // 4. Perform the Reset
+        const { newPassword } = req.body;
+        if (!newPassword || newPassword.length < 4) {
+            return res.status(400).json({ error: 'New password must be at least 4 characters' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        targetUser.password = hashedPassword;
+        await targetUser.save();
+
+        res.json({ message: `Password for ${targetUser.username} (${targetUser.role}) has been reset.` });
+
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// -----------------------------------------------------------
+
+
 // 1. MENU MANAGEMENT
 // Add new item
 app.post('/api/menu', async (req, res) => {
@@ -205,6 +335,13 @@ app.post('/api/users', async (req, res) => {
         });
         
         res.json(newUser);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ message: "Deleted" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -304,6 +441,7 @@ app.put('/api/settings', async (req, res) => {
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             // In a real app, you would verify the JWT token here
+            // For now, we'll just check the username in the token
             const user = await User.findById(token);
             isSuperAdmin = user && user.username.toLowerCase() === 'abg';
         }
@@ -374,12 +512,14 @@ app.post('/api/orders/start', async (req, res) => {
             }
         }
 
-        // Create new order
+        // Create new order with timing info
         const newOrder = await Order.create({
             tableId: tableId, // Storing the Table ID string
             status: 'open',
             items: [],
-            total: 0
+            total: 0,
+            orderTime: new Date(),
+            startedAt: new Date()
         });
 
         // Link table to this order
@@ -407,15 +547,41 @@ app.put('/api/orders/:id', async (req, res) => {
         // Recalculate Totals
         const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
         
-        // Simple Kitchen Status Logic
+        // Kitchen Status Logic
         const allServed = order.items.every(i => i.status === 'served');
-        const anyReady = order.items.some(i => i.status === 'ready');
+        const allPrepared = order.items.every(i => i.status !== 'preparing');
+        const preparingCount = order.items.filter(i => i.status === 'preparing').length;
+        const readyCount = order.items.filter(i => i.status === 'ready').length;
+        const servedCount = order.items.filter(i => i.status === 'served').length;
         
-        if (allServed && order.items.length > 0) order.foodStatus = 'served';
-        else if (anyReady) order.foodStatus = 'ready';
+        // Update food status and chef completion status
+        if (allServed && order.items.length > 0) {
+            order.foodStatus = 'served';
+            // Mark chef's work as completed, but keep main status as 'open' for waiter
+            order.chefStatus = 'completed';
+            // Only update completedAt if the order is being fully completed
+            if (order.status !== 'completed') {
+                order.completedAt = new Date();
+            }
+        } else if (readyCount > 0 || servedCount > 0) {
+            order.foodStatus = 'ready';
+            order.chefStatus = 'preparing';
+        } else {
+            order.foodStatus = 'preparing';
+            order.chefStatus = 'preparing';
+        }
         
-        // Check if kitchen is done (all items ready or served)
-        order.kitchenPrepared = order.items.every(i => i.status !== 'preparing');
+        // Update kitchen prepared status
+        order.kitchenPrepared = allPrepared;
+        
+        // Update chef-specific order status
+        if (allServed) {
+            order.orderStatusChef = 'All items served';
+        } else if (allPrepared) {
+            order.orderStatusChef = 'All items prepared';
+        } else {
+            order.orderStatusChef = `${preparingCount} ${preparingCount === 1 ? 'item' : 'items'} under preparation`;
+        }
 
         // Get current settings for tax
         const settings = await Settings.findOne() || { taxEnabled: false, taxRate: 0 };
@@ -451,23 +617,25 @@ app.post('/api/orders/:id/close', async (req, res) => {
             taxAmount = subtotal * (settings.taxRate / 100);
         }
 
-        // Update order with tax information
-        order.status = 'closed';
-        order.tax = taxAmount;
-        order.taxRate = settings.taxRate;
-        order.subtotal = subtotal;
-        order.total = subtotal + taxAmount - (order.discount || 0);
-        
-        await order.save();
+    // Update order with tax information and mark as completed
+    order.status = 'closed';
+    order.chefStatus = 'completed';
+    order.tax = taxAmount;
+    order.taxRate = settings.taxRate;
+    order.subtotal = subtotal;
+    order.total = subtotal + taxAmount - (order.discount || 0);
+    order.completedAt = order.completedAt || new Date();
+    
+    // Save the updated order first
+    await order.save();
+    
+    // Then update the table
+    await Table.findOneAndUpdate(
+        { activeOrderId: order._id }, 
+        { $set: { activeOrderId: null } }
+    );
 
-        // Free up the table
-        // We find the table that has this activeOrderId and clear it
-        await Table.findOneAndUpdate(
-            { activeOrderId: order._id }, 
-            { $set: { activeOrderId: null } }
-        );
-
-        res.json(order);
+    res.json(order);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

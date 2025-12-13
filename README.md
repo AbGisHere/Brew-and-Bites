@@ -1,5 +1,5 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales.
 
@@ -8,40 +8,40 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
-## 🚀 Current Features
+## 🚀 Version 1.2.0 Features
 
-### 👨‍🍳 Chef Dashboard
-* **Real-time Order Queue:** View incoming orders instantly.
-* **Status Toggles:** Mark items as "Preparing" or "Ready" with a single click.
-* **Table Identification:** Know exactly which table ordered what.
+### 👨‍🍳 Chef Dashboard (Major Performance Update)
+* **Tabbed Interface:** New organized view separating **Active Orders** from **Order History**.
+* **Granular Workflow:** Track items through specific stages: `Preparing` ➝ `Ready` ➝ `Served`.
+* **Performance Optimized:** Refactored rendering logic using memoization to ensure zero lag, even with 50+ active orders.
+* **Crash Protection:** Enhanced stability to handle missing data or incomplete orders without freezing the display.
 
 ### 🤵 Waiter Dashboard
-* **Table Management:** Select active tables and manage orders.
-* **Live Menu:** Browse categories and add items to the bill.
-* **Order Status:** See when food is "Ready to Serve" vs "Preparing".
-* **Receipt Generation:** Close orders and calculate totals automatically.
+* **Dual Submission Modes:**
+    * **Auto-Submit:** Orders are sent to the kitchen immediately upon adding items.
+    * **Manual Mode:** Waiters can build a "Pending List" and review it before sending to the chef.
+* **Live Order Tracking:** visual indicators for when items are "Ready to Serve" vs "Preparing".
+* **Receipt Generation:** Close orders, apply coupons, and calculate totals automatically.
 
 ### 👑 Admin Dashboard
-* **Menu Management:** Add, edit, delete, and feature dishes.
-* **Staff Management:** Create accounts for new Chefs and Waiters.
-* **Advanced Sales & Finance:**
-  * **Export Data:** Download receipts as **PDF** invoices or **CSV** files.
-  * **Tax Control:** Set a global Tax % applied to orders.
-  * **Edit Receipts:** Modify past orders (change items, quantities, or remove coupons) to fix errors.
-  * **Smart Sorting:** Filter receipts by Date, Order Value, or Order ID.
-  * **Table Tracking:** View the specific Table Number on every receipt.
-* **Coupon Manager 2.0:** Create discount codes with **Usage Limits** (e.g., "First 100 users only").
-* **Site Settings:** Toggle "Auto-Submit to Kitchen" or close the site.
+* **Financial Suite:**
+    * **Export Data:** Download receipts as **PDF** invoices or **CSV** spreadsheets.
+    * **Receipt Editor:** Fix mistakes by modifying items or quantities on past orders.
+    * **Sales Analytics:** Filter sales by Date Range to track daily or weekly performance.
+* **Menu & Staff:** Full CRUD operations for Menu Items, Tables, and Staff (Chefs/Waiters).
+* **Smart Settings:**
+    * **Site Control:** Toggle "Site Closed" to prevent non-admin logins.
+    * **Tax Management:** Enable/Disable global tax rates.
 
 ---
 
-## 🔮 Future Roadmap (Upcoming Updates)
+## 🔮 Future Roadmap
 
 We are actively working on Version 2.0 with these advanced features:
 
+* **🔥 Batch View (In Progress):** A dedicated KDS view for chefs to see item totals (e.g., "5x Burgers to cook") rather than just individual tickets.
 * **📱 User/Customer Dashboard:** A dedicated interface allowing customers to scan a QR code at their table and place orders directly from their phones (Self-Ordering).
-* **📈 Advanced Analytics & Sales Tracking:** Visual charts and graphs to analyze daily revenue trends, peak hours, and best-selling items.
-* **🔥 Enhanced Kitchen Display System (KDS):** Upgrading the Chef Dashboard with preparation timers, order history logs, and multi-station support.
+* **📈 Advanced Analytics:** Visual charts and graphs to analyze peak hours and best-selling items.
 
 ---
 

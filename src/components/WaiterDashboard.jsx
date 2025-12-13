@@ -340,76 +340,68 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .table-button:hover:not(.bg-primary) {
+    
+    /* Table button styles */
+    .table-button {
+      transition: all 0.2s ease-in-out;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .table-button:hover {
       background-color: #F5E9DD !important;
       color: #5D4037 !important;
       transform: translateY(-2px);
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-button:active {
+      transform: translateY(1px) scale(0.97) !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      background-color: #E8D8C8 !important;
+    }
+    
+    .table-button.bg-primary {
+      background-color: #8B5A2B !important;
+      color: white !important;
+      border-color: #5D4037 !important;
+    }
+    
+    .table-button.bg-primary:hover {
+      background-color: #7a4d24 !important;
     }
   `;
 
   return (
     <>
       <style>{hoverStyles}</style>
-      <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-6 py-24'}`}>
+      <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-4 py-8'}`}>
       {!embedded && (
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Waiter Dashboard</h2>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">{user?.username}</span>
-              <button
-              className="animated-button group relative inline-flex items-center justify-center"
-              onClick={onExit}
-              style={{
-                '--color': '#9CA3AF',
-                '--hover-color': '#4B5563',
-                padding: '6px 20px',
-                fontSize: '14px',
-                minWidth: '100px',
-                height: '36px',
-                marginRight: '8px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                border: '2px solid',
-                borderColor: 'transparent',
-                fontWeight: '500',
-                backgroundColor: 'transparent',
-                borderRadius: '100px',
-                color: '#9CA3AF',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #9CA3AF'
-              }}
-            >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Exit</span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#9CA3AF', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
-              <style jsx>{`
-                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
-                .animated-button:hover .arr-1 { right: -25% !important; }
-                .animated-button:hover .arr-2 { left: 16px !important; }
-                .animated-button:hover .text { transform: translateX(12px) !important; }
-                .animated-button:hover svg { fill: white !important; }
-                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #9CA3AF !important; }
-                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #4B5563 !important; }
-              `}</style>
-            </button>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+          <div className="mb-4 md:mb-0">
+            <h1 className="text-3xl font-bold text-gray-800 mb-1">Waiter Dashboard</h1>
+            <p className="text-gray-600 mb-6">Manage your tables and orders efficiently</p>
+          </div>
+          
+          <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Welcome,</span>
+              <span className="text-sm font-semibold text-primary">{user?.username}</span>
+            </div>
+            
+            <div className="w-px h-8 bg-gray-300"></div>
+            
             <button
               className="animated-button group relative inline-flex items-center justify-center"
               onClick={logout}
               style={{
                 '--color': '#8B5A2B',
                 '--hover-color': '#5D4037',
-                padding: '6px 20px',
+                padding: '8px 20px',
                 fontSize: '14px',
-                minWidth: '100px',
-                height: '36px',
+                minWidth: '120px',
+                height: '40px',
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
@@ -424,21 +416,47 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #8B5A2B'
+                boxShadow: '0 0 0 2px #8B5A2B',
               }}
             >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Logout</span>
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                Logout
+              </span>
               <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               <style jsx>{`
-                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
-                .animated-button:hover .arr-1 { right: -25% !important; }
-                .animated-button:hover .arr-2 { left: 16px !important; }
-                .animated-button:hover .text { transform: translateX(12px) !important; }
-                .animated-button:hover svg { fill: white !important; }
-                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #8B5A2B !important; }
-                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #5D4037 !important; }
+                .animated-button:hover { 
+                  box-shadow: 0 0 0 8px transparent !important; 
+                  color: white !important; 
+                  border-radius: 12px !important; 
+                }
+                .animated-button:hover .arr-1 { 
+                  right: -25% !important; 
+                }
+                .animated-button:hover .arr-2 { 
+                  left: 16px !important; 
+                }
+                .animated-button:hover .text { 
+                  transform: translateX(12px) !important; 
+                }
+                .animated-button:active { 
+                  transform: scale(0.95) !important; 
+                  box-shadow: 0 0 0 4px #8B5A2B !important; 
+                }
+                .animated-button:hover .circle { 
+                  width: 200px !important; 
+                  height: 200px !important; 
+                  opacity: 1 !important; 
+                  background-color: '#5D4037' !important; 
+                }
+                .animated-button:hover svg { 
+                  fill: white !important; 
+                }
               `}</style>
             </button>
           </div>
@@ -448,12 +466,20 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
       <div className="grid md:grid-cols-3 gap-6">
         <section className="bg-white p-4 rounded shadow">
           <h3 className="font-semibold mb-2">Tables</h3>
-          <ul className="space-y-2 max-h-[400px] overflow-auto pr-2">
+          <ul className="space-y-2 max-h-[400px] overflow-auto pr-2 py-2">
             {tables.map(t => (
               <li key={t.id}>
                 <button
-                  onClick={()=>setSelectedTable(t.id)}
-                  className={`w-full text-left border rounded p-2 table-button ${selectedTable===t.id? 'bg-primary text-white':'bg-gray-50'}`}
+                  onClick={() => setSelectedTable(t.id)}
+                  className={`w-full text-left border rounded p-2 table-button transition-all ${
+                    selectedTable === t.id ? 'bg-primary text-white' : 'bg-gray-50'
+                  }`}
+                  style={{
+                    borderColor: selectedTable === t.id ? '#5D4037' : '#E5E7EB',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transformOrigin: 'center',
+                    willChange: 'transform, box-shadow'
+                  }}
                 >
                   {t.name}
                   <div className="text-xs opacity-80">Order: {t.activeOrderId || 'None'}</div>

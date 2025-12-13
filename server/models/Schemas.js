@@ -50,14 +50,20 @@ const OrderItemSchema = new mongoose.Schema({
     price: Number,
     qty: Number,
     status: { type: String, default: 'preparing' },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    // New timing fields for items
+    startedAt: { type: Date },
+    completedAt: { type: Date },
+    timeToComplete: { type: Number } // in seconds
 });
 
 const OrderSchema = new mongoose.Schema({
     tableId: String,
     items: [OrderItemSchema], // List of items
-    status: { type: String, default: 'open' },
+    status: { type: String, default: 'open' }, // Main order status (open/completed)
+    chefStatus: { type: String, default: 'preparing' }, // Tracks chef's completion status
     foodStatus: { type: String, default: 'preparing' },
+    orderStatusChef: { type: String, default: 'All items prepared' },
     subtotal: { type: Number, default: 0 },
     tax: { type: Number, default: 0 },
     taxRate: { type: Number, default: 0 },
@@ -65,7 +71,12 @@ const OrderSchema = new mongoose.Schema({
     discount: { type: Number, default: 0 },
     couponCode: String,
     kitchenPrepared: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now }
+    // Order timing fields
+    createdAt: { type: Date, default: Date.now },
+    orderTime: { type: Date, default: Date.now },
+    startedAt: { type: Date },
+    completedAt: { type: Date },
+    timeToComplete: { type: Number } // in seconds
 });
 
 // Export all blueprints so other files can use them

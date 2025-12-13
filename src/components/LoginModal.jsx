@@ -129,7 +129,7 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
           </form>
 
           <div className="text-xs text-gray-500 mt-3">
-            Demo admin: admin/admin123, waiter: waiter1/waiter123
+            Demo admin: admin/admin123, waiter: waiter1/waiter123, chef: chef1/chef123
           </div>
         </div>
       </div>

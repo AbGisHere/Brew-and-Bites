@@ -6,7 +6,9 @@ import WaiterDashboard from './WaiterDashboard'
 // Import jsPDF with CommonJS require since the module import is causing issues
 const { jsPDF } = window.jspdf || {};
 import('jspdf-autotable');
-import { FiStar } from 'react-icons/fi'
+import { FiStar, FiUsers, FiUserPlus } from 'react-icons/fi'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 
 // --- HELPER: Convert backend data to your UI format ---
@@ -799,9 +801,76 @@ export default function AdminDashboard({ onExit }) {
   const { user, logout } = useAuth()
   const [menu, setMenu] = useState({})
   const [tab, setTab] = useState('menu')
+  const [users, setUsers] = useState([])
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'admin' })
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
+  
+  // Fetch all users (only for superadmin)
+  const fetchUsers = useCallback(async () => {
+    if (user?.username?.toLowerCase() !== 'abg') return;
+    
+    setIsLoadingUsers(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users`, {
+        headers: {
+          'Authorization': `Bearer ${user._id}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch users');
+      
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, [user]);
+  
+  // Handle adding a new user
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    if (!newUser.username || !newUser.password) {
+      toast.error('Username and password are required');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user._id}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newUser)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create user');
+      }
+
+      const createdUser = await response.json();
+      setUsers([...users, createdUser]);
+      setNewUser({ username: '', password: '', role: 'admin' });
+      toast.success('User created successfully');
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error(error.message || 'Failed to create user');
+    }
+  };
+  
+  // Load users when component mounts and when user changes
+  useEffect(() => {
+    if (user?.username?.toLowerCase() === 'abg') {
+      fetchUsers();
+    }
+  }, [user, fetchUsers]);
   const [tables, setTables] = useState([])
   const [receipts, setReceipts] = useState([])
-  const [users, setUsers] = useState([])
   const [salesTotal, setSalesTotal] = useState(0)
   const [preview, setPreview] = useState(null)
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
@@ -1297,6 +1366,39 @@ export default function AdminDashboard({ onExit }) {
     }
   }
 
+
+  // NEW: FORCE RESET PASSWORD
+  const resetUserPassword = async (id, username) => {
+    const newPassword = prompt(`Enter new password for ${username}:`);
+    if (!newPassword) return; // User cancelled
+    if (newPassword.length < 4) {
+      alert("Password must be at least 4 characters");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users/${id}/reset-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user._id || user.id}`
+        },
+        body: JSON.stringify({ newPassword })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reset password');
+      }
+      
+      alert(data.message);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      alert(error.message);
+    }
+  }
+
   // 8. DELETE RECEIPT (API)
   const deleteReceipt = async (receiptId) => {
     if (!confirm('Are you sure you want to delete this receipt? This action cannot be undone.')) {
@@ -1375,63 +1477,31 @@ export default function AdminDashboard({ onExit }) {
   }
 
   return (
-    <div className="container mx-auto px-6 py-24">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Admin Dashboard</h2>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">{user?.username}</span>
-          <button
-            className="animated-button group relative inline-flex items-center justify-center"
-            onClick={onExit}
-            style={{
-              '--color': '#9CA3AF',
-              '--hover-color': '#4B5563',
-              padding: '6px 20px',
-              fontSize: '14px',
-              minWidth: '100px',
-              height: '36px',
-              marginRight: '8px',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              border: '2px solid',
-              borderColor: 'transparent',
-              fontWeight: '500',
-              backgroundColor: 'transparent',
-              borderRadius: '100px',
-              color: '#9CA3AF',
-              cursor: 'pointer',
-              overflow: 'hidden',
-              transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-              boxShadow: '0 0 0 2px #9CA3AF'
-            }}
-          >
-            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
-            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Exit</span>
-            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#9CA3AF', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
-            <style jsx>{`
-              .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
-              .animated-button:hover .arr-1 { right: -25% !important; }
-              .animated-button:hover .arr-2 { left: 16px !important; }
-              .animated-button:hover .text { transform: translateX(12px) !important; }
-              .animated-button:hover svg { fill: white !important; }
-              .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #9CA3AF !important; }
-              .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #4B5563 !important; }
-            `}</style>
-          </button>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="mb-4 md:mb-0">
+          <h1 className="text-3xl font-bold text-gray-800 mb-1">Admin Dashboard</h1>
+          <p className="text-gray-600 mb-6">Manage your restaurant operations efficiently</p>
+        </div>
+        
+        <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Welcome,</span>
+            <span className="text-sm font-semibold text-primary">{user?.username}</span>
+          </div>
+          
+          <div className="w-px h-8 bg-gray-300"></div>
+          
           <button
             className="animated-button group relative inline-flex items-center justify-center"
             onClick={logout}
             style={{
               '--color': '#8B5A2B',
               '--hover-color': '#5D4037',
-              padding: '6px 20px',
+              padding: '8px 20px',
               fontSize: '14px',
-              minWidth: '100px',
-              height: '36px',
+              minWidth: '120px',
+              height: '40px',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -1449,18 +1519,44 @@ export default function AdminDashboard({ onExit }) {
               boxShadow: '0 0 0 2px #8B5A2B'
             }}
           >
-            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Logout</span>
+            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              Logout
+            </span>
             <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
             <style jsx>{`
-              .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
-              .animated-button:hover .arr-1 { right: -25% !important; }
-              .animated-button:hover .arr-2 { left: 16px !important; }
-              .animated-button:hover .text { transform: translateX(12px) !important; }
-              .animated-button:hover svg { fill: white !important; }
-              .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #8B5A2B !important; }
-              .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #5D4037 !important; }
+              .animated-button:hover { 
+                box-shadow: 0 0 0 8px transparent !important; 
+                color: white !important; 
+                border-radius: 12px !important; 
+              }
+              .animated-button:hover .arr-1 { 
+                right: -25% !important; 
+              }
+              .animated-button:hover .arr-2 { 
+                left: 16px !important; 
+              }
+              .animated-button:hover .text { 
+                transform: translateX(12px) !important; 
+              }
+              .animated-button:active { 
+                transform: scale(0.95) !important; 
+                box-shadow: 0 0 0 4px #8B5A2B !important; 
+              }
+              .animated-button:hover .circle { 
+                width: 200px !important; 
+                height: 200px !important; 
+                opacity: 1 !important; 
+                background-color: '#5D4037' !important; 
+              }
+              .animated-button:hover svg { 
+                fill: white !important; 
+              }
             `}</style>
           </button>
         </div>
@@ -2118,6 +2214,74 @@ export default function AdminDashboard({ onExit }) {
                 .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
               `}</style>
             </button>
+
+            {user?.username?.toLowerCase() === 'abg' && (
+              <button 
+                onClick={() => {
+                  const username = prompt('Admin username');
+                  const password = prompt('Admin password');
+                  if (!username || !password) return;
+                  
+                  fetch(`${API_URL}/api/users`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password, role: 'admin' })
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.error) throw new Error(data.error);
+                    loadAllData();
+                    toast.success('Admin added successfully');
+                  })
+                  .catch(err => {
+                    console.error('Error adding admin:', err);
+                    toast.error(err.message || 'Failed to add admin');
+                  });
+                }}
+                className="animated-button group relative inline-flex items-center justify-center"
+                style={{
+                  '--color': '#D4A76A',
+                  '--hover-color': '#3E2723',
+                  padding: '8px 24px',
+                  fontSize: '14px',
+                  minWidth: '140px',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  border: '2px solid',
+                  borderColor: 'transparent',
+                  fontWeight: '600',
+                  backgroundColor: 'transparent',
+                  borderRadius: '100px',
+                  color: '#D4A76A',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                  boxShadow: '0 0 0 2px #D4A76A'
+                }}
+              >
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  Add Admin
+                </span>
+                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <style jsx>{`
+                  .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                  .animated-button:hover .arr-1 { right: -25% !important; }
+                  .animated-button:hover .arr-2 { left: 16px !important; }
+                  .animated-button:hover .text { transform: translateX(12px) !important; }
+                  .animated-button:hover svg { fill: white !important; }
+                  .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
+                  .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
+                `}</style>
+              </button>
+            )}
           </div>
 
           <ul className="space-y-2 text-sm">
@@ -2129,9 +2293,22 @@ export default function AdminDashboard({ onExit }) {
                   <li key={u.id || u._id} className="border rounded p-2 flex justify-between items-center">
                     <span>{u.username} <span className="uppercase text-gray-500">({u.role})</span></span>
                     <div className="flex items-center gap-3">
-                      <span className="text-gray-400">id: {u.id || u._id}</span>
+                      <span className="text-gray-400 text-xs hidden sm:inline">id: {u.id || u._id}</span>
                       {canDelete && (
-                        <button className="text-red-600" onClick={() => deleteUser(u.id || u._id)}>Delete</button>
+                        <div className="flex gap-2">
+                          <button 
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium" 
+                            onClick={() => resetUserPassword(u.id || u._id, u.username)}
+                          >
+                            Reset Pwd
+                          </button>
+                          <button 
+                            className="text-red-600 hover:text-red-800 text-sm font-medium" 
+                            onClick={() => deleteUser(u.id || u._id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       )}
                     </div>
                   </li>

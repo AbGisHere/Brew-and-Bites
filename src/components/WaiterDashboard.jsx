@@ -160,6 +160,36 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
     }
   }
 
+  const handleMenuItemClick = (item) => {
+    if (autoSubmitToChef) {
+      // Check if item already exists in active order with 'preparing' status
+      if (activeOrder?.items) {
+        const existingItem = activeOrder.items.find(i => 
+          i.name === item.name && i.status === 'preparing'
+        );
+        
+        if (existingItem) {
+          // If exists, increase quantity
+          changeQty(existingItem.itemId || existingItem.id, 1, 'preparing');
+          return;
+        }
+      }
+      // If not exists or no active order, add as new item
+      addToOrder(item);
+    } else {
+      // For pending items (manual mode)
+      setPendingItems(prev => {
+        const existing = prev.find(i => i.name === item.name);
+        if (existing) {
+          return prev.map(i => 
+            i.name === item.name ? { ...i, qty: i.qty + 1 } : i
+          );
+        }
+        return [...prev, { ...item, qty: 1 }];
+      });
+    }
+  }
+
   const addToOrder = async (item, status = 'preparing') => {
     // Manual Mode
     if (!autoSubmitToChef) {
@@ -228,9 +258,9 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
   }
 
   const toggleItemServed = async (orderId, itemId, currentStatus) => {
-    const newStatus = currentStatus === 'served' ? 'ready' : 'served'
+    const newStatus = currentStatus === 'served' ? 'ready' : 'served';
     const updatedItems = activeOrder.items.map(i => {
-        if(i.id === itemId) return { ...i, status: newStatus };
+        if(i.itemId === itemId) return { ...i, status: newStatus };
         return i;
     });
     await updateOrderBackend(orderId, updatedItems);
@@ -239,19 +269,28 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
   const changeQty = async (itemId, delta, itemStatus) => {
     if (!activeOrder || itemStatus === 'served') return;
     
-    const updatedItems = activeOrder.items.map(i => {
-      if (i.itemId === itemId && i.status !== 'served') {
-        return { ...i, qty: Math.max(1, i.qty + delta) };
+    // Create a deep copy of the items to avoid mutating state directly
+    const updatedItems = activeOrder.items.map(item => {
+      // Match by both ID and status to handle multiple items with same ID but different statuses
+      const isTargetItem = (item.itemId === itemId || item.id === itemId) && 
+                         (itemStatus ? item.status === itemStatus : true);
+      
+      if (isTargetItem) {
+        // For decrementing, ensure we don't go below 1 (handled by the filter below)
+        const newQty = Math.max(1, item.qty + delta);
+        return { ...item, qty: newQty };
       }
-      return i;
-    }).filter(i => i.qty > 0);
-    
+      return item;
+    }).filter(item => item.qty > 0); // Remove items with qty <= 0
+
     await updateOrderBackend(activeOrder.id, updatedItems);
   }
 
   const removeItem = async (itemId) => {
-    if (!activeOrder) return
-    const updatedItems = activeOrder.items.filter(i => i.itemId !== itemId);
+    if (!activeOrder) return;
+    const updatedItems = activeOrder.items.filter(i => 
+      i.itemId !== itemId && i.id !== itemId
+    );
     await updateOrderBackend(activeOrder.id, updatedItems);
   }
 
@@ -292,15 +331,35 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
   // but logic is handled inside closeOrder prompt above for simplicity.
 
   // --- YOUR EXACT UI (Untouched) ---
+  // Add style tag for hover effects
+  const hoverStyles = `
+    .menu-item:hover {
+      background-color: #F5E9DD !important;
+      color: #5D4037 !important;
+      transform: translateY(-2px);
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .table-button:hover:not(.bg-primary) {
+      background-color: #F5E9DD !important;
+      color: #5D4037 !important;
+      transform: translateY(-2px);
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+  `;
+
   return (
-    <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-6 py-24'}`}>
+    <>
+      <style>{hoverStyles}</style>
+      <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-6 py-24'}`}>
       {!embedded && (
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Waiter Dashboard</h2>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">{user?.username}</span>
-            <button
-              className="animated-button"
+              <button
+              className="animated-button group relative inline-flex items-center justify-center"
               onClick={onExit}
               style={{
                 '--color': '#9CA3AF',
@@ -308,6 +367,8 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 padding: '6px 20px',
                 fontSize: '14px',
                 minWidth: '100px',
+                height: '36px',
+                marginRight: '8px',
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
@@ -322,19 +383,25 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #9CA3AF',
-                height: '36px',
-                marginRight: '8px'
+                boxShadow: '0 0 0 2px #9CA3AF'
               }}
             >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
               <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Exit</span>
               <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#9CA3AF', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
-              <style jsx>{`button:hover { box-shadow: 0 0 0 5px transparent !important; color: white !important; border-radius: 8px !important; background-color: #786C3B !important; } button:hover .arr-1 { right: -25% !important; } button:hover .arr-2 { left: 12px !important; } button:hover .text { transform: translateX(0) !important; } button:active .circle { opacity: 1; width: 200%; height: 500%; }`}</style>
+              <style jsx>{`
+                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                .animated-button:hover .arr-1 { right: -25% !important; }
+                .animated-button:hover .arr-2 { left: 16px !important; }
+                .animated-button:hover .text { transform: translateX(12px) !important; }
+                .animated-button:hover svg { fill: white !important; }
+                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #9CA3AF !important; }
+                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #4B5563 !important; }
+              `}</style>
             </button>
             <button
-              className="animated-button"
+              className="animated-button group relative inline-flex items-center justify-center"
               onClick={logout}
               style={{
                 '--color': '#8B5A2B',
@@ -342,6 +409,7 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 padding: '6px 20px',
                 fontSize: '14px',
                 minWidth: '100px',
+                height: '36px',
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
@@ -356,15 +424,22 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #8B5A2B',
-                height: '36px'
+                boxShadow: '0 0 0 2px #8B5A2B'
               }}
             >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Logout</span>
               <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <style jsx>{`button:hover { box-shadow: 0 0 0 5px transparent !important; color: white !important; border-radius: 8px !important; background-color: #5D4037 !important; } button:hover .arr-1 { right: -25% !important; } button:hover .arr-2 { left: 12px !important; } button:hover .text { transform: translateX(0) !important; } button:active .circle { opacity: 1; width: 200%; height: 500%; }`}</style>
+              <style jsx>{`
+                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                .animated-button:hover .arr-1 { right: -25% !important; }
+                .animated-button:hover .arr-2 { left: 16px !important; }
+                .animated-button:hover .text { transform: translateX(12px) !important; }
+                .animated-button:hover svg { fill: white !important; }
+                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #8B5A2B !important; }
+                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #5D4037 !important; }
+              `}</style>
             </button>
           </div>
         </div>
@@ -378,7 +453,7 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
               <li key={t.id}>
                 <button
                   onClick={()=>setSelectedTable(t.id)}
-                  className={`w-full text-left border rounded p-2 ${selectedTable===t.id? 'bg-primary text-white':'bg-gray-50'}`}
+                  className={`w-full text-left border rounded p-2 table-button ${selectedTable===t.id? 'bg-primary text-white':'bg-gray-50'}`}
                 >
                   {t.name}
                   <div className="text-xs opacity-80">Order: {t.activeOrderId || 'None'}</div>
@@ -442,7 +517,7 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 <h4 className="capitalize text-sm text-gray-500 mb-1">{cat}</h4>
                 <div className="space-y-2">
                   {menu[cat].map(item => (
-                    <button key={item.id} onClick={()=>addToOrder(item)} className="w-full border rounded p-2 text-left hover:shadow">
+                    <button key={item.id} onClick={()=>addToOrder(item)} className="w-full border rounded p-2 text-left menu-item hover:shadow">
                       <div className="flex justify-between">
                         <span>{item.name}</span>
                         <span className="text-primary font-semibold">₹{item.price.toFixed(2)}</span>
@@ -497,21 +572,33 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 <div className="mb-3 text-sm">
                   <div className="flex justify-between items-center mb-2">
                     <div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        activeOrder.items.every(i => i.status === 'served') 
-                          ? statusColors.served 
-                          : activeOrder.items.some(i => i.status === 'ready')
-                            ? statusColors['ready-to-serve']
-                            : statusColors['preparing-order']
-                      }`}>
-                        Order Status: {
-                          activeOrder.items.every(i => i.status === 'served')
-                            ? statusLabels.served
-                            : activeOrder.items.some(i => i.status === 'ready')
-                              ? statusLabels['ready-to-serve']
-                              : statusLabels['preparing-order']
+                      {(() => {
+                        const readyItems = activeOrder.items.filter(i => i.status === 'ready').length;
+                        const servedItems = activeOrder.items.filter(i => i.status === 'served').length;
+                        const totalItems = activeOrder.items.length;
+                        
+                        let statusText, statusClass;
+                        
+                        if (readyItems > 0) {
+                          statusText = `${readyItems} Item${readyItems > 1 ? 's' : ''} Ready to Serve`;
+                          statusClass = statusColors['ready-to-serve'];
+                        } else if (servedItems === totalItems) {
+                          statusText = 'Order Served';
+                          statusClass = statusColors.served;
+                        } else if (servedItems > 0) {
+                          statusText = `${servedItems} of ${totalItems} Item${totalItems > 1 ? 's' : ''} Served`;
+                          statusClass = statusColors.served;
+                        } else {
+                          statusText = 'Preparing Order';
+                          statusClass = statusColors['preparing-order'];
                         }
-                      </span>
+                        
+                        return (
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusClass}`}>
+                            {statusText}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <div className="text-sm text-gray-600">
                       {activeOrder.items.filter(i => i.status === 'served').length} of {activeOrder.items.length} items served
@@ -525,23 +612,40 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 <ul className="text-sm space-y-2">
                   {Object.entries(
                     activeOrder.items.reduce((acc, item) => {
-                      const key = `${item.name}_${item.status}`;
+                      const key = `${item.name}_${item.status}_${item.itemId || item.id}`;
                       if (!acc[key]) {
-                        acc[key] = { ...item, qty: 0 };
+                        acc[key] = { ...item, qty: item.qty || 1, originalItems: [item] };
+                      } else {
+                        acc[key].qty += (item.qty || 1);
+                        acc[key].originalItems.push(item);
                       }
-                      acc[key].qty += item.qty;
                       return acc;
                     }, {})
                   ).map(([key, it]) => (
                     <li key={key} className="flex items-center justify-between gap-2 border rounded p-2">
                       <div className="flex-1">
-                        <div className="font-medium">{it.name} ×{it.qty}</div>
+                        <div className="font-medium">
+                          {it.name} {it.originalItems.length > 1 ? `×${it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}` : ''}
+                        </div>
                         <div className="text-xs text-gray-500">₹{it.price.toFixed(2)} each</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded ${statusColors[it.status || 'preparing']}`}>
-                          {statusLabels[it.status || 'preparing']}
-                        </span>
+                        <div className="flex items-center">
+                          <span className={`text-xs px-2 py-1 rounded ${statusColors[it.status || 'preparing']}`}>
+                            {statusLabels[it.status || 'preparing']}
+                          </span>
+                          {it.status === 'preparing' && (
+                            <button
+                              onClick={() => removeItem(it.itemId || it.id)}
+                              className="text-red-500 hover:text-red-700 ml-2"
+                              title="Remove item"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                         {(it.status === 'ready' || it.status === 'served') && (
                           <button
                             className={`px-2 py-1 text-sm rounded ${
@@ -549,39 +653,39 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200' 
                                 : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                             }`}
-                            onClick={() => toggleItemServed(activeOrder.id, it.id, it.status || 'ready')}
+                            onClick={() => toggleItemServed(activeOrder.id, it.itemId || it.id, it.status || 'ready')}
                           >
                             {it.status === 'ready' ? 'Mark Served' : 'Mark Not Served'}
                           </button>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        {it.status !== 'served' ? (
+                        {it.status === 'preparing' ? (
                           <>
                             <button 
                               className="px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
-                              onClick={() => changeQty(it.itemId, -1, it.status)}
+                              onClick={() => changeQty(it.itemId || it.id, -1, it.status)}
                               disabled={it.qty <= 1}
                             >
                               -
                             </button>
                             <div className="w-12 text-center py-1">
-                              {it.qty}
+                              ×{it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}
                             </div>
                             <button 
                               className="px-2 py-1 border rounded hover:bg-gray-100"
-                              onClick={() => changeQty(it.itemId, 1, it.status)}
+                              onClick={() => changeQty(it.itemId || it.id, 1, it.status)}
                             >
                               +
                             </button>
                           </>
                         ) : (
                           <div className="w-12 text-center py-1">
-                            {it.qty}
+                            ×{it.qty}
                           </div>
                         )}
                       </div>
-                      <div className="w-20 text-right font-semibold">₹{(it.price*it.qty).toFixed(2)}</div>
+                      <div className="w-20 text-right font-semibold">₹{(it.price * it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)).toFixed(2)}</div>
                     </li>
                   ))}
                 </ul>
@@ -589,14 +693,15 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                 <div className="text-right font-semibold">Total: ₹{(activeOrder.total || 0).toFixed(2)}</div>
                 <div className="text-right mt-2">
                   <button
-                    className="animated-button"
+                    className="animated-button group relative inline-flex items-center justify-center"
                     onClick={closeOrder}
                     style={{
                       '--color': '#8B5A2B',
-                      '--hover-color': '#F5F0E8',
-                      padding: '8px 24px',
+                      '--hover-color': '#5D4037',
+                      padding: '8px 20px',
                       fontSize: '14px',
-                      minWidth: '200px',
+                      minWidth: '220px',
+                      height: '40px',
                       position: 'relative',
                       display: 'flex',
                       alignItems: 'center',
@@ -607,27 +712,59 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
                       fontWeight: '500',
                       backgroundColor: 'transparent',
                       borderRadius: '100px',
-                      color: '#4CAF50',
+                      color: '#8B5A2B',
                       cursor: 'pointer',
                       overflow: 'hidden',
                       transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                      boxShadow: '0 0 0 2px #4CAF50',
-                      height: '40px',
+                      boxShadow: '0 0 0 2px #8B5A2B',
                       marginLeft: 'auto',
                       marginTop: '16px'
                     }}
                   >
-                    <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#5D4037', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                       Close & Generate Receipt
                     </span>
                     <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                    <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#5D4037', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <style jsx>{`button:hover { box-shadow: 0 0 0 5px transparent !important; color: white !important; border-radius: 8px !important; background-color: #F5F0E8 !important; color: #5D4037 !important; } button:hover .arr-1 { right: -25% !important; } button:hover .arr-2 { left: 12px !important; } button:hover .text { transform: translateX(0) !important; } button:active .circle { opacity: 1; width: 200%; height: 500%; }`}</style>
+                    <style jsx>{`
+                      button:hover { 
+                        box-shadow: 0 0 0 8px transparent !important; 
+                        color: white !important; 
+                        border-radius: 8px !important; 
+                      }
+                      button:hover .arr-1 { 
+                        right: -25% !important; 
+                      }
+                      button:hover .arr-2 { 
+                        left: 16px !important; 
+                      }
+                      button:hover .text { 
+                        transform: translateX(0) !important; 
+                      }
+                      button:active { 
+                        transform: scale(0.95) !important; 
+                        box-shadow: 0 0 0 4px #8B5A2B !important; 
+                      }
+                      button:hover .circle { 
+                        width: 200px !important; 
+                        height: 200px !important; 
+                        opacity: 1 !important; 
+                        background-color: #5D4037 !important; 
+                      }
+                      button:hover svg { 
+                        fill: white !important; 
+                      }
+                      button:active .circle { 
+                        opacity: 1; 
+                        width: 200%; 
+                        height: 500%; 
+                      }
+                    `}</style>
                   </button>
                 </div>
               </>
@@ -642,5 +779,6 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
         canEdit={false} // Receipts viewed here are historical/read-only
       />
     </div>
+    </>
   )
 }

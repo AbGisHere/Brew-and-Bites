@@ -44,7 +44,10 @@ export default function ChefDashboard({ onExit }) {
 
   // 2. Toggle Status (API)
   const toggleItemStatus = async (orderId, itemId, currentStatus) => {
-    const newStatus = currentStatus === 'preparing' ? 'ready' : 'preparing'
+    // Don't allow changing status if item is already served
+    if (currentStatus === 'served') return;
+    
+    const newStatus = currentStatus === 'preparing' ? 'ready' : 'preparing';
     
     // Find the order locally to modify the specific item
     const order = orders.find(o => o._id === orderId);
@@ -53,7 +56,6 @@ export default function ChefDashboard({ onExit }) {
     // Update the specific item in the array
     const updatedItems = order.items.map(item => {
       // MongoDB subdocuments use _id, but your UI might rely on 'id' or 'itemId'
-      // We check both just to be safe
       if (item._id === itemId || item.id === itemId) {
         return { ...item, status: newStatus };
       }
@@ -61,14 +63,16 @@ export default function ChefDashboard({ onExit }) {
     });
 
     try {
-      // 2. USE API_URL VARIABLE
       await fetch(`${API_URL}/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: updatedItems })
       });
       refresh();
-    } catch (e) { alert("Connection Error"); }
+    } catch (e) { 
+      console.error("Error updating item status:", e);
+      alert("Failed to update item status"); 
+    }
   }
 
   // Helper to get table name
@@ -83,7 +87,47 @@ export default function ChefDashboard({ onExit }) {
         <h2 className="text-2xl font-bold">Chef Dashboard</h2>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600">{user?.username}</span>
-          <button className="px-3 py-1 border rounded" onClick={() => { logout(); onExit?.() }}>Logout</button>
+          <button
+            className="animated-button group relative inline-flex items-center justify-center"
+            onClick={() => { logout(); onExit?.() }}
+            style={{
+              '--color': '#8B5A2B',
+              '--hover-color': '#5D4037',
+              padding: '6px 20px',
+              fontSize: '14px',
+              minWidth: '100px',
+              height: '36px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              border: '2px solid',
+              borderColor: 'transparent',
+              fontWeight: '500',
+              backgroundColor: 'transparent',
+              borderRadius: '100px',
+              color: '#8B5A2B',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+              boxShadow: '0 0 0 2px #8B5A2B'
+            }}
+          >
+            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Logout</span>
+            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <style jsx>{`
+              .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+              .animated-button:hover .arr-1 { right: -25% !important; }
+              .animated-button:hover .arr-2 { left: 16px !important; }
+              .animated-button:hover .text { transform: translateX(12px) !important; }
+              .animated-button:hover svg { fill: white !important; }
+              .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #8B5A2B !important; }
+              .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #5D4037 !important; }
+            `}</style>
+          </button>
         </div>
       </div>
 

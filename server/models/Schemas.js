@@ -37,7 +37,9 @@ const CouponSchema = new mongoose.Schema({
 // 5. SETTINGS
 const SettingsSchema = new mongoose.Schema({
     autoSubmitToChef: { type: Boolean, default: true },
-    siteClosed: { type: Boolean, default: false }
+    siteClosed: { type: Boolean, default: false },
+    taxEnabled: { type: Boolean, default: false },
+    taxRate: { type: Number, default: 0, min: 0, max: 100 }
 });
 
 // 6. ORDERS (Complex Structure)
@@ -56,6 +58,9 @@ const OrderSchema = new mongoose.Schema({
     items: [OrderItemSchema], // List of items
     status: { type: String, default: 'open' },
     foodStatus: { type: String, default: 'preparing' },
+    subtotal: { type: Number, default: 0 },
+    tax: { type: Number, default: 0 },
+    taxRate: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
     couponCode: String,

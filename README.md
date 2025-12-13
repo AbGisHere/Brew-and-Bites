@@ -1,103 +1,144 @@
-# Brew & Bites Café – Interactive Landing Page
+# ☕ Brew & Bites - Full Stack Cafe Management System
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 
-A modern, responsive café landing page built with React and Vite. It features a hero, about, menu with category filters, image gallery with lightbox, contact form, and a custom animated coffee-cup loading indicator.
+A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales.
 
-## Features
-- Responsive layout (mobile-first)
-- Smooth scrolling navigation
-- Filterable Menu (Coffee, Breakfast, Lunch, Desserts)
-- Gallery with filters and lightbox modal
-- Contact form with reservation fields (simulated submit)
-- Custom animated Loader (coffee cup with steam)
-- TailwindCSS via CDN for rapid styling
+**🔗 Live Demo:** [https://brew-and-bites.vercel.app](https://brew-and-bites.vercel.app)  
+*(Note: The backend is hosted on a free instance. Please allow 30-60 seconds for the server to wake up on the first load!)*
 
-## Tech Stack
-- React + Vite
-- JavaScript (ESM)
-- TailwindCSS (CDN)
-- React Icons, React Scroll
+---
 
-## Project Structure
+## 🚀 Current Features
+
+### 👨‍🍳 Chef Dashboard
+* **Real-time Order Queue:** View incoming orders instantly.
+* **Status Toggles:** Mark items as "Preparing" or "Ready" with a single click.
+* **Table Identification:** Know exactly which table ordered what.
+
+### 🤵 Waiter Dashboard
+* **Table Management:** Select active tables and manage orders.
+* **Live Menu:** Browse categories and add items to the bill.
+* **Order Status:** See when food is "Ready to Serve" vs "Preparing".
+* **Receipt Generation:** Close orders and calculate totals automatically.
+
+### 👑 Admin Dashboard
+* **Menu Management:** Add, edit, delete, and feature dishes.
+* **Staff Management:** Create accounts for new Chefs and Waiters.
+* **Advanced Sales & Finance:**
+  * **Export Data:** Download receipts as **PDF** invoices or **CSV** files.
+  * **Tax Control:** Set a global Tax % applied to orders.
+  * **Edit Receipts:** Modify past orders (change items, quantities, or remove coupons) to fix errors.
+  * **Smart Sorting:** Filter receipts by Date, Order Value, or Order ID.
+  * **Table Tracking:** View the specific Table Number on every receipt.
+* **Coupon Manager 2.0:** Create discount codes with **Usage Limits** (e.g., "First 100 users only").
+* **Site Settings:** Toggle "Auto-Submit to Kitchen" or close the site.
+
+---
+
+## 🔮 Future Roadmap (Upcoming Updates)
+
+We are actively working on Version 2.0 with these advanced features:
+
+* **📱 User/Customer Dashboard:** A dedicated interface allowing customers to scan a QR code at their table and place orders directly from their phones (Self-Ordering).
+* **📈 Advanced Analytics & Sales Tracking:** Visual charts and graphs to analyze daily revenue trends, peak hours, and best-selling items.
+* **🔥 Enhanced Kitchen Display System (KDS):** Upgrading the Chef Dashboard with preparation timers, order history logs, and multi-station support.
+
+---
+
+## 🛠️ Tech Stack
+
+**Frontend:**
+* React.js (Vite)
+* Tailwind CSS (Styling)
+* Context API (State Management)
+
+**Backend:**
+* Node.js & Express.js
+* MongoDB Atlas (Cloud Database)
+* Mongoose (ODM)
+* BcryptJS (Security)
+
+**Deployment:**
+* **Frontend:** Vercel
+* **Backend:** Render
+* **Database:** MongoDB Atlas
+
+---
+
+## 🔐 Default Credentials (Demo)
+
+Use these credentials to test the different roles:
+
+| Role | Username | Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin` | `admin123` |
+| **Waiter** | `waiter1` | `waiter123` |
+| **Chef** | `chef1` | `chef123` |
+
+*(Note: You can create new users inside the Admin Dashboard)*
+
+---
+
+## 💻 Local Installation Guide
+
+Follow these steps to run the project on your laptop.
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/AbGisHere/Brew-and-Bites.git](https://github.com/AbGisHere/Brew-and-Bites.git)
+cd Brew-and-Bites
 ```
-windsurf-project/
-├─ index.html
-├─ vite.config.js
-├─ package.json
-├─ src/
-│  ├─ main.jsx
-│  ├─ index.css
-│  ├─ App.jsx
-│  └─ components/
-│     ├─ Navbar.jsx
-│     ├─ Hero.jsx
-│     ├─ About.jsx
-│     ├─ Menu.jsx
-│     ├─ Gallery.jsx
-│     ├─ Contact.jsx
-│     ├─ Footer.jsx
-│     └─ Loader.jsx
-```
+2. Backend Setup
+```Bash
 
-## Getting Started
-### Prerequisites
-- Node.js 18+ (LTS recommended)
-- npm 9+
-
-### Install Dependencies
-Run in the project root:
-```
+cd server
 npm install
 ```
 
-This installs:
-- react, react-dom, react-icons, react-scroll
-- vite, @vitejs/plugin-react
+Start the server:
 
-### Development
-Start the dev server:
-```
+```Bash
+
 npm run dev
 ```
-Then open the Local URL printed in the terminal (e.g. http://localhost:5173).
+3. Frontend Setup
+Open a new terminal (keep the server running).
 
-### Production Build
-Create an optimized build:
+```Bash
+
+# Go back to root if inside server
+cd .. 
+npm install
+npm run dev
 ```
-npm run build
+4. Configuration
+The app automatically detects if you are on localhost.
+
+Check src/config.js to ensure it points to http://localhost:5000 when running locally.
+
+📂 Project Structure
+```Plaintext
+
+Brew-Bites-Cafe/
+├── server/                 # Backend Node.js Code
+│   ├── models/             # Mongoose Schemas (User, Order, Menu)
+│   ├── index.js            # Main Server File (Routes & Logic)
+│   └── db.js               # Database Connection
+├── src/                    # Frontend React Code
+│   ├── components/         # Dashboards (Admin, Waiter, Chef)
+│   ├── context/            # AuthContext (Login Logic)
+│   ├── config.js           # API URL Switcher (Local vs Cloud)
+│   └── App.jsx             # Main Routing
+└── README.md
 ```
-Preview the build locally:
-```
-npm run preview
-```
+🛡️ Security Features
+Password Hashing: All passwords are encrypted using bcryptjs before storage.
 
-## Customization Guide
-- Branding: Update the site title and colors in `index.html` Tailwind config and component text.
-- Images: Replace Unsplash image URLs in `Hero.jsx`, `About.jsx`, and `Gallery.jsx`.
-- Menu Items: Edit the `menuItems` object in `components/Menu.jsx`.
-- Contact Info: Edit details in `components/Contact.jsx` and `components/Footer.jsx`.
-- Loader: Markup is in `components/Loader.jsx`; styles are appended to `src/index.css` under "Loader styles".
+Environment Variables: Sensitive keys are kept out of the codebase using .env.
 
-## Deployment
-You can deploy the `dist/` folder output to any static host.
+CORS Policy: configured to allow secure communication between Vercel and Render.
 
-- Netlify: Drag-and-drop `dist/` or connect repo and set build command `npm run build`, publish directory `dist`.
-- Vercel: Import project, framework auto-detected. Build: `npm run build`. Output: `dist`.
-- Static hosting: Serve files from `dist/` via any web server (Nginx/Apache/S3+CloudFront/etc.).
+🤝 Contributing
+Feel free to fork this repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
 
-## Troubleshooting
-- Blank page when opening index.html directly:
-  - Use the dev server. Run `npm run dev` and open the provided URL. JSX/ESM requires Vite.
-- Port already in use:
-  - Vite prints an alternate port. Or stop the conflicting process, or run `npm run dev -- --port 5174`.
-- Module resolution errors:
-  - Ensure `npm install` completed. Delete `node_modules` and reinstall if needed.
-- Tailwind classes not applying:
-  - Tailwind is included via CDN in `index.html`. Ensure you haven’t removed that `<script src="https://cdn.tailwindcss.com"></script>` line.
-
-## Accessibility
-- Semantic headings and labels for inputs
-- Focus-visible defaults from browser
-- Loader has `aria-label="Loading"`
-
-## License
-This project is provided as-is for demonstration and can be adapted for your café. Replace images and branding as needed.
+Developed by AbG

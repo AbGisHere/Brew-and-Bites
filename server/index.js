@@ -110,7 +110,10 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // 1. Search for the user
+        // 1. Get site settings
+        const settings = await Settings.findOne() || { siteClosed: false };
+        
+        // 2. Search for the user
         const user = await User.findOne({ 
             username: { $regex: new RegExp("^" + username + "$", "i") } 
         });
@@ -119,15 +122,21 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ message: "User not found" });
         }
 
-        // 2. SECURE PASSWORD CHECK (Bcrypt)
-        // bcrypt.compare( typedPassword, storedHash )
+        // 3. SECURE PASSWORD CHECK (Bcrypt)
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid password" });
         }
 
-        // 3. Success!
+        // 4. Check if site is closed and user is not super admin (AbG)
+        if (settings.siteClosed && user.username.toLowerCase() !== 'abg') {
+            return res.status(403).json({ 
+                message: "The Site has been closed, contact Owner" 
+            });
+        }
+
+        // 5. Success!
         res.json({
             id: user._id,
             username: user.username,
@@ -219,22 +228,115 @@ app.delete('/api/coupons/:code', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 4.1 MIGRATION: Add tax fields to existing settings
+app.get('/api/migrate/settings', async (req, res) => {
+    try {
+        const settings = await Settings.findOne();
+        if (settings) {
+            // If taxEnabled doesn't exist, add it with default value
+            if (settings.taxEnabled === undefined) {
+                settings.taxEnabled = false;
+            }
+            // If taxRate doesn't exist, add it with default value
+            if (settings.taxRate === undefined) {
+                settings.taxRate = 0;
+            }
+            await settings.save();
+            res.json({ message: 'Settings migrated successfully', settings });
+        } else {
+            // Create default settings if none exist
+            const newSettings = await Settings.create({ 
+                autoSubmitToChef: true, 
+                siteClosed: false,
+                taxEnabled: false,
+                taxRate: 0
+            });
+            res.json({ message: 'Default settings created', settings: newSettings });
+        }
+    } catch (error) {
+        console.error('Migration error:', error);
+        res.status(500).json({ error: 'Migration failed', details: error.message });
+    }
+});
+
 // 5. SETTINGS
 app.get('/api/settings', async (req, res) => {
-    // Get the first settings document, or create default if none exists
-    let settings = await Settings.findOne();
-    if (!settings) {
-        settings = await Settings.create({ autoSubmitToChef: true });
+    try {
+        // Get the first settings document, or create default if none exists
+        let settings = await Settings.findOne();
+        if (!settings) {
+            settings = await Settings.create({ 
+                autoSubmitToChef: true, 
+                siteClosed: false,
+                taxEnabled: false,
+                taxRate: 0
+            });
+        }
+        
+        // Check if user is super admin (AbG)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            // In a real app, you would verify the JWT token here
+            // For now, we'll just check the username in the token
+            const user = await User.findById(token);
+            if (user && user.username.toLowerCase() === 'abg') {
+                // Super admin gets all settings
+                return res.json(settings);
+            }
+        }
+        
+        // For non-super admins, don't include siteClosed in the response
+        const { siteClosed, ...rest } = settings.toObject();
+        res.json(rest);
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+        res.status(500).json({ error: 'Failed to fetch settings' });
     }
-    res.json(settings);
 });
 
 app.put('/api/settings', async (req, res) => {
     try {
-        // Update the first settings document found
-        const settings = await Settings.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+        // Check if user is super admin (AbG)
+        const authHeader = req.headers.authorization;
+        let isSuperAdmin = false;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            // In a real app, you would verify the JWT token here
+            const user = await User.findById(token);
+            isSuperAdmin = user && user.username.toLowerCase() === 'abg';
+        }
+        
+        // Get current settings
+        let settings = await Settings.findOne() || new Settings({ autoSubmitToChef: true, siteClosed: false });
+        
+        // Prepare update object
+        const update = { ...req.body };
+        
+        // If not super admin, remove siteClosed from the update
+        if (!isSuperAdmin && 'siteClosed' in update) {
+            delete update.siteClosed;
+        }
+        
+        // Update settings
+        settings = await Settings.findOneAndUpdate(
+            {},
+            update,
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+        
+        // If not super admin, don't return siteClosed in the response
+        if (!isSuperAdmin) {
+            const { siteClosed, ...rest } = settings.toObject();
+            return res.json(rest);
+        }
+        
         res.json(settings);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+        console.error('Error updating settings:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // 6. RECEIPTS & SALES
@@ -315,7 +417,18 @@ app.put('/api/orders/:id', async (req, res) => {
         // Check if kitchen is done (all items ready or served)
         order.kitchenPrepared = order.items.every(i => i.status !== 'preparing');
 
-        order.total = subtotal - (order.discount || 0);
+        // Get current settings for tax
+        const settings = await Settings.findOne() || { taxEnabled: false, taxRate: 0 };
+        
+        // Calculate tax if enabled
+        let taxAmount = 0;
+        if (settings.taxEnabled && settings.taxRate > 0) {
+            taxAmount = subtotal * (settings.taxRate / 100);
+        }
+
+        order.subtotal = subtotal;
+        order.tax = taxAmount;
+        order.total = subtotal + taxAmount - (order.discount || 0);
         
         await order.save();
         res.json(order);
@@ -328,7 +441,23 @@ app.post('/api/orders/:id/close', async (req, res) => {
         const order = await Order.findById(req.params.id);
         if (!order) return res.status(404).json({ error: "Order not found" });
 
+        // Get current settings for tax
+        const settings = await Settings.findOne() || { taxEnabled: false, taxRate: 0 };
+        
+        // Calculate tax if enabled
+        const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        let taxAmount = 0;
+        if (settings.taxEnabled && settings.taxRate > 0) {
+            taxAmount = subtotal * (settings.taxRate / 100);
+        }
+
+        // Update order with tax information
         order.status = 'closed';
+        order.tax = taxAmount;
+        order.taxRate = settings.taxRate;
+        order.subtotal = subtotal;
+        order.total = subtotal + taxAmount - (order.discount || 0);
+        
         await order.save();
 
         // Free up the table
@@ -340,6 +469,30 @@ app.post('/api/orders/:id/close', async (req, res) => {
 
         res.json(order);
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete receipt endpoint
+app.delete('/api/orders/:id', async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ error: "Receipt not found" });
+        }
+
+        // If it's an open order, make sure to clear the table reference
+        if (order.status === 'open') {
+            await Table.findOneAndUpdate(
+                { activeOrderId: order._id },
+                { $set: { activeOrderId: null } }
+            );
+        }
+
+        await Order.findByIdAndDelete(req.params.id);
+        res.json({ message: "Receipt deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting receipt:", error);
+        res.status(500).json({ error: "Failed to delete receipt" });
+    }
 });
 
 // Start Server

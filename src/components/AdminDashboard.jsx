@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
 import WaiterDashboard from './WaiterDashboard'
+// Import jsPDF with CommonJS require since the module import is causing issues
+const { jsPDF } = window.jspdf || {};
+import('jspdf-autotable');
 import { FiStar } from 'react-icons/fi'
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 
@@ -97,7 +100,7 @@ function FeaturedDishesManager() {
             <input
               type="text"
               placeholder="Search dishes..."
-              className="w-full p-3 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="input w-full p-3 pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -203,135 +206,332 @@ function FeaturedDishesManager() {
 
 function CouponManager() {
   const [coupons, setCoupons] = useState([])
-  const [form, setForm] = useState({ code: '', type: 'percent', value: 10, active: true })
+  const [form, setForm] = useState({ 
+    code: '', 
+    type: 'percent', 
+    value: 10, 
+    maxUses: null,
+    active: true 
+  })
+  const [isLoading, setIsLoading] = useState(false)
 
   // 1. Fetch Coupons
   const loadCoupons = async () => {
-    const res = await fetch(`${API_URL}/api/coupons`);
-    setCoupons(await res.json());
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${API_URL}/api/coupons`);
+      const data = await res.json();
+      setCoupons(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading coupons:', error);
+      alert('Failed to load coupons');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => { loadCoupons(); }, []);
 
   // 2. Create Coupon
   const create = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    if (!form.code.trim()) return;
+    
     try {
-      await fetch(`${API_URL}/api/coupons`, {
+      setIsLoading(true);
+      const response = await fetch(`${API_URL}/api/coupons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          code: form.code.trim().toUpperCase()
+        })
       });
-      loadCoupons();
-      setForm({ code: '', type: form.type, value: 10, active: true })
-    } catch (e) { alert("Error creating coupon"); }
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create coupon');
+      }
+      
+      await loadCoupons();
+      setForm({ code: '', type: 'percent', value: 10, active: true });
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.message || 'Error creating coupon');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   // 3. Delete Coupon
   const del = async (code) => {
-    if(!confirm("Delete coupon?")) return;
-    await fetch(`${API_URL}/api/coupons/${code}`, { method: 'DELETE' });
-    loadCoupons();
+    if (!window.confirm(`Are you sure you want to delete coupon ${code}?`)) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_URL}/api/coupons/${code}`, { 
+        method: 'DELETE' 
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete coupon');
+      }
+      
+      await loadCoupons();
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.message || 'Error deleting coupon');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  // --- YOUR EXACT UI ---
-  return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <form onSubmit={create} className="space-y-3">
-        <div>
-          <label className="text-sm">Code</label>
-          <input className="w-full border rounded px-3 py-2" value={form.code} onChange={e=>setForm(f=>({...f, code: e.target.value}))} placeholder="WELCOME10" required />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-sm">Type</label>
-            <select className="w-full border rounded px-3 py-2" value={form.type} onChange={e=>setForm(f=>({...f, type: e.target.value}))}>
-              <option value="percent">Percent %</option>
-              <option value="flat">Flat ₹</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm">Value</label>
-            <input type="number" step="0.01" className="w-full border rounded px-3 py-2" value={form.value} onChange={e=>setForm(f=>({...f, value: e.target.value}))} required />
-          </div>
-        </div>
-        <label className="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={form.active} onChange={e=>setForm(f=>({...f, active: e.target.checked}))} /> Active
-        </label>
-        <button 
-          type="submit"
-          className="animated-button"
-          style={{
-            '--ab-color': '#D4A76A',
-            '--ab-hover': '#3E2723',
-            padding: '8px 24px',
-            fontSize: '14px',
-            minWidth: '160px',
-            position: 'relative',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            border: '2px solid',
-            borderColor: 'transparent',
-            fontWeight: '500',
-            backgroundColor: 'transparent',
-            borderRadius: '100px',
-            color: '#D4A76A',
-            cursor: 'pointer',
-            overflow: 'hidden',
-            transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-            boxShadow: '0 0 0 2px #D4A76A',
-            height: '40px',
-            marginTop: '16px'
-          }}
-        >
-          <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-          </svg>
-          <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-            Create Coupon
-          </span>
-          <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-          <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-          </svg>
-          <style jsx>{`
-            button:hover { box-shadow: 0 0 0 5px transparent !important; color: #3E2723 !important; border-radius: 8px !important; background-color: #F5F0E8 !important; }
-            button:hover .arr-1 { right: -25% !important; }
-            button:hover .arr-2 { left: 12px !important; }
-            button:hover .text { transform: translateX(0) !important; }
-            button:active .circle { opacity: 1; width: 200%; height: 500%; }
-          `}</style>
-        </button>
-      </form>
 
-      <div>
-        <h4 className="font-semibold mb-2">Existing Coupons</h4>
-        <ul className="space-y-2 text-sm">
-          {coupons.length===0 && <li className="text-gray-500">No coupons yet.</li>}
-          {coupons.map(c => (
-            <li key={c.code} className="border rounded p-2 flex justify-between items-center">
+  return (
+    <div className="flex flex-col md:flex-row gap-6">
+      <div className="md:w-1/2">
+        <Section title="Create New Coupon">
+          <form onSubmit={create} className="space-y-4">
+            <div className="space-y-4">
               <div>
-                <div className="font-medium">{c.code}</div>
-                <div className="text-xs text-gray-500">{c.type === 'percent' ? `${c.value}% off` : `₹${Number(c.value).toFixed(2)} off`} • {c.active ? 'Active' : 'Inactive'}</div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>
+                <input
+                  className="input"
+                  value={form.code}
+                  onChange={e => setForm(f => ({...f, code: e.target.value.toUpperCase()}))}
+                  placeholder="e.g. WELCOME10"
+                  required
+                  maxLength="20"
+                  disabled={isLoading}
+                />
               </div>
-              <button 
-                className="animated-button" 
-                onClick={()=>del(c.code)}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+                  <select
+                    className="input w-full"
+                    value={form.type}
+                    onChange={e => setForm(f => ({...f, type: e.target.value}))}
+                    disabled={isLoading}
+                  >
+                    <option value="percent">Percentage</option>
+                    <option value="flat">Flat Amount (₹)</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {form.type === 'percent' ? 'Discount %' : 'Amount (₹)'}
+                  </label>
+                  <div className="relative rounded-md shadow-sm">
+                    <input
+                      type="number"
+                      step={form.type === 'percent' ? "1" : "0.01"}
+                      min="0"
+                      max={form.type === 'percent' ? "100" : ""}
+                      className="input w-full"
+                      value={form.value}
+                      onChange={e => setForm(f => ({...f, value: parseFloat(e.target.value) || 0}))}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Max Uses (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input w-full"
+                    value={form.maxUses || ''}
+                    onChange={e => setForm(f => ({...f, maxUses: e.target.value ? parseInt(e.target.value) : null}))}
+                    placeholder="No limit"
+                    disabled={isLoading}
+                  />
+                </div>
+                
+                <div className="flex items-end">
+                  <label className="flex items-center space-x-2">
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={form.active}
+                        onChange={e => setForm(f => ({...f, active: e.target.checked}))}
+                        disabled={isLoading}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      <span className="ml-3 text-sm font-medium text-gray-700">
+                        {form.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="animated-button group relative inline-flex items-center justify-center"
                 style={{
-                  '--ab-color': '#EF4444',
-                  '--ab-hover': '#B91C1C',
-                  padding: '4px 12px',
-                  fontSize: '14px',
-                  boxShadow: '0 0 0 1px #EF4444'
+                  padding: '8px 24px',
+                  fontSize: '15px',
+                  minWidth: '150px',
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  border: '2px solid',
+                  borderColor: 'transparent',
+                  fontWeight: '600',
+                  backgroundColor: 'transparent',
+                  borderRadius: '100px',
+                  color: '#D4A76A',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                  boxShadow: '0 0 0 2px #D4A76A',
+                  opacity: isLoading ? 0.7 : 1,
+                  pointerEvents: isLoading ? 'none' : 'auto',
+                  height: '40px'
                 }}
               >
-                <span className="text">Delete</span>
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  {isLoading ? 'Creating...' : 'Create Coupon'}
+                </span>
+                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <style jsx>{`
+                  .animated-button:hover { 
+                    box-shadow: 0 0 0 8px transparent !important; 
+                    color: white !important; 
+                    border-radius: 12px !important; 
+                  }
+                  .animated-button:hover .arr-1 { right: -25% !important; }
+                  .animated-button:hover .arr-2 { left: 16px !important; }
+                  .animated-button:hover .text { transform: translateX(12px) !important; }
+                  .animated-button:hover svg { fill: white !important; }
+                  .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
+                  .animated-button:hover .circle { 
+                    width: 200px !important; 
+                    height: 200px !important; 
+                    opacity: 1 !important; 
+                    background-color: #3E2723 !important; 
+                  }
+                `}</style>
               </button>
-            </li>
-          ))}
-        </ul>
+            </div>
+          </form>
+        </Section>
+      </div>
+
+      <div className="md:w-1/2">
+        <Section title="Existing Coupons">
+          {isLoading && coupons.length === 0 ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            </div>
+          ) : (
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Code
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Value
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Max Uses
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Times Used
+                      </th>
+                      <th scope="col" className="relative px-4 py-3">
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {coupons.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                          No coupons found. Create your first coupon.
+                        </td>
+                      </tr>
+                    ) : (
+                      coupons.map((coupon) => (
+                        <tr key={coupon.code} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0">
+                                <code className="px-2 py-1 text-xs font-mono rounded bg-amber-100 text-amber-800">
+                                  {coupon.code}
+                                </code>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
+                            {coupon.type === 'percent' 
+                              ? `${coupon.value}% off` 
+                              : `₹${parseFloat(coupon.value).toFixed(2)} off`}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {coupon.maxUses || '∞'}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              coupon.active 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {coupon.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {coupon.usedCount || 0}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end">
+                              <button
+                                onClick={() => del(coupon.code)}
+                                disabled={isLoading}
+                                className="p-1 text-red-600 hover:bg-red-50 rounded-full"
+                                title="Delete"
+                              >
+                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </Section>
       </div>
     </div>
   )
@@ -341,6 +541,8 @@ function SettingsPanel({ onBack }) {
   const [settings, setSettings] = useState({ autoSubmitToChef: true })
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
+  const { user } = useAuth()
+  const isSuperAdmin = user && user.username.toLowerCase() === 'abg'
 
   // 1. Fetch Settings
   useEffect(() => {
@@ -377,32 +579,122 @@ function SettingsPanel({ onBack }) {
     setSettings(newSettings)
   }
 
+  const handleToggleSiteStatus = (e) => {
+    const newSettings = { ...settings, siteClosed: e.target.checked }
+    setSettings(newSettings)
+  }
+
+  const handleToggleTax = (e) => {
+    const newSettings = { 
+      ...settings, 
+      taxEnabled: e.target.checked,
+      // Reset tax rate to 0 if disabling tax
+      taxRate: e.target.checked ? (settings.taxRate || 0) : 0
+    }
+    setSettings(newSettings)
+  }
+
+  const handleTaxRateChange = (e) => {
+    const value = parseFloat(e.target.value) || 0;
+    const newSettings = { 
+      ...settings, 
+      taxRate: Math.min(100, Math.max(0, value)) // Keep between 0-100
+    }
+    setSettings(newSettings)
+  }
+
   // --- YOUR EXACT UI ---
   return (
     <div className="space-y-6">
       <Section title="Application Settings">
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium">Order Submission</h4>
-              <p className="text-sm text-gray-600">
-                {settings.autoSubmitToChef 
-                  ? 'Orders are automatically sent to the kitchen when items are added.'
-                  : 'Orders require manual submission to the kitchen.'}
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium">Order Submission (Waiter)</h4>
+                <p className="text-sm text-gray-600">
+                  {settings.autoSubmitToChef 
+                    ? 'Orders taken by Waiters are automatically sent to the kitchen when items are added.'
+                    : 'Orders taken by Waiters require manual submission to the kitchen.'}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={settings.autoSubmitToChef}
+                  onChange={handleToggleAutoSubmit}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <span className="ml-3 text-sm font-medium text-gray-900">
+                  {settings.autoSubmitToChef ? 'Auto-Submit' : 'Manual Submit'}
+                </span>
+              </label>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                className="sr-only peer" 
-                checked={settings.autoSubmitToChef}
-                onChange={handleToggleAutoSubmit}
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-              <span className="ml-3 text-sm font-medium text-gray-900">
-                {settings.autoSubmitToChef ? 'Auto-Submit' : 'Manual Submit'}
-              </span>
-            </label>
+
+            {isSuperAdmin && (
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-l-4 border-yellow-400">
+                <div>
+                  <h4 className="font-medium">Website Status</h4>
+                  <p className="text-sm text-gray-600">
+                    {settings.siteClosed 
+                      ? 'Website is currently CLOSED. Only super admin can log in.'
+                      : 'Website is OPEN for all users to log in.'}
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.siteClosed || false}
+                    onChange={handleToggleSiteStatus}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.siteClosed ? 'Site Closed' : 'Site Open'}
+                  </span>
+                </label>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium">Tax Settings</h4>
+                <p className="text-sm text-gray-600">
+                  {settings.taxEnabled 
+                    ? `Tax is ENABLED at ${settings.taxRate || 0}%`
+                    : 'Tax is currently DISABLED'}
+                </p>
+                {settings.taxEnabled && (
+                  <div className="mt-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tax Rate (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={settings.taxRate || 0}
+                      onChange={handleTaxRateChange}
+                      className="input w-24"
+                    />
+                  </div>
+                )}
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={settings.taxEnabled || false}
+                  onChange={handleToggleTax}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <span className="ml-3 text-sm font-medium text-gray-900">
+                  {settings.taxEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </label>
+            </div>
           </div>
 
           <div className="pt-4 border-t">
@@ -512,6 +804,333 @@ export default function AdminDashboard({ onExit }) {
   const [users, setUsers] = useState([])
   const [salesTotal, setSalesTotal] = useState(0)
   const [preview, setPreview] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
+  const [dateFilter, setDateFilter] = useState({
+    startDate: '',
+    endDate: ''
+  });
+  const [tableMap, setTableMap] = useState({});
+
+  // Get filtered and sorted receipts based on current filters and sort
+  const getFilteredReceipts = useCallback(() => {
+    return [...receipts]
+      .filter(receipt => {
+        if (!dateFilter.startDate && !dateFilter.endDate) return true;
+        
+        const receiptDate = new Date(receipt.createdAt).setHours(0, 0, 0, 0);
+        const startDate = dateFilter.startDate ? new Date(dateFilter.startDate).setHours(0, 0, 0, 0) : -Infinity;
+        const endDate = dateFilter.endDate ? new Date(dateFilter.endDate).setHours(23, 59, 59, 999) : Infinity;
+        
+        return receiptDate >= startDate && receiptDate <= endDate;
+      });
+  }, [receipts, dateFilter]);
+
+  // Export to CSV function
+  const exportToCSV = (receiptsToExport) => {
+    const headers = ['Receipt ID', 'Date', 'Table', 'Total (₹)', 'Items'];
+    
+    const csvContent = [
+      headers.join(','),
+      ...receiptsToExport.map(receipt => {
+        const tableName = receipt.tableId 
+          ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`) 
+          : 'Takeaway';
+        
+        const items = receipt.items?.map(item => 
+          `${item.quantity}x ${item.name} (₹${item.price})`
+        ).join('; ') || '';
+        
+        return [
+          `"${receipt._id.slice(-6)}"`,
+          `"${new Date(receipt.createdAt).toLocaleString()}"`,
+          `"${tableName}"`,
+          `"${receipt.total?.toFixed(2) || '0.00'}"`,
+          `"${items}"`
+        ].join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const fileName = `receipts_${new Date().toISOString().split('T')[0]}.csv`;
+    
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export to PDF function
+  const exportToPDF = (receiptsToExport) => {
+    try {
+      if (typeof jsPDF === 'undefined' || !window.jspdf) {
+        console.error('jsPDF is not properly loaded');
+        alert('Error: PDF generation library not loaded. Please refresh the page and try again.');
+        return;
+      }
+
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 15;
+      let yPos = 20;
+      let currentPage = 1;
+      let totalSales = 0;
+
+      // Simple currency formatter for PDF
+      const formatCurrency = (amount) => {
+        // Convert to number, handle undefined/NaN cases
+        const num = parseFloat(amount) || 0;
+        // Simple number formatting with 2 decimal places
+        return `Rs. ${num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+      };
+
+      // Add summary table (Page 1)
+      const addSummaryTable = () => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text('Brew & Bites Café - Sales Summary', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+
+        if (dateFilter.startDate || dateFilter.endDate) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          const dateRange = [
+            dateFilter.startDate ? `From: ${new Date(dateFilter.startDate).toLocaleDateString()}` : '',
+            dateFilter.endDate ? `To: ${new Date(dateFilter.endDate).toLocaleDateString()}` : ''
+          ].filter(Boolean).join(' ');
+          
+          doc.text(dateRange, pageWidth / 2, yPos, { align: 'center' });
+          yPos += 10;
+        }
+
+        // Prepare table data
+        const tableData = receiptsToExport.map(receipt => {
+          const tableName = receipt.tableId 
+            ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`) 
+            : (receipt.deliveryType === 'home' ? 'Home Delivery' : 'Takeaway');
+          
+          return [
+            receipt._id.slice(-6).toUpperCase(),
+            new Date(receipt.createdAt).toLocaleString(),
+            tableName,
+            receipt.items?.length || 0,
+            formatCurrency(receipt.total)
+          ];
+        });
+
+        // Add summary table
+        doc.autoTable({
+          head: [['Order ID', 'Date', 'Table', 'Items', 'Total']],
+          body: tableData,
+          startY: yPos,
+          margin: { top: yPos },
+          styles: { 
+            fontSize: 8,
+            cellPadding: 3,
+            overflow: 'linebreak',
+            lineWidth: 0.1,
+            textColor: [0, 0, 0]
+          },
+          headStyles: { 
+            fillColor: [59, 130, 246],
+            textColor: 255,
+            fontStyle: 'bold'
+          },
+          columnStyles: {
+            0: { cellWidth: 20, cellPadding: 2 },
+            1: { cellWidth: 30, cellPadding: 2 },
+            2: { cellWidth: 25, cellPadding: 2 },
+            3: { cellWidth: 15, cellPadding: 2, halign: 'center' },
+            4: { cellWidth: 20, cellPadding: 2, halign: 'right' }
+          },
+          didDrawPage: function(data) {
+            // Add total at the bottom
+            const total = receiptsToExport.reduce((sum, r) => sum + (r.total || 0), 0);
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : yPos;
+            
+            // Save current font settings
+            const prevFont = doc.getFont();
+            const prevSize = doc.getFontSize();
+            
+            // Set new font settings
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            
+            // Calculate text width for right alignment
+            const text = `Total Sales: ${formatCurrency(total)}`;
+            const textWidth = doc.getTextWidth(text);
+            
+            // Draw the text
+            doc.text(
+              text,
+              pageWidth - margin - textWidth,
+              finalY + 10
+            );
+            
+            // Restore previous font settings
+            doc.setFont(prevFont.fontName, prevFont.fontStyle);
+            doc.setFontSize(prevSize);
+          }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 15;
+      };
+
+      // Add detailed receipt function
+      const addReceipt = (receipt) => {
+        // Check for page break (leave room for at least one receipt)
+        if (yPos > 200) {
+          doc.addPage();
+          currentPage++;
+          yPos = 20;
+        }
+
+        const tableName = receipt.tableId 
+          ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`) 
+          : (receipt.deliveryType === 'home' ? 'Home Delivery' : 'Takeaway');
+
+        const receiptTotal = receipt.total || 0;
+        const tax = receipt.tax || 0;
+        const discount = receipt.discount || 0;
+        const subtotal = receiptTotal + discount - tax;
+
+        // Receipt header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text(`Order #${receipt._id.slice(-6).toUpperCase()}`, margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Date: ${new Date(receipt.createdAt).toLocaleString()}`, margin, yPos);
+        yPos += 5;
+        
+        doc.text(`Order Type: ${tableName}`, margin, yPos);
+        yPos += 10;
+
+        // Items header
+        doc.setFont('helvetica', 'bold');
+        doc.text('Items Ordered:', margin, yPos);
+        yPos += 7;
+        
+        // Items list
+        doc.setFont('helvetica', 'normal');
+        receipt.items?.forEach(item => {
+          if (!item || !item.name) return; // Skip invalid items
+          
+          // Handle different possible quantity property names
+          const quantity = item.quantity || item.quantityOrdered || 1;
+          const price = item.price || 0;
+          const itemTotal = quantity * price;
+          const itemText = `${quantity} × ${item.name}`;
+          const priceText = formatCurrency(itemTotal);
+          
+          // Split long item names across multiple lines
+          const maxWidth = 100; // Reduced max width to accommodate price
+          const splitText = doc.splitTextToSize(itemText, maxWidth);
+          
+          // Add item name (first line)
+          doc.text(splitText[0], margin + 5, yPos);
+          
+          // Add price aligned to the right on the same line as the first line of item text
+          doc.text(priceText, pageWidth - margin - 5, yPos, { align: 'right' });
+          
+          // Handle multi-line item names
+          if (splitText.length > 1) {
+            for (let i = 1; i < splitText.length; i++) {
+              yPos += 5;
+              doc.text(splitText[i], margin + 5, yPos);
+            }
+          }
+          
+          // Move down for next item
+          yPos += 5;
+        });
+
+        // Order summary
+        yPos += 5;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Order Summary:', margin, yPos);
+        yPos += 5;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Subtotal:`, margin + 5, yPos);
+        doc.text(formatCurrency(subtotal), pageWidth - margin, yPos, { align: 'right' });
+        yPos += 5;
+        
+        if (tax > 0) {
+          doc.text(`Tax (${receipt.taxRate || 5}%):`, margin + 5, yPos);
+          doc.text(formatCurrency(tax), pageWidth - margin, yPos, { align: 'right' });
+          yPos += 5;
+        }
+        
+        if (discount > 0) {
+          doc.text(`Discount:`, margin + 5, yPos);
+          doc.text(`-${formatCurrency(discount)}`, pageWidth - margin, yPos, { align: 'right' });
+          yPos += 5;
+        }
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total:`, margin + 5, yPos);
+        doc.text(formatCurrency(receiptTotal), pageWidth - margin, yPos, { align: 'right' });
+        yPos += 10;
+        
+        // Add separator
+        doc.setDrawColor(200);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        yPos += 15;
+      };
+
+      // Generate PDF
+      addSummaryTable();  // First page with summary table
+      
+      // Add a new page for detailed receipts
+      doc.addPage();
+      currentPage = 2;
+      yPos = 20;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('Detailed Receipts', pageWidth / 2, yPos, { align: 'center' });
+      yPos = 30;
+      
+      // Add all receipts
+      receiptsToExport.forEach(receipt => addReceipt(receipt));
+
+      // Add footer to all pages
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.text(`Page ${i} of ${pageCount}`, 
+                 pageWidth / 2, 287, { align: 'center' });
+        doc.text(`Generated on ${new Date().toLocaleString()}`, 
+                 pageWidth - margin, 287, { align: 'right' });
+      }
+
+      // Save the PDF
+      doc.save(`BrewBites_Receipts_${new Date().toISOString().split('T')[0]}.pdf`);
+        
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please check the console for details.');
+    }
+  };
+  
+  // Handle sorting when column headers are clicked
+  const handleSort = (key) => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
   
   // New state for Site Status (requires a new endpoint if you want to persist it)
   const [siteClosed, setSiteClosed] = useState(false);
@@ -530,11 +1149,21 @@ export default function AdminDashboard({ onExit }) {
 
       const menuData = await menuRes.json();
       setMenu(processMenuData(menuData)); // Helper to group categories
-      setTables(await tableRes.json());
+      
+      // Process tables and create a map of _id to table name
+      const tablesData = await tableRes.json();
+      setTables(tablesData);
+      
+      // Create a map of table _id to table name
+      const tableMapping = {};
+      tablesData.forEach(table => {
+        tableMapping[table._id] = table.name || `Table ${table.tableNumber || 'N/A'}`;
+      });
+      setTableMap(tableMapping);
       
       const rData = await receiptRes.json();
       setReceipts(rData);
-      setSalesTotal(rData.reduce((sum, r) => sum + r.total, 0));
+      setSalesTotal(rData.reduce((sum, r) => sum + (r.total || 0), 0));
 
       setUsers(await userRes.json());
       
@@ -668,14 +1297,172 @@ export default function AdminDashboard({ onExit }) {
     }
   }
 
+  // 8. DELETE RECEIPT (API)
+  const deleteReceipt = async (receiptId) => {
+    if (!confirm('Are you sure you want to delete this receipt? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/orders/${receiptId}`, { 
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete receipt');
+      }
+      
+      // Refresh the receipts list
+      loadAllData();
+      // Close the modal if it's open
+      if (preview) {
+        setPreview(null);
+      }
+      
+      // Show success message
+      alert('Receipt deleted successfully');
+    } catch (error) {
+      console.error('Error deleting receipt:', error);
+      alert('Failed to delete receipt. Please try again.');
+    }
+  }
+
+  // 9. UPDATE RECEIPT (API)
+  const updateReceipt = async (receiptId, updatedItems) => {
+    try {
+      const response = await fetch(`${API_URL}/api/orders/${receiptId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items: updatedItems })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update receipt');
+      }
+
+      // Update the local state to reflect the changes
+      const updatedReceipt = await response.json();
+      
+      // Update the receipts list
+      setReceipts(prevReceipts => 
+        prevReceipts.map(r => 
+          r._id === updatedReceipt._id ? { ...r, ...updatedReceipt } : r
+        )
+      );
+      
+      // Update the preview if it's open
+      if (preview && preview._id === updatedReceipt._id) {
+        setPreview(updatedReceipt);
+      }
+      
+      // Update sales total
+      setSalesTotal(prevTotal => 
+        prevTotal - (preview?.total || 0) + updatedReceipt.total
+      );
+      
+      alert('Receipt updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Error updating receipt:', error);
+      alert('Failed to update receipt. Please try again.');
+      return false;
+    }
+  }
+
   return (
     <div className="container mx-auto px-6 py-24">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Admin Dashboard</h2>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600">{user?.username}</span>
-          <button className="px-3 py-1 border rounded" onClick={onExit}>Exit</button>
-          <button className="px-3 py-1 bg-gray-900 text-white rounded" onClick={logout}>Logout</button>
+          <button
+            className="animated-button group relative inline-flex items-center justify-center"
+            onClick={onExit}
+            style={{
+              '--color': '#9CA3AF',
+              '--hover-color': '#4B5563',
+              padding: '6px 20px',
+              fontSize: '14px',
+              minWidth: '100px',
+              height: '36px',
+              marginRight: '8px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              border: '2px solid',
+              borderColor: 'transparent',
+              fontWeight: '500',
+              backgroundColor: 'transparent',
+              borderRadius: '100px',
+              color: '#9CA3AF',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+              boxShadow: '0 0 0 2px #9CA3AF'
+            }}
+          >
+            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
+            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Exit</span>
+            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#9CA3AF', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
+            <style jsx>{`
+              .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+              .animated-button:hover .arr-1 { right: -25% !important; }
+              .animated-button:hover .arr-2 { left: 16px !important; }
+              .animated-button:hover .text { transform: translateX(12px) !important; }
+              .animated-button:hover svg { fill: white !important; }
+              .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #9CA3AF !important; }
+              .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #4B5563 !important; }
+            `}</style>
+          </button>
+          <button
+            className="animated-button group relative inline-flex items-center justify-center"
+            onClick={logout}
+            style={{
+              '--color': '#8B5A2B',
+              '--hover-color': '#5D4037',
+              padding: '6px 20px',
+              fontSize: '14px',
+              minWidth: '100px',
+              height: '36px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              border: '2px solid',
+              borderColor: 'transparent',
+              fontWeight: '500',
+              backgroundColor: 'transparent',
+              borderRadius: '100px',
+              color: '#8B5A2B',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+              boxShadow: '0 0 0 2px #8B5A2B'
+            }}
+          >
+            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Logout</span>
+            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <style jsx>{`
+              .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+              .animated-button:hover .arr-1 { right: -25% !important; }
+              .animated-button:hover .arr-2 { left: 16px !important; }
+              .animated-button:hover .text { transform: translateX(12px) !important; }
+              .animated-button:hover svg { fill: white !important; }
+              .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #8B5A2B !important; }
+              .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #5D4037 !important; }
+            `}</style>
+          </button>
         </div>
       </div>
 
@@ -757,21 +1544,45 @@ export default function AdminDashboard({ onExit }) {
             <form onSubmit={addItem} className="space-y-3">
               <div>
                 <label className="text-sm">Category</label>
-                <select value={form.category} onChange={e=>setForm(f=>({...f, category: e.target.value}))} className="w-full border rounded px-3 py-2">
+                <select 
+                  value={form.category} 
+                  onChange={e => setForm(f => ({...f, category: e.target.value}))} 
+                  className="input w-full"
+                >
                   {categories.map(c=> <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-sm">Name</label>
-                <input value={form.name} onChange={e=>setForm(f=>({...f, name: e.target.value}))} className="w-full border rounded px-3 py-2" required />
+                <input 
+                  value={form.name} 
+                  onChange={e => setForm(f => ({...f, name: e.target.value}))} 
+                  className="input w-full" 
+                  placeholder="Item name"
+                  required 
+                />
               </div>
               <div>
                 <label className="text-sm">Description</label>
-                <input value={form.description} onChange={e=>setForm(f=>({...f, description: e.target.value}))} className="w-full border rounded px-3 py-2" />
+                <input 
+                  value={form.description} 
+                  onChange={e => setForm(f => ({...f, description: e.target.value}))} 
+                  className="input w-full" 
+                  placeholder="Item description (optional)"
+                />
               </div>
               <div>
                 <label className="text-sm">Price</label>
-                <input type="number" step="0.01" value={form.price} onChange={e=>setForm(f=>({...f, price: e.target.value}))} className="w-full border rounded px-3 py-2" required />
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="0"
+                  value={form.price} 
+                  onChange={e => setForm(f => ({...f, price: e.target.value}))} 
+                  className="input w-full" 
+                  placeholder="0.00"
+                  required 
+                />
               </div>
               <div className="flex gap-3">
                 <button 
@@ -916,41 +1727,224 @@ export default function AdminDashboard({ onExit }) {
       )}
 
       {tab==='receipts' && (
-        <Section title="Receipts">
-          <div className="space-y-3">
-            {receipts.length===0 && <div className="text-gray-500">No receipts yet.</div>}
-            {receipts.map(r => (
-              <div key={r.id} className="w-full border rounded p-3 hover:shadow">
-                <div className="flex justify-between text-sm">
-                  <div>Receipt: {r.id || r._id}</div>
-                  <div>Date: {new Date(r.createdAt).toLocaleString()}</div>
-                </div>
-                <div className="text-sm">Table: {r.tableId}</div>
-                <ul className="mt-2 text-sm">
-                  {r.items.map((it, idx)=> (
-                    <li key={idx} className="flex justify-between">
-                      <span>{it.name} x{it.qty}</span>
-                      <span>₹{(it.price*it.qty).toFixed(2)}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex items-center justify-between mt-2">
-                  <div className="font-semibold">Total: ₹{r.total.toFixed(2)}</div>
-                  <div className="flex gap-2">
-                    {/* Note: Edit Receipt not implemented in backend demo for simplicity */}
-                    <button className="px-2 py-1 border rounded" onClick={()=>setPreview(r)}>View</button>
-                  </div>
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div className="flex items-center gap-4">
+              <h3 className="text-xl font-semibold">Receipts</h3>
+              <div className="relative group">
+                <button 
+                  className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm"
+                  onMouseEnter={(e) => {
+                    clearTimeout(e.currentTarget.closest('.group')._timer);
+                    e.currentTarget.closest('.group').classList.add('is-open');
+                  }}
+                >
+                  Export
+                </button>
+                <div 
+                  className="absolute left-0 mt-1 w-32 bg-white rounded-md shadow-lg py-1 z-10 opacity-0 invisible transition-all duration-200 transform -translate-y-1 group-[.is-open]:opacity-100 group-[.is-open]:visible group-[.is-open]:translate-y-0"
+                  onMouseEnter={(e) => {
+                    clearTimeout(e.currentTarget.closest('.group')._timer);
+                    e.currentTarget.closest('.group').classList.add('is-open');
+                  }}
+                  onMouseLeave={(e) => {
+                    const group = e.currentTarget.closest('.group');
+                    group._timer = setTimeout(() => {
+                      group.classList.remove('is-open');
+                    }, 200);
+                  }}
+                >
+                  <button 
+                    onClick={() => exportToCSV(getFilteredReceipts())}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Export as CSV
+                  </button>
+                  <button 
+                    onClick={() => exportToPDF(getFilteredReceipts())}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Export as PDF
+                  </button>
                 </div>
               </div>
-            ))}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 whitespace-nowrap">From:</label>
+                <input
+                  type="date"
+                  value={dateFilter.startDate}
+                  onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="border rounded p-1 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 whitespace-nowrap">To:</label>
+                <input
+                  type="date"
+                  value={dateFilter.endDate}
+                  onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="border rounded p-1 text-sm"
+                  min={dateFilter.startDate}
+                />
+              </div>
+              {(dateFilter.startDate || dateFilter.endDate) && (
+                <button
+                  onClick={() => setDateFilter({ startDate: '', endDate: '' })}
+                  className="text-sm text-red-600 hover:underline whitespace-nowrap"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+            <div className="text-lg font-medium">
+              Total Sales: <span className="text-green-600">₹{salesTotal.toFixed(2)}</span>
+            </div>
           </div>
-          <ReceiptModal 
-            open={!!preview} 
-            onClose={()=>{ setPreview(null); loadAllData(); }} 
-            receipt={preview} 
-            canEdit={false} 
-          />
-        </Section>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th 
+                    className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort('_id')}
+                  >
+                    <div className="flex items-center">
+                      ID
+                      {sortConfig.key === '_id' && (
+                        <span className="ml-1">
+                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort('createdAt')}
+                  >
+                    <div className="flex items-center">
+                      Date
+                      {sortConfig.key === 'createdAt' && (
+                        <span className="ml-1">
+                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort('tableId.name')}
+                  >
+                    <div className="flex items-center">
+                      Table
+                      {sortConfig.key === 'tableId.name' && (
+                        <span className="ml-1">
+                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-right p-2 cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort('total')}
+                  >
+                    <div className="flex items-center justify-end">
+                      Total
+                      {sortConfig.key === 'total' && (
+                        <span className="ml-1">
+                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-right p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredReceipts()
+                  .sort((a, b) => {
+                    let aValue, bValue;
+                    
+                    // Handle nested properties
+                    if (sortConfig.key === 'tableId.name') {
+                      aValue = a.tableId?.name || 'Z';
+                      bValue = b.tableId?.name || 'Z';
+                      
+                      // If both are 'Z' (no table), sort by date
+                      if (aValue === 'Z' && bValue === 'Z') {
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                      }
+                      
+                      // If one is 'Z', push it to the end
+                      if (aValue === 'Z') return sortConfig.direction === 'asc' ? 1 : -1;
+                      if (bValue === 'Z') return sortConfig.direction === 'asc' ? -1 : 1;
+                    } else {
+                      aValue = a[sortConfig.key];
+                      bValue = b[sortConfig.key];
+                    }
+                    
+                    // Handle different data types
+                    if (typeof aValue === 'string' && typeof bValue === 'string') {
+                      return sortConfig.direction === 'asc' 
+                        ? aValue.localeCompare(bValue)
+                        : bValue.localeCompare(aValue);
+                    } else if (aValue instanceof Date && bValue instanceof Date) {
+                      return sortConfig.direction === 'asc'
+                        ? aValue - bValue
+                        : bValue - aValue;
+                    } else {
+                      return sortConfig.direction === 'asc'
+                        ? (aValue || 0) - (bValue || 0)
+                        : (bValue || 0) - (aValue || 0);
+                    }
+                  })
+                  .map((r) => (
+                  <tr key={r._id} className="border-b hover:bg-gray-50">
+                    <td className="p-2">{r._id.slice(-6)}</td>
+                    <td className="p-2">{new Date(r.createdAt).toLocaleString()}</td>
+                    <td className="p-2">
+                      {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
+                    </td>
+                    <td className="p-2 text-right">₹{r.total?.toFixed(2) || '0.00'}</td>
+                    <td className="p-2 text-right space-x-2">
+                      <button 
+                        onClick={() => setPreview(r)}
+                        className="text-blue-600 hover:underline"
+                      >
+                        View
+                      </button>
+                      <button 
+                        onClick={() => deleteReceipt(r._id)}
+                        className="text-red-600 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {preview && (
+        <ReceiptModal
+          open={!!preview}
+          onClose={() => setPreview(null)}
+          receipt={preview}
+          canEdit={true}
+          onDelete={deleteReceipt}
+          onUpdate={async (items) => {
+            const success = await updateReceipt(preview._id, items);
+            if (success) {
+              // Refresh the data to ensure everything is in sync
+              loadAllData();
+            }
+            return success;
+          }}
+        />
       )}
 
       {tab==='coupons' && (
@@ -1125,29 +2119,6 @@ export default function AdminDashboard({ onExit }) {
               `}</style>
             </button>
           </div>
-
-          {/* Super Admin controls */}
-          {user?.username === 'AbG' && (
-            <div className="mb-4 p-3 border rounded bg-orange-50">
-              <div className="font-semibold mb-2">Super Admin</div>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm">Site status:</span>
-                <span className="text-sm font-medium">{siteClosed ? 'Closed' : 'Open'}</span>
-                <button className="px-3 py-1 border rounded" onClick={async () => {
-                   // Toggle site status
-                   const newValue = !siteClosed;
-                   await fetch(`${API_URL}/api/settings`, {
-                     method: 'PUT',
-                     headers: {'Content-Type': 'application/json'},
-                     body: JSON.stringify({ siteClosed: newValue })
-                   });
-                   setSiteClosed(newValue);
-                   alert(`Site is now ${newValue ? 'CLOSED' : 'OPEN'}`)
-                }}>{siteClosed ? 'Open Site' : 'Close Site'}</button>
-              </div>
-              <div className="text-xs text-gray-600">Closing the site prevents starting new orders.</div>
-            </div>
-          )}
 
           <ul className="space-y-2 text-sm">
             {users

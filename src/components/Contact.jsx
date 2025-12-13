@@ -78,7 +78,7 @@ export default function Contact() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="input w-full"
                     required
                   />
                 </div>
@@ -90,7 +90,7 @@ export default function Contact() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="input w-full"
                     required
                   />
                 </div>
@@ -105,7 +105,7 @@ export default function Contact() {
                     name="date"
                     value={formData.date}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="input w-full"
                   />
                 </div>
                 <div>
@@ -116,7 +116,7 @@ export default function Contact() {
                     name="time"
                     value={formData.time}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="input w-full"
                   />
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function Contact() {
                   name="guests"
                   value={formData.guests}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="input w-full min-h-[8rem]"
                 >
                   {[1, 2, 3, 4, 5, '6+'].map(num => (
                     <option key={num} value={num}>
@@ -146,7 +146,7 @@ export default function Contact() {
                   rows="4"
                   value={formData.message}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="input w-full min-h-[8rem]"
                   required
                 ></textarea>
               </div>
@@ -154,7 +154,7 @@ export default function Contact() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary hover:bg-opacity-90 text-white font-semibold py-3 px-6 rounded-md transition-colors disabled:opacity-70"
+                className={`w-full bg-primary text-white py-3 px-6 rounded-md font-medium hover:bg-opacity-90 transition-colors ${isSubmitting ? 'opacity-70' : ''} mt-4`}
               >
                 {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>

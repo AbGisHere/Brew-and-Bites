@@ -101,9 +101,10 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
               <input 
                 value={username} 
                 onChange={e=>setUsername(e.target.value)} 
-                className="w-full border rounded px-3 py-2" 
+                className="input w-full" 
                 required 
                 disabled={isLoading}
+                placeholder="Enter your username"
               />
             </div>
             <div>
@@ -112,15 +113,16 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
                 type="password" 
                 value={password} 
                 onChange={e=>setPassword(e.target.value)} 
-                className="w-full border rounded px-3 py-2" 
+                className="input w-full" 
                 required 
                 disabled={isLoading}
+                placeholder="Enter your password"
               />
             </div>
             <button 
               type="submit" 
               disabled={isLoading}
-              className={`w-full text-white py-2 rounded font-medium ${isLoading ? 'bg-gray-400' : 'bg-primary hover:bg-opacity-90'}`}
+              className={`w-full text-white py-2 rounded-md font-medium transition-colors ${isLoading ? 'bg-gray-400' : 'bg-primary hover:bg-opacity-90'}`}
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </button>

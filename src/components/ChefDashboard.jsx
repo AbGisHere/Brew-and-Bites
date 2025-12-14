@@ -300,103 +300,105 @@ export default function ChefDashboard({ onExit }) {
   }, []);
 
   const toggleItemStatus = async (orderId, itemUniqueId, currentStatus, markAsNotPrepared = false) => {
-    try {
-      // Find the order in the current state
-      const order = orders.find(o => o._id === orderId);
-      if (!order) return;
+    // 1. Determine New Status
+    let newStatus;
+    if (markAsNotPrepared && currentStatus === 'ready') {
+      newStatus = 'preparing';
+    } else if (currentStatus === 'preparing') {
+      newStatus = 'ready';
+    } else {
+      newStatus = currentStatus;
+    }
 
-      // Create a deep copy of the order to avoid direct state mutation
-      const orderCopy = JSON.parse(JSON.stringify(order));
-      
-      // Extract the original item ID and instance number from the uniqueId
+    if (newStatus === currentStatus) return;
+
+    // 2. OPTIMISTIC UPDATE: Update UI Immediately
+    const previousOrders = [...orders]; // Keep backup
+    
+    setOrders(prevOrders => prevOrders.map(order => {
+      if (order._id !== orderId) return order;
+
+      // Deep copy items
+      const updatedItems = order.items.map(i => ({...i}));
       const [itemId, instanceNum] = itemUniqueId.split('-');
       
-      // Find the specific item to update using both ID and status
-      let itemToUpdate;
       let itemIndex = -1;
       
-      // First, find all items with matching ID
+      // Logic to find the specific item instance
       const matchingItems = [];
-      orderCopy.items.forEach((item, idx) => {
+      updatedItems.forEach((item, idx) => {
         const itemIdToCheck = item._id || item.id;
         if (itemIdToCheck === itemId) {
           matchingItems.push({ item, index: idx });
         }
       });
-      
-      // If we have the specific instance number, update only that instance
+
       if (instanceNum !== undefined && matchingItems[instanceNum]) {
         itemIndex = matchingItems[instanceNum].index;
-        itemToUpdate = matchingItems[instanceNum].item;
-      } 
-      // Otherwise, find the first item with matching ID and status
-      else {
-        const itemWithStatus = orderCopy.items.find((item, idx) => {
+      } else {
+        itemIndex = updatedItems.findIndex((item) => {
           const itemIdToCheck = item._id || item.id;
           return itemIdToCheck === itemId && item.status === currentStatus;
         });
-        
-        if (itemWithStatus) {
-          itemIndex = orderCopy.items.findIndex(item => 
-            (item._id === itemWithStatus._id || item.id === itemWithStatus.id) && 
-            item.status === currentStatus
-          );
-          itemToUpdate = itemWithStatus;
-        }
       }
+
+      if (itemIndex === -1) return order;
+
+      // Update status locally
+      updatedItems[itemIndex].status = newStatus;
+      updatedItems[itemIndex].completedAt = newStatus === 'ready' ? new Date().toISOString() : null;
+
+      // Check if entire order is ready
+      const allReady = updatedItems.every(i => i.status === 'ready' || i.status === 'served');
       
-      if (!itemToUpdate || itemIndex === -1) return;
+      return {
+        ...order,
+        items: updatedItems,
+        orderStatusChef: allReady ? 'ready' : 'preparing' 
+      };
+    }));
+
+    // 3. Send Request to Server
+    try {
+      // Re-find the order object to send correct data payload
+      const orderToUpdate = orders.find(o => o._id === orderId); 
+      const payloadItems = orderToUpdate ? JSON.parse(JSON.stringify(orderToUpdate.items)) : [];
       
-      // Determine new status based on current status
-      let newStatus;
-      if (markAsNotPrepared && currentStatus === 'ready') {
-        newStatus = 'preparing'; // Go back to preparing when marking as not prepared
-      } else if (currentStatus === 'preparing') {
-        newStatus = 'ready'; // Only allow preparing -> ready
+      // Apply same logic to payload items
+      const [pItemId, pInstanceNum] = itemUniqueId.split('-');
+      let pItemIndex = -1;
+      const pMatchingItems = [];
+      payloadItems.forEach((item, idx) => {
+        if ((item._id || item.id) === pItemId) pMatchingItems.push({ index: idx });
+      });
+      if (pInstanceNum !== undefined && pMatchingItems[pInstanceNum]) {
+        pItemIndex = pMatchingItems[pInstanceNum].index;
       } else {
-        newStatus = currentStatus; // No other transitions allowed
+        pItemIndex = payloadItems.findIndex(i => (i._id || i.id) === pItemId && i.status === currentStatus);
       }
       
-      // Update the item's status
-      orderCopy.items[itemIndex].status = newStatus;
-      
-      // Update timestamps
-      if (newStatus === 'ready') {
-        orderCopy.items[itemIndex].completedAt = new Date().toISOString();
-      } else {
-        orderCopy.items[itemIndex].completedAt = null;
+      if (pItemIndex > -1) {
+        payloadItems[pItemIndex].status = newStatus;
+        payloadItems[pItemIndex].completedAt = newStatus === 'ready' ? new Date().toISOString() : null;
       }
-      
-      // Check if all items are ready or served
-      const allItemsReadyOrServed = orderCopy.items.every(item => 
-        item.status === 'ready' || item.status === 'served'
-      );
-      
-      // Update the order status based on items' status
+
+      const allItemsReadyOrServed = payloadItems.every(item => item.status === 'ready' || item.status === 'served');
       const orderStatus = allItemsReadyOrServed ? 'ready' : 'preparing';
-      
-      // Update the order on the server
+
       const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: orderCopy.items,
+          items: payloadItems,
           status: orderStatus
         })
       });
 
       if (!response.ok) throw new Error('Failed to update status');
-      
-      // Update local state with the modified order
-      const updatedOrder = await response.json();
-      setOrders(prev => prev.map(o => 
-        o._id === orderId ? updatedOrder : o
-      ));
-      
     } catch (err) {
       console.error('Error updating item status:', err);
-      // Re-fetch to ensure consistency
-      fetchData();
+      setOrders(previousOrders); // Revert on failure
+      alert("Sync failed. Reverting changes.");
     }
   };
 
@@ -534,7 +536,7 @@ export default function ChefDashboard({ onExit }) {
       {/* Tabs */}
       <div className="flex gap-3 mb-6 flex-wrap">
         {[
-          //{ id: 'batch', label: 'Batch View', count: batchItems.length }
+          //{ id: 'batch', label: 'Batch View', count: batchItems.length } ##Version 1.2.1
           { id: 'active', label: 'Active Orders', count: orders.length },
           { id: 'completed', label: 'Order History', count: completedOrders.length },
         ].map(t => {

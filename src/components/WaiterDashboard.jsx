@@ -191,7 +191,7 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
   }
 
   const addToOrder = async (item, status = 'preparing') => {
-    // Manual Mode
+    // 1. Manual Mode (No change)
     if (!autoSubmitToChef) {
       setPendingItems(prev => {
         const existing = prev.find(i => i.id === item.id && i.status === status)
@@ -203,32 +203,69 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
       return;
     }
 
-    // Auto Mode
-    const order = await ensureOrder();
-    if (!order) {
-        alert("Could not start order. Please try refreshing.");
-        return;
-    }
+    // 2. OPTIMISTIC UPDATE
+    const prevActiveOrder = activeOrder ? JSON.parse(JSON.stringify(activeOrder)) : null;
 
-    // Safety check for items array
-    let updatedItems = order.items ? [...order.items] : [];
-    
-    // Check if we are updating an existing item (same ID, same status)
-    // Note: Use 'itemId' from backend schema, or 'id' if just added locally
-    const existingIndex = updatedItems.findIndex(i => (i.itemId === item.id || i.itemId === item._id) && i.status === status);
-    
-    if (existingIndex > -1) {
-        updatedItems[existingIndex].qty += 1;
-    } else {
-        updatedItems.push({
-            itemId: item.id,
+    if (activeOrder && activeOrder.items) {
+      const optimisticItems = [...activeOrder.items];
+      // Try to find existing item to increment
+      const existingIndex = optimisticItems.findIndex(i => (i.itemId === item.id || i.itemId === item._id) && i.status === status);
+
+      if (existingIndex > -1) {
+        optimisticItems[existingIndex] = {
+            ...optimisticItems[existingIndex],
+            qty: (optimisticItems[existingIndex].qty || 1) + 1
+        };
+      } else {
+        optimisticItems.push({
+            itemId: item.id || item._id, 
+            id: item.id || item._id,
             name: item.name,
             price: item.price,
             qty: 1,
             status: status
         });
+      }
+      
+      // Update Total Price Optimistically
+      const newTotal = (activeOrder.total || 0) + item.price;
+      
+      setActiveOrder({
+        ...activeOrder,
+        items: optimisticItems,
+        total: newTotal
+      });
     }
-    await updateOrderBackend(order.id, updatedItems);
+
+    // 3. Network Sync
+    try {
+      const order = await ensureOrder();
+      if (!order) {
+        if (prevActiveOrder) setActiveOrder(prevActiveOrder); // Revert
+        return;
+      }
+
+      let updatedItems = order.items ? [...order.items] : [];
+      const existingIndex = updatedItems.findIndex(i => (i.itemId === item.id || i.itemId === item._id) && i.status === status);
+      
+      if (existingIndex > -1) {
+        updatedItems[existingIndex].qty += 1;
+      } else {
+        updatedItems.push({
+          itemId: item.id || item._id,
+          name: item.name,
+          price: item.price,
+          qty: 1,
+          status: status
+        });
+      }
+      
+      await updateOrderBackend(order.id, updatedItems);
+    } catch (e) {
+      console.error(e);
+      if (prevActiveOrder) setActiveOrder(prevActiveOrder); // Revert
+      refreshData();
+    }
   }
 
   const submitPendingItems = async () => {
@@ -268,22 +305,41 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
 
   const changeQty = async (itemId, delta, itemStatus) => {
     if (!activeOrder || itemStatus === 'served') return;
+
+    // 1. Optimistic Update
+    const prevOrderState = JSON.parse(JSON.stringify(activeOrder));
     
-    // Create a deep copy of the items to avoid mutating state directly
-    const updatedItems = activeOrder.items.map(item => {
-      // Match by both ID and status to handle multiple items with same ID but different statuses
+    // Calculate new items array
+    const optimisticItems = activeOrder.items.map(item => {
       const isTargetItem = (item.itemId === itemId || item.id === itemId) && 
                          (itemStatus ? item.status === itemStatus : true);
       
       if (isTargetItem) {
-        // For decrementing, ensure we don't go below 1 (handled by the filter below)
         const newQty = Math.max(1, item.qty + delta);
         return { ...item, qty: newQty };
       }
       return item;
-    }).filter(item => item.qty > 0); // Remove items with qty <= 0
+    }).filter(item => item.qty > 0);
 
-    await updateOrderBackend(activeOrder.id, updatedItems);
+    // Calculate optimistic total price change
+    const targetItem = activeOrder.items.find(i => (i.itemId === itemId || i.id === itemId));
+    const priceChange = targetItem ? targetItem.price * delta : 0;
+
+    // Apply State
+    setActiveOrder({ 
+        ...activeOrder, 
+        items: optimisticItems,
+        total: (activeOrder.total || 0) + priceChange 
+    });
+
+    // 2. Network Request
+    try {
+        await updateOrderBackend(activeOrder.id, optimisticItems);
+    } catch (e) {
+        console.error("Qty update failed", e);
+        setActiveOrder(prevOrderState); // Revert on failure
+        refreshData();
+    }
   }
 
   const removeItem = async (itemId) => {

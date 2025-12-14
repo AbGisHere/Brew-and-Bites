@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 // REMOVED: import { store } from '../store'
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'

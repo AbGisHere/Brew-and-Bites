@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 // REMOVED: import { store } from '../store' 
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
@@ -798,6 +798,8 @@ function SettingsPanel({ onBack }) {
 }
 
 export default function AdminDashboard({ onExit }) {
+  const [orderingTableId, setOrderingTableId] = useState(null);
+  const isUpdating = useRef(false);
   const { user, logout } = useAuth()
   const [menu, setMenu] = useState({})
   const [tab, setTab] = useState('menu')
@@ -1205,7 +1207,9 @@ export default function AdminDashboard({ onExit }) {
   const [siteClosed, setSiteClosed] = useState(false);
 
   // 1. DATA LOADING (Replaces store.getState())
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async (isBackground = false) => {
+    // Prevent UI glitches if user is interacting
+    if(isUpdating.current) return;
     try {
       // 2. USE API_URL
       const [menuRes, tableRes, receiptRes, userRes, settingRes] = await Promise.all([
@@ -1243,9 +1247,16 @@ export default function AdminDashboard({ onExit }) {
   }, []);
 
   useEffect(() => {
-    loadAllData();
-  }, [loadAllData])
-
+    loadAllData(); // Initial load
+    
+    // ✅ 3. ADD: Live Polling Interval
+    const interval = setInterval(() => {
+      loadAllData(true); 
+    }, 2000); 
+    
+    return () => clearInterval(interval);
+  }, [loadAllData]);
+  
   const categories = useMemo(() => Object.keys(menu), [menu])
 
   const [form, setForm] = useState({ id: null, category: 'coffee', name: '', description: '', price: '' })
@@ -2025,6 +2036,53 @@ export default function AdminDashboard({ onExit }) {
         </div>
       )}
 
+      {/* ✅ ORDERING POPUP MODAL */}
+      {orderingTableId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          {/* Backdrop with blur */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setOrderingTableId(null)} // Click outside to close
+          ></div>
+
+          {/* Modal Container */}
+          <div className="relative bg-white w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-4 border-b bg-white z-10">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Manage Order
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Editing Table ID: {orderingTableId.slice(-4)}
+                </p>
+              </div>
+              <button 
+                onClick={() => setOrderingTableId(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body (Waiter Dashboard) */}
+            <div className="flex-1 overflow-y-auto bg-gray-50 relative">
+              <WaiterDashboard 
+                embedded={true} 
+                initialTableId={orderingTableId}
+                onExit={() => {
+                   setOrderingTableId(null); // Close modal when they finish/print
+                   loadAllData(); // Refresh Admin view immediately
+                }} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {preview && (
         <ReceiptModal
           open={!!preview}
@@ -2049,9 +2107,9 @@ export default function AdminDashboard({ onExit }) {
         </Section>
       )}
 
-      {tab==='tables' && (
+      {tab === 'tables' && (
         <Section title="Tables">
-          <div className="mb-6">
+          <div className="mb-6 flex items-center gap-3">
             <button 
               onClick={addTable}
               className="animated-button group relative inline-flex items-center justify-center"
@@ -2098,19 +2156,81 @@ export default function AdminDashboard({ onExit }) {
               `}</style>
             </button>
           </div>
-          <ul className="space-y-2">
-            {tables.map(t => (
-              <li key={t.id || t._id} className="border rounded p-3 flex justify-between items-center">
-                <div>
-                  <div className="font-medium">{t.name}</div>
-                  <div className="text-sm text-gray-600">Active Order: {t.activeOrderId || 'None'}</div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button className="text-red-600 text-sm" onClick={() => deleteTable(t.id || t._id)}>Delete</button>
-                </div>
-              </li>
-            ))}
-          </ul>
+
+          {/* Tables List */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            {tables.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                No tables found. Add your first table to get started.
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {tables.map(t => {
+                  const hasActiveOrder = t.activeOrderId;
+                  return (
+                    <div key={t.id || t._id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-800">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 8v8a2 2 0 002 2h10a2 2 0 002-2V8m-7 4h4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">Table {t.name}</div>
+                          <div className="flex items-center mt-1">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              hasActiveOrder 
+                                ? 'bg-red-100 text-red-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {hasActiveOrder ? 'Occupied' : 'Available'}
+                            </span>
+                            {hasActiveOrder && (
+                              <span className="ml-2 text-sm text-gray-500">
+                                Order: {t.activeOrderId}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* UPDATE: Handle both View (Edit) and Take Order scenarios via Modal */}
+                        {hasActiveOrder ? (
+                          <button
+                            onClick={() => setOrderingTableId(t.id || t._id)}
+                            className="px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 rounded-md transition-colors border border-amber-200"
+                          >
+                            View / Edit Order
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setOrderingTableId(t.id || t._id)}
+                            className="px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 rounded-md transition-colors border border-green-200"
+                          >
+                            Take Order
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete Table ${t.name}? This action cannot be undone.`)) {
+                              deleteTable(t.id || t._id);
+                            }
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                          title="Delete Table"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </Section>
       )}
 
@@ -2120,7 +2240,7 @@ export default function AdminDashboard({ onExit }) {
         </Section>
       )}
 
-      {tab==='users' && (
+      {tab === 'users' && (
         <Section title="Users">
           <div className="mb-6 flex items-center gap-3">
             <button 
@@ -2284,37 +2404,101 @@ export default function AdminDashboard({ onExit }) {
             )}
           </div>
 
-          <ul className="space-y-2 text-sm">
-            {users
-              .filter(u => !(u.hidden && user?.username !== 'AbG'))
-              .map(u => {
-                const canDelete = (user?.username === 'AbG' && u.id !== 'root') || (user?.role === 'admin' && (u.role === 'waiter' || u.role === 'chef'))
-                return (
-                  <li key={u.id || u._id} className="border rounded p-2 flex justify-between items-center">
-                    <span>{u.username} <span className="uppercase text-gray-500">({u.role})</span></span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-400 text-xs hidden sm:inline">id: {u.id || u._id}</span>
-                      {canDelete && (
-                        <div className="flex gap-2">
-                          <button 
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium" 
-                            onClick={() => resetUserPassword(u.id || u._id, u.username)}
-                          >
-                            Reset Pwd
-                          </button>
-                          <button 
-                            className="text-red-600 hover:text-red-800 text-sm font-medium" 
-                            onClick={() => deleteUser(u.id || u._id)}
-                          >
-                            Delete
-                          </button>
+          {/* Users List */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            {isLoadingUsers ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading users...</p>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                No users found. Add your first user to get started.
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {users
+                  .filter(u => !(u.hidden && user?.username !== 'AbG'))
+                  .map((u, index) => {
+                    const canDelete = (user?.username === 'AbG' && u.id !== 'root') || 
+                                    (user?.role === 'admin' && (u.role === 'waiter' || u.role === 'chef'));
+                    
+                    // Role-based styling
+                    const roleStyles = {
+                      admin: 'bg-purple-100 text-purple-800',
+                      chef: 'bg-blue-100 text-blue-800',
+                      waiter: 'bg-green-100 text-green-800',
+                      default: 'bg-gray-100 text-gray-800'
+                    };
+                    
+                    const roleStyle = roleStyles[u.role] || roleStyles.default;
+                    
+                    return (
+                      <div 
+                        key={u.id || u._id} 
+                        className="p-4 hover:bg-gray-50 transition-colors duration-150 group"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                              {u.role === 'admin' ? (
+                                // Shield icon for admin
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              ) : u.role === 'chef' ? (
+                                // Detailed chef hat icon
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z" />
+                                </svg>
+                              ) : (
+                                // Serving tray icon for waiters
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                                  <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h6l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">{u.username}</h3>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleStyle}`}>
+                                  {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                                </span>
+                                <span className="text-xs text-gray-500">ID: {u.id || u._id}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {canDelete && (
+                            <div className="mt-3 sm:mt-0 flex space-x-2">
+                              <button
+                                onClick={() => resetUserPassword(u.id || u._id, u.username)}
+                                className="px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                                title="Reset Password"
+                              >
+                                Reset Password
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete ${u.username}? This action cannot be undone.`)) {
+                                    deleteUser(u.id || u._id);
+                                  }
+                                }}
+                                className="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                                title="Delete User"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </li>
-                )
-            })}
-          </ul>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
         </Section>
       )}
 

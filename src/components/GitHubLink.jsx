@@ -14,7 +14,7 @@ export default function GitHubLink() {
         }
       } catch (error) {
         console.error('Error fetching version:', error);
-        setVersion('1.2.1'); // Fallback version
+        setVersion('1.3.0'); // Fallback version
       }
     };
 

@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FiClock, FiCheckCircle } from 'react-icons/fi';
 import API_URL from '../config';
 
 const statusColors = {
@@ -15,19 +14,17 @@ const statusLabels = {
   served: 'Served'
 };
 
-// Helper function to format time duration
-const formatDuration = (seconds) => {
-  if (!seconds) return '--:--';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
-
 // Helper function to format time with seconds
 const formatTime = (dateString) => {
   if (!dateString) return '--:--:--';
   const date = new Date(dateString);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+};
+
+// Helper: Generate a VALID 24-char Hex ObjectId for MongoDB
+const generateObjectId = () => {
+  const timestamp = (new Date().getTime() / 1000 | 0).toString(16);
+  return timestamp + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => (Math.random() * 16 | 0).toString(16)).toLowerCase();
 };
 
 export default function ChefDashboard({ onExit }) {
@@ -38,40 +35,115 @@ export default function ChefDashboard({ onExit }) {
   const [tables, setTables] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [batchItems, setBatchItems] = useState([]);
+  
+  // Input state for batch view inputs
   const [completedCounts, setCompletedCounts] = useState({});
-  const scrollRef = useRef(null);
-
+  
+  // Traffic Controller
   const isUpdating = useRef(false);
 
-  // OPTIMIZATION: Wrapped sorting logic in useMemo
+  // --- 1. LIVE BATCH CALCULATION (ZERO LATENCY) ---
+  const batchItems = useMemo(() => {
+    const itemsMap = new Map();
+    
+    // Filter active orders
+    const activeOrdersList = orders.filter(order => 
+      order.chefStatus !== 'completed' && 
+      order.status !== 'completed' && 
+      order.status !== 'closed'
+    );
+
+    activeOrdersList.forEach(order => {
+      if (order.items && Array.isArray(order.items)) {
+        const orderTime = new Date(order.createdAt || order.updatedAt || new Date());
+        
+        // Inline table name lookup
+        const table = tables.find(t => t._id === order.tableId || t.id === order.tableId);
+        const tableName = table ? table.name || `Table ${table.number || '?'}` : 'Unknown Table';
+        
+        order.items.forEach(item => {
+          if (item.status !== 'served') { 
+            const itemKey = item.name;
+            const existing = itemsMap.get(itemKey) || {
+              name: item.name,
+              totalQuantity: 0,
+              preparedQuantity: 0,
+              pendingQuantity: 0,
+              orders: [],
+              notes: new Set()
+            };
+            
+            // Handle quantity safely
+            const itemQuantity = item.qty || item.quantity || 1;
+            
+            // Treat BOTH 'ready' AND 'prepared' as done
+            const isPrepared = item.status === 'ready' || item.status === 'prepared';
+            
+            existing.totalQuantity += itemQuantity;
+            if (isPrepared) {
+              existing.preparedQuantity += itemQuantity;
+            } else {
+              existing.pendingQuantity += itemQuantity;
+            }
+            
+            if (!isPrepared) {
+              existing.orders.push({
+                tableId: order.tableId,
+                tableName: tableName,
+                orderTime: orderTime,
+                orderId: order._id,
+                itemId: item._id || item.id,
+                quantity: itemQuantity,
+                status: item.status,
+                notes: item.notes
+              });
+            }
+            
+            if (item.notes) existing.notes.add(item.notes);
+            itemsMap.set(itemKey, existing);
+          }
+        });
+      }
+    });
+
+    // Return sorted array
+    return Array.from(itemsMap.values())
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .filter(item => item.pendingQuantity > 0)
+      .map(item => ({
+        ...item,
+        orders: item.orders
+          .sort((a, b) => b.orderTime - a.orderTime)
+          .map(order => ({
+            ...order,
+            timeString: order.orderTime.toLocaleTimeString([], { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: true 
+            })
+          }))
+      }));
+  }, [orders, tables]);
+
+  // --- 2. SORTED ORDERS ---
   const sortedActiveOrders = useMemo(() => {
     if (!orders || !Array.isArray(orders)) return [];
     
     return [...orders].sort((a, b) => {
-      // Get the most recent 'preparing' item time for each order
       const getLatestPreparingTime = (order) => {
-        // Defensive check: Ensure items exists
         if (!order || !order.items || !Array.isArray(order.items)) return 0;
-
         const preparingItems = order.items.filter(item => 
           item.status === 'preparing' || !item.status
         );
         if (preparingItems.length === 0) return 0;
-        
-        // Defensive check: Ensure createdAt exists
         return Math.max(...preparingItems.map(item => new Date(item.createdAt || Date.now()).getTime()));
       };
-      
-      // Sort by most recent preparing item first (descending)
       return getLatestPreparingTime(b) - getLatestPreparingTime(a);
     });
   }, [orders]);
 
-  // OPTIMIZATION: Wrapped completed orders sorting in useMemo
   const sortedCompletedOrders = useMemo(() => {
     if (!completedOrders || !Array.isArray(completedOrders)) return [];
-    
     return [...completedOrders].sort((a, b) => {
       const timeA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
       const timeB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
@@ -79,7 +151,6 @@ export default function ChefDashboard({ onExit }) {
     });
   }, [completedOrders]);
 
-  // OPTIMIZATION: Wrapped current list derivation in useMemo
   const currentOrders = useMemo(() => {
     return activeTab === 'active' ? sortedActiveOrders : 
            activeTab === 'completed' ? sortedCompletedOrders : [];
@@ -88,185 +159,33 @@ export default function ChefDashboard({ onExit }) {
   const hasOrders = (activeTab === 'batch' && batchItems.length > 0) || 
                    (activeTab !== 'batch' && currentOrders.length > 0);
 
-  // --- END OF MOVED HOOKS ---
-
-  
-  const handleCompleteBatch = async (itemName, count) => {
-    try {
-      // Find all orders containing this item that are not yet prepared
-      const ordersToUpdate = [];
-      const updatedOrders = [...orders];
-      
-      // First, find and mark the items as prepared
-      updatedOrders.forEach(order => {
-        if (order.items && Array.isArray(order.items)) {
-          order.items.forEach(item => {
-            if (item.name === itemName && item.status !== 'prepared' && item.status !== 'served' && count > 0) {
-              if (!item._id) item._id = Math.random().toString(36).substr(2, 9); // Add temp ID if missing
-              ordersToUpdate.push({
-                orderId: order._id,
-                itemId: item._id,
-                tableId: order.tableId
-              });
-              count--;
-            }
-          });
-        }
-      });
-      
-      // Update the first 'count' items as prepared
-      if (ordersToUpdate.length > 0) {
-        const updatePromises = ordersToUpdate.map(async ({ orderId, itemId, tableId }) => {
-          try {
-            const response = await fetch(`${API_URL}/api/orders/${orderId}/items/${itemId}/status`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ status: 'prepared' }),
-            });
-            
-            if (!response.ok) {
-              throw new Error('Failed to update item status');
-            }
-            
-            return response.json();
-          } catch (err) {
-            console.error('Error updating item status:', err);
-            return null;
-          }
-        });
-        
-        await Promise.all(updatePromises);
-        // Refresh data after update
-        fetchData();
-      }
-    } catch (err) {
-      console.error('Error completing batch:', err);
-      setError('Failed to update item status. Please try again.');
-    }
-  };
-  
-  const getTableName = (id) => {
-    if (!id) return 'Unknown Table';
-    const table = tables.find(t => t._id === id || t.id === id);
-    return table ? table.name || `Table ${table.number || '?'}` : 'Unknown Table';
-  };
-
+  // --- 3. DATA FETCHING ---
   const fetchData = async (isBackgroundRefresh = false) => {
     try {
-      // FIX: Only show loading spinner if it's NOT a background refresh
-      if (!isBackgroundRefresh) {
-        setIsLoading(true);
-      }
+      if (!isBackgroundRefresh) setIsLoading(true);
       setError(null);
       
-      // Fetch all orders regardless of status
       const [allOrdersRes, tableRes] = await Promise.all([
         fetch(`${API_URL}/api/orders`).then(res => res.json()),
         fetch(`${API_URL}/api/tables`).then(res => res.json())
       ]);
       
-      // Filter orders - active orders are those not marked as completed/closed
       const activeOrders = (allOrdersRes || []).filter(order => 
         order.chefStatus !== 'completed' && 
         order.status !== 'completed' && 
         order.status !== 'closed'
       );
       
-      // Completed orders
-      const completedOrders = (allOrdersRes || []).filter(order => 
+      const completedOrdersList = (allOrdersRes || []).filter(order => 
         order.chefStatus === 'completed' || 
         order.status === 'completed' || 
         order.status === 'closed'
       );
       
-      // Calculate batch items logic
-      const itemsMap = new Map();
-      const newCompletedCounts = {};
-      
-      activeOrders.forEach(order => {
-        if (order.items && Array.isArray(order.items)) {
-          const orderTime = new Date(order.createdAt || order.updatedAt || new Date());
-          const tableName = getTableName(order.tableId) || 'Table ?';
-          
-          order.items.forEach(item => {
-            if (item.status !== 'served') { 
-              const itemKey = item.name;
-              const existing = itemsMap.get(itemKey) || {
-                name: item.name,
-                totalQuantity: 0,
-                preparedQuantity: 0,
-                pendingQuantity: 0,
-                orders: [],
-                notes: new Set()
-              };
-              
-              const itemQuantity = item.quantity || 1;
-              const isPrepared = item.status === 'prepared';
-              
-              existing.totalQuantity += itemQuantity;
-              if (isPrepared) {
-                existing.preparedQuantity += itemQuantity;
-              } else {
-                existing.pendingQuantity += itemQuantity;
-              }
-              
-              if (!isPrepared) {
-                existing.orders.push({
-                  tableId: order.tableId,
-                  tableName: tableName,
-                  orderTime: orderTime,
-                  orderId: order._id,
-                  itemId: item._id || Math.random().toString(36).substr(2, 9),
-                  quantity: itemQuantity,
-                  status: item.status,
-                  notes: item.notes
-                });
-              }
-              
-              if (item.notes) existing.notes.add(item.notes);
-              itemsMap.set(itemKey, existing);
-              
-              if (newCompletedCounts[itemKey] === undefined) {
-                newCompletedCounts[itemKey] = 0;
-              }
-            }
-          });
-        }
-      });
-      
-      setCompletedCounts(prevCounts => ({
-        ...newCompletedCounts,
-        ...Object.keys(prevCounts).reduce((acc, key) => {
-          if (itemsMap.has(key)) {
-            acc[key] = Math.min(prevCounts[key], itemsMap.get(key).pendingQuantity);
-          }
-          return acc;
-        }, {})
-      }));
-      
-      const batchItemsArray = Array.from(itemsMap.values())
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(item => ({
-          ...item,
-          orders: item.orders
-            .sort((a, b) => b.orderTime - a.orderTime)
-            .map(order => ({
-              ...order,
-              timeString: order.orderTime.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-              })
-            }))
-        }));
-      
       if (!isUpdating.current) {
         setOrders(activeOrders);
-        setCompletedOrders(completedOrders);
+        setCompletedOrders(completedOrdersList);
         setTables(tableRes || []);
-        setBatchItems(batchItemsArray);
       }
       
     } catch (err) {
@@ -279,29 +198,139 @@ export default function ChefDashboard({ onExit }) {
     }
   };
 
-  // Function to manually refresh data while preserving scroll
-  const refreshData = () => {
-    fetchData(true);
-  };
-
-  // Initial data fetch and auto-refresh setup
   useEffect(() => {
-    // Initial fetch
     fetchData(false);
-    
-    // Set up auto-refresh every 2 seconds
     const intervalId = setInterval(() => {
-      fetchData(true); // Preserve scroll during auto-refresh
+      fetchData(true);
     }, 2000);
-    
-    // Cleanup function to clear interval on unmount
-    return () => {
-      clearInterval(intervalId);
-    };
+    return () => clearInterval(intervalId);
   }, []);
 
+  // --- 4. ACTION HANDLERS ---
+  
+  // Helper: Get Table Name (Missing function fixed here)
+  const getTableName = (id) => {
+    if (!id) return 'Unknown Table';
+    const table = tables.find(t => t._id === id || t.id === id);
+    return table ? table.name || `Table ${table.number || '?'}` : 'Unknown Table';
+  };
+
+  // Helper: Generate a VALID 24-char Hex ObjectId
+  const generateBatchId = () => {
+    const timestamp = (new Date().getTime() / 1000 | 0).toString(16);
+    return timestamp + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => (Math.random() * 16 | 0).toString(16)).toLowerCase();
+  };
+
+  const handleCompleteBatch = async (itemName, count) => {
+    // Ensure count is a number
+    let remainingCount = parseInt(count, 10);
+    if (isNaN(remainingCount) || remainingCount <= 0) return;
+
+    // 1. LOCK THE POLLER
+    isUpdating.current = true;
+    const previousOrders = JSON.parse(JSON.stringify(orders)); // Backup
+    
+    try {
+      const updatesToSend = []; // Store updates to send to server later
+
+      // 2. OPTIMISTIC UPDATE LOOP
+      const nextOrders = orders.map(order => {
+        // Skip if we are done or order has no items
+        if (remainingCount <= 0 || !order.items) return order;
+
+        // Check if this order contains the target item (not ready/served)
+        const hasTarget = order.items.some(i => i.name === itemName && i.status !== 'ready' && i.status !== 'served');
+        if (!hasTarget) return order;
+
+        let orderModified = false;
+        const newItemsList = [];
+
+        // Iterate and Process Items
+        for (const item of order.items) {
+            // Check if this is the item we want to mark done
+            if (remainingCount > 0 && item.name === itemName && 
+                item.status !== 'ready' && item.status !== 'served') {
+                
+                if (item.qty > 1) {
+                    // CASE A: Split needed
+                    newItemsList.push({ ...item, qty: item.qty - 1 }); // Keep remaining
+                    
+                    newItemsList.push({
+                       ...item,
+                       _id: generateBatchId(), // New VALID Hex ID
+                       qty: 1,
+                       status: 'ready',
+                       completedAt: new Date().toISOString()
+                    });
+                    remainingCount--;
+                    orderModified = true;
+                } else {
+                    // CASE B: Exact match (Qty is 1)
+                    newItemsList.push({
+                        ...item,
+                        status: 'ready',
+                        completedAt: new Date().toISOString()
+                    });
+                    remainingCount--;
+                    orderModified = true;
+                }
+            } else {
+                // Keep other items unchanged
+                newItemsList.push(item);
+            }
+        }
+
+        if (orderModified) {
+            const allReady = newItemsList.every(i => i.status === 'ready' || i.status === 'served');
+            const newStatus = allReady ? 'ready' : 'preparing';
+            
+            // Queue this update for the server
+            updatesToSend.push({
+                orderId: order._id,
+                items: newItemsList,
+                status: newStatus
+            });
+
+            return {
+                ...order,
+                items: newItemsList,
+                orderStatusChef: newStatus
+            };
+        }
+        return order;
+      });
+
+      // 3. APPLY TO UI IMMEDIATELY
+      setOrders(nextOrders);
+      setCompletedCounts(prev => ({ ...prev, [itemName]: 0 })); // Reset input to 0
+
+      // 4. SEND TO SERVER (Use the main PUT endpoint)
+      await Promise.all(updatesToSend.map(update => 
+          fetch(`${API_URL}/api/orders/${update.orderId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                  items: update.items,
+                  status: update.status
+              })
+          })
+      ));
+      
+      // Refresh data to be sure
+      fetchData();
+
+    } catch (err) {
+      console.error("Batch update error:", err);
+      setOrders(previousOrders); // Revert on error
+      alert("Failed to update batch. Reverting.");
+    } finally {
+      // 5. RELEASE LOCK
+      setTimeout(() => { isUpdating.current = false; }, 500);
+    }
+  };
+
   const toggleItemStatus = async (orderId, itemUniqueId, currentStatus, markAsNotPrepared = false) => {
-    // 1. LOCK THE POLLER (Stops background refresh from overwriting changes)
+    // 1. LOCK THE POLLER
     isUpdating.current = true;
 
     // 2. Determine New Status
@@ -312,92 +341,83 @@ export default function ChefDashboard({ onExit }) {
       newStatus = 'ready';
     } else {
       newStatus = currentStatus;
+      isUpdating.current = false;
+      return;
     }
 
     if (newStatus === currentStatus) {
-        isUpdating.current = false; // Release lock if no change
+        isUpdating.current = false;
         return;
     }
 
-    // 3. OPTIMISTIC UPDATE: Update UI Immediately
-    const previousOrders = [...orders]; // Keep backup
+    // 3. OPTIMISTIC UPDATE
+    const previousOrders = JSON.parse(JSON.stringify(orders)); // Deep copy for backup
+
+    // Helper: Calculate status based on items
+    const calculateOrderStatus = (items) => {
+      const allReadyOrServed = items.every(i => i.status === 'ready' || i.status === 'served');
+      return allReadyOrServed ? 'ready' : 'preparing';
+    };
+
+    // --- CORE LOGIC: CALCULATE NEW STATE ONCE ---
+    let payloadItems = [];
+    let payloadStatus = 'preparing';
     
-    setOrders(prevOrders => prevOrders.map(order => {
+    const nextOrders = orders.map(order => {
       if (order._id !== orderId) return order;
 
       // Deep copy items
-      const updatedItems = order.items.map(i => ({...i}));
-      const [itemId, instanceNum] = itemUniqueId.split('-');
+      let updatedItems = JSON.parse(JSON.stringify(order.items));
+      const [targetItemId, _] = itemUniqueId.split('-');
       
-      let itemIndex = -1;
+      // Find the item
+      const itemIndex = updatedItems.findIndex(i => (i._id || i.id) === targetItemId && i.status === currentStatus);
       
-      // Logic to find the specific item instance
-      const matchingItems = [];
-      updatedItems.forEach((item, idx) => {
-        const itemIdToCheck = item._id || item.id;
-        if (itemIdToCheck === itemId) {
-          matchingItems.push({ item, index: idx });
+      if (itemIndex > -1) {
+        const item = updatedItems[itemIndex];
+        
+        if (item.qty > 1) {
+          // CASE A: SPLIT ITEM (Qty > 1)
+          item.qty -= 1; // Decrease original
+          
+          const splitItem = {
+            ...item,
+            _id: generateObjectId(), // GENERATE VALID 24-CHAR ID
+            qty: 1,
+            status: newStatus,
+            completedAt: newStatus === 'ready' ? new Date().toISOString() : null,
+            createdAt: item.createdAt 
+          };
+          updatedItems.push(splitItem);
+        } else {
+          // CASE B: UPDATE DIRECTLY (Qty = 1)
+          updatedItems[itemIndex].status = newStatus;
+          updatedItems[itemIndex].completedAt = newStatus === 'ready' ? new Date().toISOString() : null;
         }
-      });
-
-      if (instanceNum !== undefined && matchingItems[instanceNum]) {
-        itemIndex = matchingItems[instanceNum].index;
-      } else {
-        itemIndex = updatedItems.findIndex((item) => {
-          const itemIdToCheck = item._id || item.id;
-          return itemIdToCheck === itemId && item.status === currentStatus;
-        });
       }
 
-      if (itemIndex === -1) return order;
+      // Capture these for the server payload
+      payloadItems = updatedItems;
+      payloadStatus = calculateOrderStatus(updatedItems);
 
-      // Update status locally
-      updatedItems[itemIndex].status = newStatus;
-      updatedItems[itemIndex].completedAt = newStatus === 'ready' ? new Date().toISOString() : null;
-
-      // Check if entire order is ready
-      const allReady = updatedItems.every(i => i.status === 'ready' || i.status === 'served');
-      
       return {
         ...order,
         items: updatedItems,
-        orderStatusChef: allReady ? 'ready' : 'preparing' 
+        orderStatusChef: payloadStatus
       };
-    }));
+    });
+
+    // Apply Update to UI
+    setOrders(nextOrders);
 
     // 4. Send Request to Server
     try {
-      // Re-find the order object to send correct data payload
-      const orderToUpdate = orders.find(o => o._id === orderId); 
-      const payloadItems = orderToUpdate ? JSON.parse(JSON.stringify(orderToUpdate.items)) : [];
-      
-      // Apply same logic to payload items
-      const [pItemId, pInstanceNum] = itemUniqueId.split('-');
-      let pItemIndex = -1;
-      const pMatchingItems = [];
-      payloadItems.forEach((item, idx) => {
-        if ((item._id || item.id) === pItemId) pMatchingItems.push({ index: idx });
-      });
-      if (pInstanceNum !== undefined && pMatchingItems[pInstanceNum]) {
-        pItemIndex = pMatchingItems[pInstanceNum].index;
-      } else {
-        pItemIndex = payloadItems.findIndex(i => (i._id || i.id) === pItemId && i.status === currentStatus);
-      }
-      
-      if (pItemIndex > -1) {
-        payloadItems[pItemIndex].status = newStatus;
-        payloadItems[pItemIndex].completedAt = newStatus === 'ready' ? new Date().toISOString() : null;
-      }
-
-      const allItemsReadyOrServed = payloadItems.every(item => item.status === 'ready' || item.status === 'served');
-      const orderStatus = allItemsReadyOrServed ? 'ready' : 'preparing';
-
       const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: payloadItems,
-          status: orderStatus
+          status: payloadStatus
         })
       });
 
@@ -407,13 +427,16 @@ export default function ChefDashboard({ onExit }) {
       setOrders(previousOrders); // Revert on failure
       alert("Sync failed. Reverting changes.");
     } finally {
-      // 5. RELEASE THE LOCK (After 500ms safety delay)
+      // 5. RELEASE THE LOCK
       setTimeout(() => { isUpdating.current = false; }, 500);
     }
   };
 
-  // --- CONDITIONAL RETURNS MUST BE AFTER ALL HOOKS ---
-  
+  const handleLogout = () => {
+    logout();
+    if (onExit) onExit();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -434,7 +457,7 @@ export default function ChefDashboard({ onExit }) {
           </div>
           <p className="mt-2 text-sm">{error}</p>
           <button
-            onClick={fetchData}
+            onClick={() => fetchData(false)}
             className="mt-3 px-4 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 transition-colors text-sm font-medium"
           >
             Retry
@@ -443,11 +466,6 @@ export default function ChefDashboard({ onExit }) {
       </div>
     );
   }
-
-  const handleLogout = () => {
-    logout();
-    if (onExit) onExit();
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -545,7 +563,7 @@ export default function ChefDashboard({ onExit }) {
       {/* Tabs */}
       <div className="flex gap-3 mb-6 flex-wrap">
         {[
-          //{ id: 'batch', label: 'Batch View', count: batchItems.length } ##Version 1.2.1
+          { id: 'batch', label: 'Batch View', count: batchItems.length },
           { id: 'active', label: 'Active Orders', count: orders.length },
           { id: 'completed', label: 'Order History', count: completedOrders.length },
         ].map(t => {
@@ -655,7 +673,7 @@ export default function ChefDashboard({ onExit }) {
           </h3>
           <div className="flex items-center">
             <button
-              onClick={fetchData}
+              onClick={() => fetchData(false)}
               className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               <svg className="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -851,12 +869,6 @@ export default function ChefDashboard({ onExit }) {
                           const readyItems = expandedItems.filter(i => i.status === 'ready');
                           const servedItems = expandedItems.filter(i => i.status === 'served');
 
-                          // Find the latest completion time if any items are completed
-                          const completedItems = expandedItems.filter(item => item.completedAt);
-                          const latestCompletion = completedItems.length > 0
-                            ? new Date(Math.max(...completedItems.map(i => new Date(i.completedAt))))
-                            : null;
-
                           return (
                             <div key={name} className="p-3 border-b">
                               <div className="flex justify-between items-start">
@@ -888,19 +900,6 @@ export default function ChefDashboard({ onExit }) {
                                             </span>
                                           ))}
                                         </div>
-                                      </div>
-                                    )}
-                                    {items.some(i => i.startedAt) && (
-                                      <div className="flex items-center">
-                                        <span className="mr-1">⏳ Started:</span>
-                                        {Array.from(new Set(items
-                                          .filter(i => i.startedAt)
-                                          .map(i => formatTime(i.startedAt))
-                                        )).map((time, idx) => (
-                                          <span key={idx} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded mr-1">
-                                            {time}
-                                          </span>
-                                        ))}
                                       </div>
                                     )}
                                     {/* Served/Completed Items */}

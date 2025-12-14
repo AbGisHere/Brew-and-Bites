@@ -30,11 +30,11 @@ const mapId = (data) => {
   return data;
 };
 
-export default function WaiterDashboard({ onExit, embedded = false }) {
+export default function WaiterDashboard({ onExit, embedded = false, initialTableId = null }) {
   const { user, logout } = useAuth()
   const [tables, setTables] = useState([])
   const [menu, setMenu] = useState({})
-  const [selectedTable, setSelectedTable] = useState(null)
+  const [selectedTable, setSelectedTable] = useState(initialTableId)
   const [activeOrder, setActiveOrder] = useState(null)
   const [couponCode, setCouponCode] = useState('')
   const [couponError, setCouponError] = useState('')
@@ -44,6 +44,11 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
 
   const isUpdating = useRef(false);
   
+  useEffect(() => {
+    if (initialTableId) {
+        setSelectedTable(initialTableId);
+    }
+  }, [initialTableId]);
   // --- 1. DATA FETCHING (Replaces store polling) ---
   const refreshData = useCallback(async () => {
     try {
@@ -108,7 +113,7 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
 
   useEffect(() => {
     refreshData();
-    const iv = setInterval(refreshData, 2000); // Poll every 2s
+    const iv = setInterval(refreshData, 2000); // ✅ Polls every 2s
     return () => clearInterval(iv);
   }, [refreshData]);
 

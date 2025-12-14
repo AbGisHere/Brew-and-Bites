@@ -1,5 +1,5 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales.
 
@@ -8,22 +8,51 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
-## 🚀 Version 1.2.0 Features
+## 🚀 What's New in v1.3.0 (Current)
 
-### 👨‍🍳 Chef Dashboard (Major Performance Update)
+### 👑 Admin Dashboard (Major UX Upgrade)
+* **User Management Overhaul:** Completely redesigned the Users tab. Now features a card-based layout with role-specific icons (Shield for Admin, Hat for Chef, Tray for Waiter) and quick action buttons.
+* **Visual Table Grid:** Tables are now displayed in a responsive grid with clear "Occupied/Available" status pills and active order tracking.
+* **Live Admin "Take Order" Modal:** Admins can now view or edit active orders in a popup overlay in the Tables tab without leaving the dashboard. No more losing context by switching tabs!
+* **Real-Time Monitoring:** The dashboard now auto-refreshes every 2 seconds. Watch table statuses turn from `Green` (Free) to `Red` (Occupied) instantly.
+* **Embedded Waiter Mode:** The Waiter interface now runs seamlessly inside the Admin panel for quick order taking.
+
+### 👨‍🍳 Chef Dashboard (New Feature)
+* **Batch Mode:** This is a high-performance mode designed for efficiency in busy kitchens. Instead of fulfilling orders ticket-by-ticket (e.g., "Table 1 needs a Burger", "Table 2 needs a Burger"), it aggregates identical items so chefs can cook in bulk.
+
+---
+
+## 📜 Version History
+
+### **v1.3.0 (Current Dev)**
+#### 👑 Admin Dashboard (Major UX Upgrade)
+* **User Management Overhaul:** Completely redesigned the Users tab. Now features a card-based layout with role-specific icons (Shield for Admin, Hat for Chef, Tray for Waiter) and quick action buttons.
+* **Visual Table Grid:** Tables are now displayed in a responsive grid with clear "Occupied/Available" status pills and active order tracking.
+* **Live Admin "Take Order" Modal:** Admins can now view or edit active orders in a popup overlay in the Tables tab without leaving the dashboard. No more losing context by switching tabs!
+* **Real-Time Monitoring:** The dashboard now auto-refreshes every 2 seconds. Watch table statuses turn from `Green` (Free) to `Red` (Occupied) instantly.
+* **Embedded Waiter Mode:** The Waiter interface now runs seamlessly inside the Admin panel for quick order taking.
+#### 👨‍🍳 Chef Dashboard (New Feature)
+* **Batch Mode:** This is a high-performance mode designed for efficiency in busy kitchens. Instead of fulfilling orders ticket-by-ticket (e.g., "Table 1 needs a Burger", "Table 2 needs a Burger"), it aggregates identical items so chefs can cook in bulk.
+
+### **v1.2.1 (Zero Latency UI Update)**
+* **Zero-Latency Batch View:** The "Items to Prepare" list updates instantly when items are marked as "Done".
+* **Smart Item Splitting:** Marking 1 item as "Ready" from a batch of 4 (e.g., "4x Coffees") now correctly splits them into (3 Preparing, 1 Ready).
+* **ID Generation:** Implemented valid 24-char Hex ID generation for split items to fix server errors.
+* **Honest Timestamps:** Removed artificial delays; items now display their exact order creation time.
+
+### **v1.2.0 (Major Feature Release)**
+#### 👨‍🍳 Chef Dashboard (Major Performance Update)
 * **Tabbed Interface:** New organized view separating **Active Orders** from **Order History**.
 * **Granular Workflow:** Track items through specific stages: `Preparing` ➝ `Ready` ➝ `Served`.
 * **Performance Optimized:** Refactored rendering logic using memoization to ensure zero lag, even with 50+ active orders.
 * **Crash Protection:** Enhanced stability to handle missing data or incomplete orders without freezing the display.
-
-### 🤵 Waiter Dashboard
+#### 🤵 Waiter Dashboard
 * **Dual Submission Modes:**
     * **Auto-Submit:** Orders are sent to the kitchen immediately upon adding items.
     * **Manual Mode:** Waiters can build a "Pending List" and review it before sending to the chef.
 * **Live Order Tracking:** visual indicators for when items are "Ready to Serve" vs "Preparing".
 * **Receipt Generation:** Close orders, apply coupons, and calculate totals automatically.
-
-### 👑 Admin Dashboard
+#### 👑 Admin Dashboard
 * **Financial Suite:**
     * **Export Data:** Download receipts as **PDF** invoices or **CSV** spreadsheets.
     * **Receipt Editor:** Fix mistakes by modifying items or quantities on past orders.
@@ -41,59 +70,39 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 The Admin dashboard is the brain of the operation, allowing full control over the restaurant's data and settings.
 * **Menu Management:**
     * **CRUD Operations:** Add, Edit, and Delete menu items.
-    * **Featured Dishes:** Toggle items as "Featured" to highlight them (with Star icons).
+    * **Featured Dishes:** Toggle items as "Featured" to highlight them.
     * **Search & Filter:** Instantly search through menu items or filter by category.
 * **Financial Suite:**
     * **Receipt Management:** View a full history of all orders. Sort by Date, Table, or Amount.
-    * **Receipt Editor:** Fix mistakes by modifying items or quantities on past closed orders.
-    * **Advanced Exports:** Download sales data as **PDF Invoices** or **CSV Spreadsheets** for accounting.
-    * **Date Filtering:** Filter sales reports by specific Start and End dates.
+    * **Advanced Exports:** Download sales data as **PDF** or **CSV**.
 * **Staff & Floor Management:**
     * **User Accounts:** Create and delete secure login credentials for Chefs and Waiters.
     * **Table Layout:** Add or remove tables and see which ones currently have active orders.
-* **Marketing & Logic:**
-    * **Coupon Manager :** Create Discount Codes (Percentage or Flat Amount) with specific usage limits.
-    * **Global Settings:**
-        * **Tax Control:** Enable/Disable global tax and set specific rates (e.g., 5% GST).
-        * **Site Lock:** Remote "Kill Switch" to close the site for non-admins.
-        * **Waiter Mode:** Force "Manual Submission" or "Auto-Submit" for all waiters.
+    * **Instant Order Taking:** Click any table to open the **Service Modal** and take orders immediately.
 
 ### 🤵 Waiter Module (Service)
 Designed for tablets and mobile devices to be used tableside.
-* **Order Taking:**
-    * **Visual Menu:** Browse items by category with prices and descriptions.
-    * **Dual Submission Modes:**
-        * *Auto-Mode:* Items sent to kitchen immediately.
-        * *Manual-Mode:* Build a "Pending List" and review before firing the order.
-* **Table Management:**
-    * **Order Modification:** Increase/Decrease quantity or remove items before they are prepared.
-    * **Live Status:** Visual indicators showing if items are "Preparing", "Ready to Serve", or "Served".
-* **Billing:**
-    * **Coupon Application:** Apply discount codes directly at the table.
-    * **Instant Receipts:** Generate a preview of the final bill and close the table.
-    * **Printable Receipts:** One-Click to print the final bill to be shared with customers.
+* **Order Taking:** Visual Menu with prices and descriptions.
+* **Table Management:** Increase/Decrease quantity or remove items before preparation.
+* **Billing:** Apply coupons, generate instant receipts, and close tables.
 
 ### 👨‍🍳 Chef Module (Kitchen Display System)
 A streamlined, real-time dashboard for the kitchen staff.
-* **Workflow Tracking:**
-    * **Granular Status:** Move items from `Preparing` ➝ `Ready` ➝ `Served`.
-    * **Timestamps:** Track exactly when an order came in and when it was completed.
-* **Views:**
-    * **Active Tab:** Focus only on what needs to be cooked right now.
-    * **History Tab:** Review previously completed orders.
-* **Performance:**
-    * **Zero-Lag Rendering:** Optimized for performance to handle 50+ active orders without freezing.
-    * **Defensive Data Handling:** Prevents crashes even if order data is incomplete.
+* **Workflow Tracking:** Move items from `Preparing` ➝ `Ready` ➝ `Served`.
+* **Performance:** Optimized for performance to handle 50+ active orders without freezing.
 
 ---
 
-## 🔮 Future Roadmap
+## 🍳 Feature Spotlight: Chef Batch View
+The **Batch View** is a high-performance mode designed for efficiency in busy kitchens. Instead of fulfilling orders ticket-by-ticket (e.g., "Table 1 needs a Burger", "Table 2 needs a Burger"), it aggregates identical items so chefs can cook in bulk.
 
-We are actively working on Version 2.0 with these advanced features:
-
-* **🔥 Batch View (In Progress):** A dedicated KDS view for chefs to see item totals (e.g., "5x Burgers to cook") rather than just individual tickets.
-* **📱 User/Customer Dashboard:** A dedicated interface allowing customers to scan a QR code at their table and place orders directly from their phones (Self-Ordering).
-* **📈 Advanced Analytics:** Visual charts and graphs to analyze peak hours and best-selling items.
+### How it Works:
+1.  **Live Aggregation:** The system instantly sums up all pending items across every active order. If 5 tables order Cappuccinos, the chef sees **"5x Cappuccino Pending"**.
+2.  **Smart Item Splitting:** When a chef marks **2** items as "Ready" out of a batch of **5**, the system performs complex logic in the background:
+    * It finds the specific orders containing those items (using **FIFO** logic to prioritize older orders).
+    * It **splits** the order items in the database (e.g., converting "4x Burgers" into "2x Burgers (Ready)" and "2x Burgers (Preparing)").
+    * It generates new valid MongoDB IDs for the split items to ensure data integrity.
+3.  **Zero Latency:** The UI updates optimistically, meaning the chef sees the change immediately while the server processes the split in the background.
 
 ---
 

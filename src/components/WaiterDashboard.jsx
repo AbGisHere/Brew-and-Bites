@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 // REMOVED: import { store } from '../store'
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
@@ -42,10 +42,11 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
   const [receipts, setReceipts] = useState([])
   const [settings, setSettings] = useState({ autoSubmitToChef: true })
 
+  const isUpdating = useRef(false);
+  
   // --- 1. DATA FETCHING (Replaces store polling) ---
   const refreshData = useCallback(async () => {
     try {
-      // 2. USE API_URL VARIABLE
       const [tableRes, menuRes, settingRes, receiptRes] = await Promise.all([
         fetch(`${API_URL}/api/tables`),
         fetch(`${API_URL}/api/menu`),
@@ -53,19 +54,17 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
         fetch(`${API_URL}/api/receipts`)
       ]);
 
-      if (!tableRes.ok || !menuRes.ok) return; // Prevent crash on bad network
+      if (!tableRes.ok || !menuRes.ok) return;
 
       const tData = mapId(await tableRes.json());
       setTables(tData || []);
 
-      // Handle table selection logic
       if (selectedTable && tData && !tData.find(t => t.id === selectedTable)) {
-         setSelectedTable(null); // Table deleted
+         setSelectedTable(null);
       } else if (!selectedTable && tData && tData.length > 0) {
          setSelectedTable(tData[0].id);
       }
 
-      // Process Menu
       const mData = await menuRes.json();
       const groupedMenu = (mData || []).reduce((acc, item) => {
         const uiItem = { ...item, id: item._id };
@@ -87,16 +86,21 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
            if (ordersRes.ok) {
              const orders = mapId(await ordersRes.json());
              const order = orders.find(o => o.id === table.activeOrderId);
-             // Ensure items have IDs mapped for UI keys
-             if(order && order.items) {
-               order.items = order.items.map(i => ({...i, id: i._id || i.id}));
-               setActiveOrder(order);
-             } else {
-               setActiveOrder(null);
+             
+             // --- CHANGED: ONLY UPDATE IF NOT CURRENTLY MODIFYING ---
+             if (!isUpdating.current) { 
+               if(order && order.items) {
+                 order.items = order.items.map(i => ({...i, id: i._id || i.id}));
+                 setActiveOrder(order);
+               } else {
+                 setActiveOrder(null);
+               }
              }
+             // -------------------------------------------------------
            }
         } else {
-           setActiveOrder(null);
+           // Safe to clear if table has no order
+           if (!isUpdating.current) setActiveOrder(null);
         }
       }
     } catch (err) { console.error("Sync error:", err); }
@@ -191,7 +195,7 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
   }
 
   const addToOrder = async (item, status = 'preparing') => {
-    // Manual Mode
+    // 1. Manual Mode (No change)
     if (!autoSubmitToChef) {
       setPendingItems(prev => {
         const existing = prev.find(i => i.id === item.id && i.status === status)
@@ -203,95 +207,208 @@ export default function WaiterDashboard({ onExit, embedded = false }) {
       return;
     }
 
-    // Auto Mode
-    const order = await ensureOrder();
-    if (!order) {
-        alert("Could not start order. Please try refreshing.");
-        return;
-    }
+    // LOCK THE POLLER
+    isUpdating.current = true;
 
-    // Safety check for items array
-    let updatedItems = order.items ? [...order.items] : [];
-    
-    // Check if we are updating an existing item (same ID, same status)
-    // Note: Use 'itemId' from backend schema, or 'id' if just added locally
-    const existingIndex = updatedItems.findIndex(i => (i.itemId === item.id || i.itemId === item._id) && i.status === status);
-    
-    if (existingIndex > -1) {
-        updatedItems[existingIndex].qty += 1;
-    } else {
-        updatedItems.push({
-            itemId: item.id,
+    // 2. OPTIMISTIC UPDATE
+    const prevActiveOrder = activeOrder ? JSON.parse(JSON.stringify(activeOrder)) : null;
+
+    if (activeOrder && activeOrder.items) {
+      const optimisticItems = [...activeOrder.items];
+      // Try to find existing item to increment
+      const existingIndex = optimisticItems.findIndex(i => (i.itemId === item.id || i.itemId === item._id) && i.status === status);
+
+      if (existingIndex > -1) {
+        optimisticItems[existingIndex] = {
+            ...optimisticItems[existingIndex],
+            qty: (optimisticItems[existingIndex].qty || 1) + 1
+        };
+      } else {
+        optimisticItems.push({
+            itemId: item.id || item._id, 
+            id: item.id || item._id,
             name: item.name,
             price: item.price,
             qty: 1,
             status: status
         });
+      }
+      
+      // Update Total Price Optimistically
+      const newTotal = (activeOrder.total || 0) + item.price;
+      
+      setActiveOrder({
+        ...activeOrder,
+        items: optimisticItems,
+        total: newTotal
+      });
     }
-    await updateOrderBackend(order.id, updatedItems);
+
+    // 3. Network Sync
+    try {
+      const order = await ensureOrder();
+      if (!order) {
+        if (prevActiveOrder) setActiveOrder(prevActiveOrder); // Revert
+        return;
+      }
+
+      let updatedItems = order.items ? [...order.items] : [];
+      const existingIndex = updatedItems.findIndex(i => (i.itemId === item.id || i.itemId === item._id) && i.status === status);
+      
+      if (existingIndex > -1) {
+        updatedItems[existingIndex].qty += 1;
+      } else {
+        updatedItems.push({
+          itemId: item.id || item._id,
+          name: item.name,
+          price: item.price,
+          qty: 1,
+          status: status
+        });
+      }
+      
+      await updateOrderBackend(order.id, updatedItems);
+    } catch (e) {
+      console.error(e);
+      if (prevActiveOrder) setActiveOrder(prevActiveOrder); // Revert
+      refreshData();
+    } finally {
+      // RELEASE THE POLLER
+      setTimeout(() => { isUpdating.current = false; }, 500);
+    }
   }
 
   const submitPendingItems = async () => {
     if (pendingItems.length === 0) return
-    const order = await ensureOrder();
-    if (!order) return;
-
-    let updatedItems = order.items ? [...order.items] : [];
     
-    pendingItems.forEach(pItem => {
-        const idx = updatedItems.findIndex(i => (i.itemId === pItem.id || i.itemId === pItem._id) && i.status === pItem.status);
-        if(idx > -1) {
-            updatedItems[idx].qty += pItem.qty;
-        } else {
-            updatedItems.push({
-                itemId: pItem.id,
-                name: pItem.name,
-                price: pItem.price,
-                qty: pItem.qty,
-                status: pItem.status || 'preparing'
-            });
-        }
-    });
+    // LOCK THE POLLER
+    isUpdating.current = true;
 
-    await updateOrderBackend(order.id, updatedItems);
-    setPendingItems([])
+    try {
+        const order = await ensureOrder();
+        if (!order) return;
+
+        let updatedItems = order.items ? [...order.items] : [];
+        
+        pendingItems.forEach(pItem => {
+            const idx = updatedItems.findIndex(i => (i.itemId === pItem.id || i.itemId === pItem._id) && i.status === pItem.status);
+            if(idx > -1) {
+                updatedItems[idx].qty += pItem.qty;
+            } else {
+                updatedItems.push({
+                    itemId: pItem.id,
+                    name: pItem.name,
+                    price: pItem.price,
+                    qty: pItem.qty,
+                    status: pItem.status || 'preparing'
+                });
+            }
+        });
+
+        await updateOrderBackend(order.id, updatedItems);
+        setPendingItems([])
+    } catch(e) {
+        console.error(e);
+    } finally {
+        setTimeout(() => { isUpdating.current = false; }, 500);
+    }
   }
 
   const toggleItemServed = async (orderId, itemId, currentStatus) => {
-    const newStatus = currentStatus === 'served' ? 'ready' : 'served';
-    const updatedItems = activeOrder.items.map(i => {
-        if(i.itemId === itemId) return { ...i, status: newStatus };
-        return i;
-    });
-    await updateOrderBackend(orderId, updatedItems);
+    // LOCK THE POLLER
+    isUpdating.current = true;
+
+    try {
+        const newStatus = currentStatus === 'served' ? 'ready' : 'served';
+        
+        // Optimistic UI Update
+        if (activeOrder) {
+             const updatedItems = activeOrder.items.map(i => {
+                if(i.itemId === itemId || i.id === itemId) return { ...i, status: newStatus };
+                return i;
+            });
+            setActiveOrder({ ...activeOrder, items: updatedItems });
+        }
+
+        const updatedItems = activeOrder.items.map(i => {
+            if(i.itemId === itemId || i.id === itemId) return { ...i, status: newStatus };
+            return i;
+        });
+        await updateOrderBackend(orderId, updatedItems);
+    } catch(e) {
+        console.error(e);
+        refreshData();
+    } finally {
+        setTimeout(() => { isUpdating.current = false; }, 500);
+    }
   }
 
   const changeQty = async (itemId, delta, itemStatus) => {
     if (!activeOrder || itemStatus === 'served') return;
+
+    // LOCK THE POLLER
+    isUpdating.current = true;
+
+    // 1. Optimistic Update
+    const prevOrderState = JSON.parse(JSON.stringify(activeOrder));
     
-    // Create a deep copy of the items to avoid mutating state directly
-    const updatedItems = activeOrder.items.map(item => {
-      // Match by both ID and status to handle multiple items with same ID but different statuses
+    // Calculate new items array
+    const optimisticItems = activeOrder.items.map(item => {
       const isTargetItem = (item.itemId === itemId || item.id === itemId) && 
                          (itemStatus ? item.status === itemStatus : true);
       
       if (isTargetItem) {
-        // For decrementing, ensure we don't go below 1 (handled by the filter below)
         const newQty = Math.max(1, item.qty + delta);
         return { ...item, qty: newQty };
       }
       return item;
-    }).filter(item => item.qty > 0); // Remove items with qty <= 0
+    }).filter(item => item.qty > 0);
 
-    await updateOrderBackend(activeOrder.id, updatedItems);
+    // Calculate optimistic total price change
+    const targetItem = activeOrder.items.find(i => (i.itemId === itemId || i.id === itemId));
+    const priceChange = targetItem ? targetItem.price * delta : 0;
+
+    // Apply State
+    setActiveOrder({ 
+        ...activeOrder, 
+        items: optimisticItems,
+        total: (activeOrder.total || 0) + priceChange 
+    });
+
+    // 2. Network Request
+    try {
+        await updateOrderBackend(activeOrder.id, optimisticItems);
+    } catch (e) {
+        console.error("Qty update failed", e);
+        setActiveOrder(prevOrderState); // Revert on failure
+        refreshData();
+    } finally {
+        // RELEASE THE POLLER
+        setTimeout(() => { isUpdating.current = false; }, 500);
+    }
   }
 
   const removeItem = async (itemId) => {
     if (!activeOrder) return;
-    const updatedItems = activeOrder.items.filter(i => 
-      i.itemId !== itemId && i.id !== itemId
-    );
-    await updateOrderBackend(activeOrder.id, updatedItems);
+    
+    // LOCK THE POLLER
+    isUpdating.current = true;
+
+    try {
+        // Optimistic Update
+        const optimisticItems = activeOrder.items.filter(i => i.itemId !== itemId && i.id !== itemId);
+        setActiveOrder({ ...activeOrder, items: optimisticItems });
+
+        const updatedItems = activeOrder.items.filter(i => 
+          i.itemId !== itemId && i.id !== itemId
+        );
+        await updateOrderBackend(activeOrder.id, updatedItems);
+    } catch(e) {
+        console.error(e);
+        refreshData();
+    } finally {
+        setTimeout(() => { isUpdating.current = false; }, 500);
+    }
   }
 
   const closeOrder = async () => {

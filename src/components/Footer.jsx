@@ -1,3 +1,5 @@
+import GitHubLink from './GitHubLink';
+
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300 py-10">
@@ -18,8 +20,11 @@ export default function Footer() {
           <p className="text-gray-400">123 Coffee Street<br/>Brewtown, CA 90210</p>
         </div>
       </div>
-      <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
-        © {new Date().getFullYear()} Brew & Bites. All rights reserved.
+      <div className="border-t border-gray-800 mt-8 pt-6 text-center">
+        <div className="text-gray-500 text-sm mb-4">
+          © {new Date().getFullYear()} Brew & Bites. All rights reserved.
+        </div>
+        <GitHubLink />
       </div>
     </footer>
   )

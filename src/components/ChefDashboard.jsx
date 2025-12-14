@@ -42,7 +42,7 @@ export default function ChefDashboard({ onExit }) {
   const [completedCounts, setCompletedCounts] = useState({});
   const scrollRef = useRef(null);
 
-  // --- MOVED HOOKS TO TOP (Fixes "Rendered more hooks" error) ---
+  const isUpdating = useRef(false);
 
   // OPTIMIZATION: Wrapped sorting logic in useMemo
   const sortedActiveOrders = useMemo(() => {
@@ -262,11 +262,12 @@ export default function ChefDashboard({ onExit }) {
             }))
         }));
       
-      // Update state
-      setOrders(activeOrders);
-      setCompletedOrders(completedOrders);
-      setTables(tableRes || []);
-      setBatchItems(batchItemsArray);
+      if (!isUpdating.current) {
+        setOrders(activeOrders);
+        setCompletedOrders(completedOrders);
+        setTables(tableRes || []);
+        setBatchItems(batchItemsArray);
+      }
       
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -300,7 +301,10 @@ export default function ChefDashboard({ onExit }) {
   }, []);
 
   const toggleItemStatus = async (orderId, itemUniqueId, currentStatus, markAsNotPrepared = false) => {
-    // 1. Determine New Status
+    // 1. LOCK THE POLLER (Stops background refresh from overwriting changes)
+    isUpdating.current = true;
+
+    // 2. Determine New Status
     let newStatus;
     if (markAsNotPrepared && currentStatus === 'ready') {
       newStatus = 'preparing';
@@ -310,9 +314,12 @@ export default function ChefDashboard({ onExit }) {
       newStatus = currentStatus;
     }
 
-    if (newStatus === currentStatus) return;
+    if (newStatus === currentStatus) {
+        isUpdating.current = false; // Release lock if no change
+        return;
+    }
 
-    // 2. OPTIMISTIC UPDATE: Update UI Immediately
+    // 3. OPTIMISTIC UPDATE: Update UI Immediately
     const previousOrders = [...orders]; // Keep backup
     
     setOrders(prevOrders => prevOrders.map(order => {
@@ -358,7 +365,7 @@ export default function ChefDashboard({ onExit }) {
       };
     }));
 
-    // 3. Send Request to Server
+    // 4. Send Request to Server
     try {
       // Re-find the order object to send correct data payload
       const orderToUpdate = orders.find(o => o._id === orderId); 
@@ -399,9 +406,11 @@ export default function ChefDashboard({ onExit }) {
       console.error('Error updating item status:', err);
       setOrders(previousOrders); // Revert on failure
       alert("Sync failed. Reverting changes.");
+    } finally {
+      // 5. RELEASE THE LOCK (After 500ms safety delay)
+      setTimeout(() => { isUpdating.current = false; }, 500);
     }
   };
-
 
   // --- CONDITIONAL RETURNS MUST BE AFTER ALL HOOKS ---
   

@@ -35,6 +35,58 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
+## 🌟 Comprehensive Feature List
+
+### 👑 Admin Module (Control Center)
+The Admin dashboard is the brain of the operation, allowing full control over the restaurant's data and settings.
+* **Menu Management:**
+    * **CRUD Operations:** Add, Edit, and Delete menu items.
+    * **Featured Dishes:** Toggle items as "Featured" to highlight them (with Star icons).
+    * **Search & Filter:** Instantly search through menu items or filter by category.
+* **Financial Suite:**
+    * **Receipt Management:** View a full history of all orders. Sort by Date, Table, or Amount.
+    * **Receipt Editor:** Fix mistakes by modifying items or quantities on past closed orders.
+    * **Advanced Exports:** Download sales data as **PDF Invoices** or **CSV Spreadsheets** for accounting.
+    * **Date Filtering:** Filter sales reports by specific Start and End dates.
+* **Staff & Floor Management:**
+    * **User Accounts:** Create and delete secure login credentials for Chefs and Waiters.
+    * **Table Layout:** Add or remove tables and see which ones currently have active orders.
+* **Marketing & Logic:**
+    * **Coupon Manager :** Create Discount Codes (Percentage or Flat Amount) with specific usage limits.
+    * **Global Settings:**
+        * **Tax Control:** Enable/Disable global tax and set specific rates (e.g., 5% GST).
+        * **Site Lock:** Remote "Kill Switch" to close the site for non-admins.
+        * **Waiter Mode:** Force "Manual Submission" or "Auto-Submit" for all waiters.
+
+### 🤵 Waiter Module (Service)
+Designed for tablets and mobile devices to be used tableside.
+* **Order Taking:**
+    * **Visual Menu:** Browse items by category with prices and descriptions.
+    * **Dual Submission Modes:**
+        * *Auto-Mode:* Items sent to kitchen immediately.
+        * *Manual-Mode:* Build a "Pending List" and review before firing the order.
+* **Table Management:**
+    * **Order Modification:** Increase/Decrease quantity or remove items before they are prepared.
+    * **Live Status:** Visual indicators showing if items are "Preparing", "Ready to Serve", or "Served".
+* **Billing:**
+    * **Coupon Application:** Apply discount codes directly at the table.
+    * **Instant Receipts:** Generate a preview of the final bill and close the table.
+    * **Printable Receipts:** One-Click to print the final bill to be shared with customers.
+
+### 👨‍🍳 Chef Module (Kitchen Display System)
+A streamlined, real-time dashboard for the kitchen staff.
+* **Workflow Tracking:**
+    * **Granular Status:** Move items from `Preparing` ➝ `Ready` ➝ `Served`.
+    * **Timestamps:** Track exactly when an order came in and when it was completed.
+* **Views:**
+    * **Active Tab:** Focus only on what needs to be cooked right now.
+    * **History Tab:** Review previously completed orders.
+* **Performance:**
+    * **Zero-Lag Rendering:** Optimized for performance to handle 50+ active orders without freezing.
+    * **Defensive Data Handling:** Prevents crashes even if order data is incomplete.
+
+---
+
 ## 🔮 Future Roadmap
 
 We are actively working on Version 2.0 with these advanced features:

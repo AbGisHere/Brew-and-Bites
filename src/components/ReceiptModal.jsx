@@ -81,8 +81,8 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 invoice w-full max-w-md">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl p-6 invoice w-full max-w-md my-8">
         <div id="invoice-print-root" className="master-container">
           <div className="card cart">
             <label className="title">Order Summary</label>

@@ -309,7 +309,7 @@ function CouponManager() {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
                   <select
@@ -448,8 +448,8 @@ function CouponManager() {
             </div>
           ) : (
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="overflow-x-auto w-full">
+                <table className="min-w-full divide-y divide-gray-200 w-full">
                   <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1488,14 +1488,29 @@ export default function AdminDashboard({ onExit }) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
+      {/* Mobile Only - Welcome and Logout */}
+      <div className="md:hidden mb-4 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700">Welcome,</span>
+          <span className="text-sm font-semibold text-primary">{user?.username}</span>
+        </div>
+        <button
+          onClick={logout}
+          className="px-3 py-1.5 text-sm rounded-full border border-amber-700 text-amber-700 hover:bg-amber-50 transition-colors"
+        >
+          Logout
+        </button>
+      </div>
+
+      <div className="flex flex-col items-center text-center md:flex-row md:items-center md:justify-between md:text-left mb-6 md:mb-8">
         <div className="mb-4 md:mb-0">
-          <h1 className="text-3xl font-bold text-gray-800 mb-1">Admin Dashboard</h1>
-          <p className="text-gray-600 mb-6">Manage your restaurant operations efficiently</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Admin Dashboard</h1>
+          <p className="text-gray-600 md:mb-0">Manage your restaurant operations efficiently</p>
         </div>
         
-        <div className="flex items-center space-x-8">
+        {/* Desktop Only - Welcome and Logout */}
+        <div className="hidden md:flex items-center space-x-8">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-700">Welcome,</span>
             <span className="text-sm font-semibold text-primary">{user?.username}</span>
@@ -1530,123 +1545,128 @@ export default function AdminDashboard({ onExit }) {
               boxShadow: '0 0 0 2px #8B5A2B'
             }}
           >
-            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-              <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-              Logout
-            </span>
-            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-              <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <style jsx>{`
-              .animated-button:hover { 
-                box-shadow: 0 0 0 8px transparent !important; 
-                color: white !important; 
-                border-radius: 12px !important; 
-              }
-              .animated-button:hover .arr-1 { 
-                right: -25% !important; 
-              }
-              .animated-button:hover .arr-2 { 
-                left: 16px !important; 
-              }
-              .animated-button:hover .text { 
-                transform: translateX(12px) !important; 
-              }
-              .animated-button:active { 
-                transform: scale(0.95) !important; 
-                box-shadow: 0 0 0 4px #8B5A2B !important; 
-              }
-              .animated-button:hover .circle { 
-                width: 200px !important; 
-                height: 200px !important; 
-                opacity: 1 !important; 
-                background-color: '#5D4037' !important; 
-              }
-              .animated-button:hover svg { 
-                fill: white !important; 
-              }
-            `}</style>
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                Logout
+              </span>
+              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <style jsx>{`
+                .animated-button:hover { 
+                  box-shadow: 0 0 0 8px transparent !important; 
+                  color: white !important; 
+                  border-radius: 12px !important; 
+                }
+                .animated-button:hover .arr-1 { 
+                  right: -25% !important; 
+                }
+                .animated-button:hover .arr-2 { 
+                  left: 16px !important; 
+                }
+                .animated-button:hover .text { 
+                  transform: translateX(12px) !important; 
+                }
+                .animated-button:active { 
+                  transform: scale(0.95) !important; 
+                  box-shadow: 0 0 0 4px #8B5A2B !important; 
+                }
+                .animated-button:hover .circle { 
+                  width: 200px !important; 
+                  height: 200px !important; 
+                  opacity: 1 !important; 
+                  background-color: '#5D4037' !important; 
+                }
+                .animated-button:hover svg { 
+                  fill: white !important; 
+                }
+              `}</style>
           </button>
         </div>
       </div>
 
-      <div className="flex gap-3 mb-6 flex-wrap">
-        {[
-          { id: 'menu', label: 'Menu' },
-          { id: 'receipts', label: 'Receipts' },
-          { id: 'tables', label: 'Tables' },
-          { id: 'sales', label: 'Sales' },
-          { id: 'users', label: 'Users' },
-          { id: 'coupons', label: 'Coupons' },
-          { id: 'settings', label: 'Settings' },
-        ].map(t => {
-          const isActive = tab === t.id;
-          const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
-          const hoverColor = '#3E2723';
-          
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`animated-button group relative inline-flex items-center justify-center ${
-                isActive ? 'active' : ''
-              }`}
-              style={{
-                '--color': buttonColor,
-                '--hover-color': hoverColor,
-                '--box-shadow': `0 0 0 2px ${buttonColor}`,
-                '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
-                padding: '12px 24px',
-                minWidth: '120px',
-                margin: '4px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                border: '2px solid',
-                borderColor: 'transparent',
-                fontSize: '14px',
-                fontWeight: '600',
-                backgroundColor: 'transparent',
-                borderRadius: '100px',
-                color: buttonColor,
-                cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: `0 0 0 2px ${buttonColor}`
-              }}
-            >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                {t.label}
-              </span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <style jsx>{`
-                .animated-button:hover { box-shadow: 0 0 0 12px transparent !important; color: ${hoverColor} !important; border-radius: 12px !important; }
-                .animated-button:hover .arr-1 { right: -25% !important; }
-                .animated-button:hover .arr-2 { left: 16px !important; }
-                .animated-button:hover .text { transform: translateX(12px) !important; }
-                .animated-button:hover svg { fill: ${hoverColor} !important; }
-                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px ${buttonColor} !important; }
-                .animated-button:hover .circle { width: 220px !important; height: 220px !important; opacity: 1 !important; }
-                .active { box-shadow: 0 0 0 4px ${buttonColor} !important; background-color: ${hoverColor} !important; color: white !important; }
-                .active svg { fill: white !important; }
-              `}</style>
-            </button>
-          );
-        })}
+      <div className="relative">
+        <div className="md:hidden absolute left-0 right-0 top-1/2 h-12 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-white to-transparent w-8 z-10"></div>
+        <div className="md:hidden absolute right-0 top-1/2 h-12 -translate-y-1/2 pointer-events-none bg-gradient-to-l from-white to-transparent w-8 z-10"></div>
+        
+        <div className="flex overflow-x-auto pb-3 px-4 md:px-0 md:overflow-visible md:flex-wrap gap-3 mb-6 md:justify-start justify-start scrollbar-hide">
+          {[
+            { id: 'menu', label: 'Menu' },
+            { id: 'receipts', label: 'Receipts' },
+            { id: 'tables', label: 'Tables' },
+            { id: 'sales', label: 'Sales' },
+            { id: 'users', label: 'Users' },
+            { id: 'coupons', label: 'Coupons' },
+            { id: 'settings', label: 'Settings' },
+          ].map(t => {
+            const isActive = tab === t.id;
+            const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
+            const hoverColor = '#3E2723';
+            
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
+                  isActive ? 'active' : ''
+                }`}
+                style={{
+                  '--color': buttonColor,
+                  '--hover-color': hoverColor,
+                  '--box-shadow': `0 0 0 2px ${buttonColor}`,
+                  '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
+                  padding: '12px 24px',
+                  minWidth: '120px',
+                  margin: '4px',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  border: '2px solid',
+                  borderColor: 'transparent',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  backgroundColor: 'transparent',
+                  borderRadius: '100px',
+                  color: buttonColor,
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                  boxShadow: `0 0 0 2px ${buttonColor}`
+                }}
+              >
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  {t.label}
+                </span>
+                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <style jsx>{`
+                  .animated-button:hover { box-shadow: 0 0 0 12px transparent !important; color: ${hoverColor} !important; border-radius: 12px !important; }
+                  .animated-button:hover .arr-1 { right: -25% !important; }
+                  .animated-button:hover .arr-2 { left: 16px !important; }
+                  .animated-button:hover .text { transform: translateX(12px) !important; }
+                  .animated-button:hover svg { fill: ${hoverColor} !important; }
+                  .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px ${buttonColor} !important; }
+                  .animated-button:hover .circle { width: 220px !important; height: 220px !important; opacity: 1 !important; }
+                  .active { box-shadow: 0 0 0 4px ${buttonColor} !important; background-color: ${hoverColor} !important; color: white !important; }
+                  .active svg { fill: white !important; }
+                `}</style>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {tab==='menu' && (
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-6 px-4 md:px-0">
           <Section title="Add / Edit Item">
             <form onSubmit={addItem} className="space-y-3">
               <div>
@@ -1834,7 +1854,7 @@ export default function AdminDashboard({ onExit }) {
       )}
 
       {tab==='receipts' && (
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 md:px-0">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <div className="flex items-center gap-4">
               <h3 className="text-xl font-semibold">Receipts</h3>
@@ -1909,8 +1929,8 @@ export default function AdminDashboard({ onExit }) {
               Total Sales: <span className="text-green-600">₹{salesTotal.toFixed(2)}</span>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <table className="w-full">
+          <div className="bg-white p-4 rounded-lg shadow overflow-x-auto">
+            <table className="w-full min-w-max">
               <thead>
                 <tr className="border-b">
                   <th 
@@ -2007,7 +2027,7 @@ export default function AdminDashboard({ onExit }) {
                     }
                   })
                   .map((r) => (
-                  <tr key={r._id} className="border-b hover:bg-gray-50">
+                  <tr key={r._id} className="border-b hover:bg-gray-50 min-w-max">
                     <td className="p-2">{r._id.slice(-6)}</td>
                     <td className="p-2">{new Date(r.createdAt).toLocaleString()}</td>
                     <td className="p-2">
@@ -2158,25 +2178,25 @@ export default function AdminDashboard({ onExit }) {
           </div>
 
           {/* Tables List */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow p-4 md:p-6 overflow-hidden">
             {tables.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 No tables found. Add your first table to get started.
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 w-full">
                 {tables.map(t => {
                   const hasActiveOrder = t.activeOrderId;
                   return (
-                    <div key={t.id || t._id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-800">
+                    <div key={t.id || t._id} className="px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors w-full">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 8v8a2 2 0 002 2h10a2 2 0 002-2V8m-7 4h4" />
                           </svg>
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900">Table {t.name}</div>
+                          <div className="font-medium text-gray-900 truncate max-w-[150px] sm:max-w-none">{t.name}</div>
                           <div className="flex items-center mt-1">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               hasActiveOrder 
@@ -2185,15 +2205,10 @@ export default function AdminDashboard({ onExit }) {
                             }`}>
                               {hasActiveOrder ? 'Occupied' : 'Available'}
                             </span>
-                            {hasActiveOrder && (
-                              <span className="ml-2 text-sm text-gray-500">
-                                Order: {t.activeOrderId}
-                              </span>
-                            )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         {/* UPDATE: Handle both View (Edit) and Take Order scenarios via Modal */}
                         {hasActiveOrder ? (
                           <button
@@ -2405,7 +2420,7 @@ export default function AdminDashboard({ onExit }) {
           </div>
 
           {/* Users List */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow p-4 md:p-6 overflow-hidden">
             {isLoadingUsers ? (
               <div className="p-8 text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
@@ -2416,7 +2431,7 @@ export default function AdminDashboard({ onExit }) {
                 No users found. Add your first user to get started.
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 w-full">
                 {users
                   .filter(u => !(u.hidden && user?.username !== 'AbG'))
                   .map((u, index) => {

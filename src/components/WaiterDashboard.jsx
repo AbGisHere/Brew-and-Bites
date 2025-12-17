@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
 import API_URL from '../config'; // <--- 1. IMPORT THIS
+import { UserGroupIcon } from '@heroicons/react/24/outline'
 
 const statusColors = {
   preparing: 'bg-yellow-100 text-yellow-800',
@@ -498,24 +499,24 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
   return (
     <>
       <style>{hoverStyles}</style>
-      <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-4 py-8'}`}>
+      <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-2 sm:px-4 py-4 sm:py-8'}`}>
       {!embedded && (
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div className="mb-4 md:mb-0">
-            <h1 className="text-3xl font-bold text-gray-800 mb-1">Waiter Dashboard</h1>
-            <p className="text-gray-600 mb-6">Manage your tables and orders efficiently</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
+          <div className="mb-3 sm:mb-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-0 sm:mb-1">Waiter Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-600 hidden sm:block">Manage your tables and orders efficiently</p>
           </div>
           
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center justify-between sm:space-x-4 md:space-x-8">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">Welcome,</span>
               <span className="text-sm font-semibold text-primary">{user?.username}</span>
             </div>
             
-            <div className="w-px h-8 bg-gray-300"></div>
+            <div className="w-px h-6 sm:h-8 bg-gray-300 mx-2"></div>
             
             <button
-              className="animated-button group relative inline-flex items-center justify-center"
+              className="animated-button group relative inline-flex items-center justify-center text-sm sm:text-base"
               onClick={logout}
               style={{
                 '--color': '#8B5A2B',
@@ -585,10 +586,10 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <section className="bg-white p-4 rounded shadow">
           <h3 className="font-semibold mb-2">Tables</h3>
-          <ul className="space-y-2 max-h-[400px] overflow-auto pr-2 py-2">
+          <ul className="space-y-2 max-h-[400px] overflow-y-auto overflow-x-auto pr-1 py-2 -mr-1 w-full">
             {tables.map(t => (
               <li key={t.id}>
                 <button
@@ -603,15 +604,26 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                     willChange: 'transform, box-shadow'
                   }}
                 >
-                  {t.name}
-                  <div className="text-xs opacity-80">Order: {t.activeOrderId || 'None'}</div>
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <UserGroupIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${selectedTable === t.id ? 'text-white' : 'text-amber-700'}`} />
+                      <span className="font-medium text-sm sm:text-base">{t.name}</span>
+                    </div>
+                    <div className={`text-xs px-2 py-0.5 rounded-full ${
+                      t.activeOrderId 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {t.activeOrderId ? 'Occupied' : 'Available'}
+                    </div>
+                  </div>
                 </button>
               </li>
             ))}
           </ul>
           <div className="mt-4 border-t pt-3 pb-1">
             <h4 className="font-semibold mb-3">Receipts (table)</h4>
-            <ul className="space-y-3 max-h-[240px] overflow-y-auto overflow-x-visible pr-2 -mr-2 pl-1 text-sm">
+            <ul className="space-y-3 max-h-[240px] overflow-y-auto overflow-x-auto w-full pr-1 -mr-1 pl-1 text-sm">
               {receipts.filter(r=>r.tableId===selectedTable).map(r => (
                 <li key={r.id} className="flex justify-between items-center py-1">
                   <span>{new Date(r.createdAt).toLocaleTimeString()} • ₹{r.total.toFixed(2)}</span>
@@ -659,13 +671,13 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
 
         <section className="bg-white p-4 rounded shadow md:col-span-2">
           <h3 className="font-semibold mb-2">Menu</h3>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {categories.map(cat => (
               <div key={cat}>
                 <h4 className="capitalize text-sm text-gray-500 mb-1">{cat}</h4>
                 <div className="space-y-2">
                   {menu[cat].map(item => (
-                    <button key={item.id} onClick={()=>addToOrder(item)} className="w-full border rounded p-2 text-left menu-item hover:shadow">
+                    <button key={item.id} onClick={()=>addToOrder(item)} className="w-full border rounded p-2 text-left menu-item hover:shadow text-sm sm:text-base">
                       <div className="flex justify-between">
                         <span>{item.name}</span>
                         <span className="text-primary font-semibold">₹{item.price.toFixed(2)}</span>
@@ -757,7 +769,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   )}
                   {couponError && <div className="text-red-600">{couponError}</div>}
                 </div>
-                <ul className="text-sm space-y-2">
+                <ul className="text-sm space-y-2 overflow-x-auto w-full">
                   {Object.entries(
                     activeOrder.items.reduce((acc, item) => {
                       const key = `${item.name}_${item.status}_${item.itemId || item.id}`;
@@ -770,14 +782,14 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                       return acc;
                     }, {})
                   ).map(([key, it]) => (
-                    <li key={key} className="flex items-center justify-between gap-2 border rounded p-2">
-                      <div className="flex-1">
-                        <div className="font-medium">
+                    <li key={key} className="flex items-center justify-between gap-2 border rounded p-2 min-w-max w-full">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
                           {it.name} {it.originalItems.length > 1 ? `×${it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}` : ''}
                         </div>
-                        <div className="text-xs text-gray-500">₹{it.price.toFixed(2)} each</div>
+                        <div className="text-xs text-gray-500 truncate">₹{it.price.toFixed(2)} each</div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <div className="flex items-center">
                           <span className={`text-xs px-2 py-1 rounded ${statusColors[it.status || 'preparing']}`}>
                             {statusLabels[it.status || 'preparing']}
@@ -807,7 +819,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                           </button>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         {it.status === 'preparing' ? (
                           <>
                             <button 

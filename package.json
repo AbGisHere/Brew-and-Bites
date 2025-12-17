@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@tanstack/react-query": "^5.90.12",
     "axios": "^1.13.2",
     "jspdf": "^3.0.4",

@@ -1,30 +1,38 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.0-green.svg)
 
-A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales.
+A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now fully optimized for a mobile-first experience.
 
 **🔗 Live Demo:** [https://brew-and-bites.vercel.app](https://brew-and-bites.vercel.app)  
 *(Note: The backend is hosted on a free instance. Please allow 30-60 seconds for the server to wake up on the first load!)*
 
 ---
 
-## 🚀 What's New in v1.3.0 (Current)
+## 🚀 What's New in v1.4.0 (Mobile Optimization, Responsive UI & Waiter UX)
 
-### 👑 Admin Dashboard (Major UX Upgrade)
-* **User Management Overhaul:** Completely redesigned the Users tab. Now features a card-based layout with role-specific icons (Shield for Admin, Hat for Chef, Tray for Waiter) and quick action buttons.
-* **Visual Table Grid:** Tables are now displayed in a responsive grid with clear "Occupied/Available" status pills and active order tracking.
-* **Live Admin "Take Order" Modal:** Admins can now view or edit active orders in a popup overlay in the Tables tab without leaving the dashboard. No more losing context by switching tabs!
-* **Real-Time Monitoring:** The dashboard now auto-refreshes every 2 seconds. Watch table statuses turn from `Green` (Free) to `Red` (Occupied) instantly.
-* **Embedded Waiter Mode:** The Waiter interface now runs seamlessly inside the Admin panel for quick order taking.
+### 📱 Mobile-First Optimization (Major UI Upgrade)
+* **Full Responsive Redesign:** The entire UI has been overhauled for mobile usage. Earlier layouts that suffered from overlapping or unreadable text are now "near perfect."
+* **Scrollable Navigation:** Tabs in the Admin and Waiter panels are now horizontally scrollable on small screens, ensuring no functionality is cut off.
+* **Non-Overflowing Containers:** Containers and grids now scale dynamically to fit phone screens without breaking the page width.
 
-### 👨‍🍳 Chef Dashboard (New Feature)
-* **Batch Mode:** This is a high-performance mode designed for efficiency in busy kitchens. Instead of fulfilling orders ticket-by-ticket (e.g., "Table 1 needs a Burger", "Table 2 needs a Burger"), it aggregates identical items so chefs can cook in bulk.
+### 🤵 Waiter & UI Enhancements
+* **Smart Table Occupancy:** Waiters now see the real-time status of a table (Occupied/Available) instead of the older technical Order ID, allowing for faster seating decisions.
+* **Viewport-Aware Modals:** Fixed a bug where receipts and modals would load in the center of the total webpage instead of the center of the visible screen.
+* **Redesigned Footer:** A fresh, modern UI for the website footer to match the updated dashboard aesthetics.
+* **Admin Cleanup:** The word "Table" was visible twice in the admin panel; this has been fixed for a cleaner look.
 
 ---
 
 ## 📜 Version History
 
-### **v1.3.0 (Current Dev)**
+### **v1.4.0 (Current Dev)**
+#### 📱 UI/UX & Mobile
+* **Mobile Overhaul:** Full CSS refactor for phone/tablet compatibility.
+* **Fixed Modal Positioning:** Centered receipts within the active viewport.
+* **Waiter Logic:** Tables now display "Occupancy Status" for better usability.
+* **UI Polish:** Redesigned footer and cleaned up redundant labels.
+
+### **v1.3.0 (Admin Modal, Chef Batch Orders & Minor Bugs)**
 #### 👑 Admin Dashboard (Major UX Upgrade)
 * **User Management Overhaul:** Completely redesigned the Users tab. Now features a card-based layout with role-specific icons (Shield for Admin, Hat for Chef, Tray for Waiter) and quick action buttons.
 * **Visual Table Grid:** Tables are now displayed in a responsive grid with clear "Occupied/Available" status pills and active order tracking.

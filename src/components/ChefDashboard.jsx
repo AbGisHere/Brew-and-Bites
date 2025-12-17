@@ -468,14 +468,29 @@ export default function ChefDashboard({ onExit }) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
+      {/* Mobile Only - Welcome and Logout */}
+      <div className="md:hidden mb-4 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700">Welcome,</span>
+          <span className="text-sm font-semibold text-primary">{user?.username}</span>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="px-3 py-1.5 text-sm rounded-full border border-amber-700 text-amber-700 hover:bg-amber-50 transition-colors"
+        >
+          Logout
+        </button>
+      </div>
+
+      <div className="flex flex-col items-center text-center md:flex-row md:items-center md:justify-between md:text-left mb-6 md:mb-8">
         <div className="mb-4 md:mb-0">
-          <h1 className="text-3xl font-bold text-gray-800 mb-1">Chef Dashboard</h1>
-          <p className="text-gray-600 mb-6">Manage your kitchen orders efficiently</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Chef Dashboard</h1>
+          <p className="text-gray-600 md:mb-0">Manage your kitchen orders efficiently</p>
         </div>
         
-        <div className="flex items-center space-x-8">
+        {/* Desktop Only - Welcome and Logout */}
+        <div className="hidden md:flex items-center space-x-8">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-700">Welcome,</span>
             <span className="text-sm font-semibold text-primary">{user?.username}</span>
@@ -490,7 +505,6 @@ export default function ChefDashboard({ onExit }) {
               '--color': '#8B5A2B',
               '--hover-color': '#5D4037',
               padding: '8px 20px',
-              fontSize: '14px',
               minWidth: '120px',
               height: '40px',
               position: 'relative',
@@ -507,7 +521,8 @@ export default function ChefDashboard({ onExit }) {
               cursor: 'pointer',
               overflow: 'hidden',
               transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-              boxShadow: '0 0 0 2px #8B5A2B'
+              boxShadow: '0 0 0 2px #8B5A2B',
+              fontSize: '14px'
             }}
           >
             <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -560,443 +575,449 @@ export default function ChefDashboard({ onExit }) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-3 mb-6 flex-wrap">
-        {[
-          { id: 'batch', label: 'Batch View', count: batchItems.length },
-          { id: 'active', label: 'Active Orders', count: orders.length },
-          { id: 'completed', label: 'Order History', count: completedOrders.length },
-        ].map(t => {
-          const isActive = activeTab === t.id;
-          const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
-          const hoverColor = '#3E2723';
-          
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`animated-button group relative inline-flex items-center justify-center ${
-                isActive ? 'active' : ''
-              } hover:text-white hover:[&_svg]:fill-white`}
-              style={{
-                '--color': buttonColor,
-                '--hover-color': hoverColor,
-                '--box-shadow': `0 0 0 2px ${buttonColor}`,
-                '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
-                padding: '12px 24px',
-                minWidth: '180px',
-                margin: '4px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                border: '2px solid',
-                borderColor: 'transparent',
-                fontSize: '14px',
-                fontWeight: '600',
-                backgroundColor: 'transparent',
-                borderRadius: '100px',
-                color: buttonColor,
-                cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: `0 0 0 2px ${buttonColor}`
-              }}
-            >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)', display: 'flex', alignItems: 'center' }}>
-                {t.icon}
-                {t.label}
-                {t.count > 0 && (
-                  <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">
-                    {t.count}
-                  </span>
-                )}
-              </span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <style jsx>{`
-                .animated-button:hover .arr-1,
-                .animated-button:hover .arr-2 {
-                  fill: white !important;
-                }
-                .animated-button:hover { 
-                  box-shadow: 0 0 0 12px transparent !important; 
-                  color: ${hoverColor} !important; 
-                  border-radius: 12px !important; 
-                }
-                .animated-button:hover .arr-1 { 
-                  right: -25% !important; 
-                }
-                .animated-button:hover .arr-2 { 
-                  left: 16px !important; 
-                }
-                .animated-button:hover .text { 
-                  transform: translateX(12px) !important; 
-                }
-                .animated-button:hover svg { 
-                  fill: ${hoverColor} !important; 
-                }
-                .animated-button:active { 
-                  transform: scale(0.95) !important; 
-                  box-shadow: 0 0 0 4px ${buttonColor} !important; 
-                }
-                .animated-button:hover .circle { 
-                  width: 220px !important; 
-                  height: 220px !important; 
-                  opacity: 1 !important; 
-                }
-                .active { 
-                  box-shadow: 0 0 0 4px ${buttonColor} !important; 
-                  background-color: ${hoverColor} !important; 
-                  color: white !important; 
-                }
-                .active svg { 
-                  fill: white !important; 
-                }
-              `}</style>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            {activeTab === 'batch' ? 'Batch View - Items to Prepare' : 
-             activeTab === 'active' ? 'Active Orders' : 'Order History'}
-          </h3>
-          <div className="flex items-center">
-            <button
-              onClick={() => fetchData(false)}
-              className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <svg className="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
-          </div>
+      {/* Tabs with horizontal scrolling for mobile */}
+      <div className="relative">
+        {/* Gradient overlays for mobile */}
+        <div className="md:hidden absolute left-0 right-0 top-1/2 h-12 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-white to-transparent w-8 z-10"></div>
+        <div className="md:hidden absolute right-0 top-1/2 h-12 -translate-y-1/2 pointer-events-none bg-gradient-to-l from-white to-transparent w-8 z-10"></div>
+        
+        <div className="flex overflow-x-auto pb-3 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap gap-3 mb-6 md:justify-start justify-start scrollbar-hide">
+          {[
+            { id: 'batch', label: 'Batch View', count: batchItems.length },
+            { id: 'active', label: 'Active Orders', count: orders.length },
+            { id: 'completed', label: 'Order History', count: completedOrders.length },
+          ].map(t => {
+            const isActive = activeTab === t.id;
+            const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
+            const hoverColor = '#3E2723';
+            
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
+                  isActive ? 'active' : ''
+                }`}
+                style={{
+                  '--color': buttonColor,
+                  '--hover-color': hoverColor,
+                  '--box-shadow': `0 0 0 2px ${buttonColor}`,
+                  '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
+                  padding: '12px 24px',
+                  minWidth: '140px',
+                  margin: '4px',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  border: '2px solid',
+                  borderColor: 'transparent',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  backgroundColor: 'transparent',
+                  borderRadius: '100px',
+                  color: buttonColor,
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                  boxShadow: `0 0 0 2px ${buttonColor}`
+                }}
+              >
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)', display: 'flex', alignItems: 'center' }}>
+                  {t.icon}
+                  {t.label}
+                  {t.count > 0 && (
+                    <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                      {t.count}
+                    </span>
+                  )}
+                </span>
+                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <style jsx>{`
+                  .animated-button:hover .arr-1,
+                  .animated-button:hover .arr-2 {
+                    fill: white !important;
+                  }
+                  .animated-button:hover { 
+                    box-shadow: 0 0 0 12px transparent !important; 
+                    color: ${hoverColor} !important; 
+                    border-radius: 12px !important; 
+                  }
+                  .animated-button:hover .arr-1 { 
+                    right: -25% !important; 
+                  }
+                  .animated-button:hover .arr-2 { 
+                    left: 16px !important; 
+                  }
+                  .animated-button:hover .text { 
+                    transform: translateX(12px) !important; 
+                  }
+                  .animated-button:hover svg { 
+                    fill: ${hoverColor} !important; 
+                  }
+                  .animated-button:active { 
+                    transform: scale(0.95) !important; 
+                    box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                  }
+                  .animated-button:hover .circle { 
+                    width: 220px !important; 
+                    height: 220px !important; 
+                    opacity: 1 !important; 
+                  }
+                  .active { 
+                    box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                    background-color: ${hoverColor} !important; 
+                    color: white !important; 
+                  }
+                  .active svg { 
+                    fill: white !important; 
+                  }
+                `}</style>
+              </button>
+            );
+          })}
         </div>
 
-        {activeTab === 'batch' ? (
-          <div className="divide-y divide-gray-200">
-            {batchItems.length > 0 ? (
-              <div className="overflow-hidden">
-                <div className="px-4 py-3 bg-gray-50 grid grid-cols-12 gap-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="col-span-6">Item</div>
-                  <div className="col-span-2 text-center">Quantity</div>
-                  <div className="col-span-4">Mark Complete</div>
-                </div>
-                <div className="bg-white divide-y divide-gray-200">
-                  {batchItems.map((item, index) => (
-                    <div key={index} className="px-4 py-3 grid grid-cols-12 gap-4 hover:bg-gray-50">
-                      <div className="col-span-6">
-                        <div className="font-medium text-gray-900">
-                          {item.name}
-                        </div>
-                      </div>
-                      <div className="col-span-2 text-center text-gray-900 font-medium">
-                        {item.pendingQuantity}
-                      </div>
-                      <div className="col-span-4 flex items-center">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="number"
-                            min="0"
-                            max={item.pendingQuantity}
-                            value={completedCounts[item.name] || 0}
-                            onChange={(e) => {
-                              const value = Math.min(Math.max(0, parseInt(e.target.value) || 0), item.pendingQuantity);
-                              setCompletedCounts(prev => ({
-                                ...prev,
-                                [item.name]: value
-                              }));
-                            }}
-                            className="w-12 px-2 py-1 border border-gray-300 rounded text-center mr-2"
-                          />
-                          <button
-                            onClick={() => handleCompleteBatch(item.name, completedCounts[item.name] || 0)}
-                            disabled={!completedCounts[item.name] || completedCounts[item.name] <= 0}
-                            className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Done
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="px-4 py-12 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    vectorEffect="non-scaling-stroke"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
+        {/* Content */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              {activeTab === 'batch' ? 'Batch View - Items to Prepare' : 
+               activeTab === 'active' ? 'Active Orders' : 'Order History'}
+            </h3>
+            <div className="flex items-center">
+              <button
+                onClick={() => fetchData(false)}
+                className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <svg className="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No items to prepare</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  All caught up! No items need preparation at the moment.
-                </p>
-              </div>
-            )}
+                Refresh
+              </button>
+            </div>
           </div>
-        ) : !hasOrders ? (
-          <div className="px-4 py-12 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                vectorEffect="non-scaling-stroke"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No orders</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {activeTab === 'active' 
-                ? 'No active orders at the moment.' 
-                : 'No completed orders yet.'}
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-gray-200">
-            {currentOrders.map((order) => (
-              <li key={order._id} className="hover:bg-gray-50">
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center">
-                        <div>
-                          <p className="text-sm font-medium text-primary-600 truncate">
-                            Table: {getTableName(order.tableId)}
-                          </p>
-                          <p className="text-xs text-gray-500 flex items-center flex-wrap gap-2">
-                            <span className="flex items-center">
-                              <span className="mr-1">⌛</span>Order: {formatTime(order.createdAt)}
-                            </span>
-                            {order.completedAt && (
-                              <span className="flex items-center text-green-600 font-medium">
-                                <span className="mr-1">✅</span>Completed: {formatTime(order.completedAt)}
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        {activeTab === 'completed' && order.updatedAt && (
-                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            {new Date(order.updatedAt).toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Order ID: {order._id.substring(0, 8)}...
-                      </p>
-                    </div>
-                    {activeTab === 'active' && (
-                      <div className="ml-2 flex-shrink-0">
-                        <span 
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            order.orderStatusChef?.includes('served')
-                              ? 'bg-green-100 text-green-800'
-                              : order.orderStatusChef?.includes('prepared')
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {order.orderStatusChef || 'Checking status...'}
-                        </span>
-                      </div>
-                    )}
+
+          {activeTab === 'batch' ? (
+            <div className="divide-y divide-gray-200">
+              {batchItems.length > 0 ? (
+                <div className="overflow-hidden">
+                  <div className="px-4 py-3 bg-gray-50 grid grid-cols-12 gap-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="col-span-6">Item</div>
+                    <div className="col-span-2 text-center">Quantity</div>
+                    <div className="col-span-4">Mark Complete</div>
                   </div>
+                  <div className="bg-white divide-y divide-gray-200">
+                    {batchItems.map((item, index) => (
+                      <div key={index} className="px-4 py-3 grid grid-cols-12 gap-4 hover:bg-gray-50">
+                        <div className="col-span-6">
+                          <div className="font-medium text-gray-900">
+                            {item.name}
+                          </div>
+                        </div>
+                        <div className="col-span-2 text-center text-gray-900 font-medium">
+                          {item.pendingQuantity}
+                        </div>
+                        <div className="col-span-4 flex items-center">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              min="0"
+                              max={item.pendingQuantity}
+                              value={completedCounts[item.name] || 0}
+                              onChange={(e) => {
+                                const value = Math.min(Math.max(0, parseInt(e.target.value) || 0), item.pendingQuantity);
+                                setCompletedCounts(prev => ({
+                                  ...prev,
+                                  [item.name]: value
+                                }));
+                              }}
+                              className="w-12 px-2 py-1 border border-gray-300 rounded text-center mr-2"
+                            />
+                            <button
+                              onClick={() => handleCompleteBatch(item.name, completedCounts[item.name] || 0)}
+                              disabled={!completedCounts[item.name] || completedCounts[item.name] <= 0}
+                              className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Done
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-12 text-center">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      vectorEffect="non-scaling-stroke"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No items to prepare</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    All caught up! No items need preparation at the moment.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : !hasOrders ? (
+            <div className="px-4 py-12 text-center">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  vectorEffect="non-scaling-stroke"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No orders</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {activeTab === 'active' 
+                  ? 'No active orders at the moment.' 
+                  : 'No completed orders yet.'}
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {currentOrders.map((order) => (
+                <li key={order._id} className="hover:bg-gray-50">
+                  <div className="px-4 py-4 sm:px-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center">
+                          <div>
+                            <p className="text-sm font-medium text-primary-600 truncate">
+                              Table: {getTableName(order.tableId)}
+                            </p>
+                            <p className="text-xs text-gray-500 flex items-center flex-wrap gap-2">
+                              <span className="flex items-center">
+                                <span className="mr-1">⌛</span>Order: {formatTime(order.createdAt)}
+                              </span>
+                              {order.completedAt && (
+                                <span className="flex items-center text-green-600 font-medium">
+                                  <span className="mr-1">✅</span>Completed: {formatTime(order.completedAt)}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          {activeTab === 'completed' && order.updatedAt && (
+                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {new Date(order.updatedAt).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Order ID: {order._id.substring(0, 8)}...
+                        </p>
+                      </div>
+                      {activeTab === 'active' && (
+                        <div className="ml-2 flex-shrink-0">
+                          <span 
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              order.orderStatusChef?.includes('served')
+                                ? 'bg-green-100 text-green-800'
+                                : order.orderStatusChef?.includes('prepared')
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {order.orderStatusChef || 'Checking status...'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Items:</h4>
-                    <div className="border border-gray-200 rounded-md divide-y divide-gray-200">
-                      {(() => {
-                        // Group items by name
-                        const itemsByName = {};
-                        // Safety check: Ensure items exists
-                        if (order.items && Array.isArray(order.items)) {
-                          order.items.forEach(item => {
-                            if (!itemsByName[item.name]) {
-                              itemsByName[item.name] = [];
-                            }
-                            itemsByName[item.name].push(item);
-                          });
-                        }
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Items:</h4>
+                      <div className="border border-gray-200 rounded-md divide-y divide-gray-200">
+                        {(() => {
+                          // Group items by name
+                          const itemsByName = {};
+                          // Safety check: Ensure items exists
+                          if (order.items && Array.isArray(order.items)) {
+                            order.items.forEach(item => {
+                              if (!itemsByName[item.name]) {
+                                itemsByName[item.name] = [];
+                              }
+                              itemsByName[item.name].push(item);
+                            });
+                          }
 
-                        return Object.entries(itemsByName).flatMap(([name, items]) => {
-                          // Flatten the items array to handle quantities
-                          const expandedItems = [];
-                          items.forEach(item => {
-                            const qty = item.qty || 1;
-                            for (let i = 0; i < qty; i++) {
-                              expandedItems.push({
-                                ...item,
-                                // Add a unique key for each instance
-                                uniqueId: `${item._id || item.id}-${i}`,
-                                // For the first item, keep the original timestamp
-                                // For subsequent items, add a small delay to make timestamps unique
-                                orderedAt: new Date(new Date(item.createdAt || Date.now()).getTime() + (i * 1000)).toISOString()
-                              });
-                            }
-                          });
+                          return Object.entries(itemsByName).flatMap(([name, items]) => {
+                            // Flatten the items array to handle quantities
+                            const expandedItems = [];
+                            items.forEach(item => {
+                              const qty = item.qty || 1;
+                              for (let i = 0; i < qty; i++) {
+                                expandedItems.push({
+                                  ...item,
+                                  // Add a unique key for each instance
+                                  uniqueId: `${item._id || item.id}-${i}`,
+                                  // For the first item, keep the original timestamp
+                                  // For subsequent items, add a small delay to make timestamps unique
+                                  orderedAt: new Date(new Date(item.createdAt || Date.now()).getTime() + (i * 1000)).toISOString()
+                                });
+                              }
+                            });
 
-                          // Group by status for display
-                          const preparingItems = expandedItems.filter(i => !i.status || i.status === 'preparing');
-                          const readyItems = expandedItems.filter(i => i.status === 'ready');
-                          const servedItems = expandedItems.filter(i => i.status === 'served');
+                            // Group by status for display
+                            const preparingItems = expandedItems.filter(i => !i.status || i.status === 'preparing');
+                            const readyItems = expandedItems.filter(i => i.status === 'ready');
+                            const servedItems = expandedItems.filter(i => i.status === 'served');
 
-                          return (
-                            <div key={name} className="p-3 border-b">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium">{name} x {expandedItems.length}</p>
-                                  <div className="mt-1 text-xs text-gray-500 space-y-2">
-                                    {/* Preparing Items */}
-                                    {preparingItems.length > 0 && (
-                                      <div>
-                                        <div className="font-medium text-yellow-700 mb-1">Preparing ({preparingItems.length}):</div>
-                                        <div className="flex flex-wrap gap-2">
-                                          {preparingItems.map((item, idx) => (
-                                            <span key={item.uniqueId} className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded border border-yellow-100">
-                                              ⌛ {formatTime(item.orderedAt)}
-                                            </span>
-                                          ))}
+                            return (
+                              <div key={name} className="p-3 border-b">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-medium">{name} x {expandedItems.length}</p>
+                                    <div className="mt-1 text-xs text-gray-500 space-y-2">
+                                      {/* Preparing Items */}
+                                      {preparingItems.length > 0 && (
+                                        <div>
+                                          <div className="font-medium text-yellow-700 mb-1">Preparing ({preparingItems.length}):</div>
+                                          <div className="flex flex-wrap gap-2">
+                                            {preparingItems.map((item, idx) => (
+                                              <span key={item.uniqueId} className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded border border-yellow-100">
+                                                ⌛ {formatTime(item.orderedAt)}
+                                              </span>
+                                            ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
 
-                                    {/* Ready Items */}
-                                    {readyItems.length > 0 && (
-                                      <div>
-                                        <div className="font-medium text-blue-700 mb-1">Ready ({readyItems.length}):</div>
-                                        <div className="flex flex-wrap gap-2">
-                                          {readyItems.map((item, idx) => (
-                                            <span key={item.uniqueId} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
-                                              ⏳ {formatTime(item.completedAt || item.updatedAt)}
-                                            </span>
-                                          ))}
+                                      {/* Ready Items */}
+                                      {readyItems.length > 0 && (
+                                        <div>
+                                          <div className="font-medium text-blue-700 mb-1">Ready ({readyItems.length}):</div>
+                                          <div className="flex flex-wrap gap-2">
+                                            {readyItems.map((item, idx) => (
+                                              <span key={item.uniqueId} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
+                                                ⏳ {formatTime(item.completedAt || item.updatedAt)}
+                                              </span>
+                                            ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
-                                    {/* Served/Completed Items */}
-                                    {servedItems.length > 0 && (
-                                      <div>
-                                        <div className="font-medium text-green-700 mb-1">Served ({servedItems.length}):</div>
-                                        <div className="flex flex-wrap gap-2">
-                                          {servedItems.map((item, idx) => (
-                                            <span key={item.uniqueId} className="bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100">
-                                              ✅ {formatTime(item.completedAt)}
-                                            </span>
-                                          ))}
+                                      )}
+                                      {/* Served/Completed Items */}
+                                      {servedItems.length > 0 && (
+                                        <div>
+                                          <div className="font-medium text-green-700 mb-1">Served ({servedItems.length}):</div>
+                                          <div className="flex flex-wrap gap-2">
+                                            {servedItems.map((item, idx) => (
+                                              <span key={item.uniqueId} className="bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100">
+                                                ✅ {formatTime(item.completedAt)}
+                                              </span>
+                                            ))}
+                                          </div>
                                         </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <span 
+                                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                        items.every(i => i.status === 'served') 
+                                          ? statusColors.served 
+                                          : items.some(i => i.status === 'ready') 
+                                            ? statusColors.ready 
+                                            : statusColors.preparing
+                                      }`}
+                                    >
+                                      {items.every(i => i.status === 'served') 
+                                        ? statusLabels.served 
+                                        : items.some(i => i.status === 'ready') 
+                                          ? statusLabels.ready 
+                                          : statusLabels.preparing}
+                                    </span>
+                                    {activeTab === 'active' && (
+                                      <div className="flex flex-col space-y-2">
+                                        {expandedItems.map((item, index) => {
+                                          // Create a unique identifier for each item instance
+                                          const itemUniqueId = `${item._id || item.id}-${index}`;
+                                          return (
+                                            <div key={itemUniqueId} className="mt-1">
+                                              {item.status === 'preparing' || !item.status ? (
+                                                <button
+                                                  onClick={() => toggleItemStatus(order._id, itemUniqueId, 'preparing')}
+                                                  className="px-2.5 py-1 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                                                >
+                                                  Mark as Ready
+                                                </button>
+                                              ) : item.status === 'ready' && (
+                                                <button
+                                                  onClick={() => toggleItemStatus(order._id, itemUniqueId, 'ready', true)}
+                                                  className="px-2.5 py-1 text-xs font-medium rounded-md bg-red-100 text-red-800 hover:bg-red-200"
+                                                >
+                                                  Mark as Not Prepared
+                                                </button>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                  <span 
-                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                      items.every(i => i.status === 'served') 
-                                        ? statusColors.served 
-                                        : items.some(i => i.status === 'ready') 
-                                          ? statusColors.ready 
-                                          : statusColors.preparing
-                                    }`}
-                                  >
-                                    {items.every(i => i.status === 'served') 
-                                      ? statusLabels.served 
-                                      : items.some(i => i.status === 'ready') 
-                                        ? statusLabels.ready 
-                                        : statusLabels.preparing}
-                                  </span>
-                                  {activeTab === 'active' && (
-                                    <div className="flex flex-col space-y-2">
-                                      {expandedItems.map((item, index) => {
-                                        // Create a unique identifier for each item instance
-                                        const itemUniqueId = `${item._id || item.id}-${index}`;
-                                        return (
-                                          <div key={itemUniqueId} className="mt-1">
-                                            {item.status === 'preparing' || !item.status ? (
-                                              <button
-                                                onClick={() => toggleItemStatus(order._id, itemUniqueId, 'preparing')}
-                                                className="px-2.5 py-1 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                                              >
-                                                Mark as Ready
-                                              </button>
-                                            ) : item.status === 'ready' && (
-                                              <button
-                                                onClick={() => toggleItemStatus(order._id, itemUniqueId, 'ready', true)}
-                                                className="px-2.5 py-1 text-xs font-medium rounded-md bg-red-100 text-red-800 hover:bg-red-200"
-                                              >
-                                                Mark as Not Prepared
-                                              </button>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
                               </div>
-                            </div>
-                          );
-                        });
-                      })()}
+                            );
+                          });
+                        })()}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      {activeTab === 'active' ? (
-                        <>
-                          <span className="font-medium text-gray-700">
-                            {/* Safety check for items */}
-                            {(order.items || []).filter(i => i.status === 'ready' || i.status === 'served').length}
-                          </span>{' '}
-                          of {(order.items || []).length} items ready
-                        </>
-                      ) : (
-                        <>
-                          <span className="font-medium text-gray-700">
-                            {(order.items || []).filter(i => i.status === 'served').length}
-                          </span>{' '}
-                          of {(order.items || []).length} items served
-                        </>
-                      )}
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">
-                      Total: ₹{(order.items || []).reduce((sum, item) => sum + (item.price * item.qty || 0), 0).toFixed(2)}
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        {activeTab === 'active' ? (
+                          <>
+                            <span className="font-medium text-gray-700">
+                              {/* Safety check for items */}
+                              {(order.items || []).filter(i => i.status === 'ready' || i.status === 'served').length}
+                            </span>{' '}
+                            of {(order.items || []).length} items ready
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-medium text-gray-700">
+                              {(order.items || []).filter(i => i.status === 'served').length}
+                            </span>{' '}
+                            of {(order.items || []).length} items served
+                          </>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        Total: ₹{(order.items || []).reduce((sum, item) => sum + (item.price * item.qty || 0), 0).toFixed(2)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 export default function Footer() {
-  const [version, setVersion] = useState('1.3.0');
+  const [version, setVersion] = useState('1.4.1');
 
   useEffect(() => {
     const fetchVersion = async () => {

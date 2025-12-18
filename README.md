@@ -1,5 +1,5 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.4.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.4.1-green.svg)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now fully optimized for a mobile-first experience.
 
@@ -8,24 +8,29 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
-## 🚀 What's New in v1.4.0 (Mobile Optimization, Responsive UI & Waiter UX)
+## 🚀 What's New in v1.4.1 (UI Consistency & Performance Patch)
 
-### 📱 Mobile-First Optimization (Major UI Upgrade)
-* **Full Responsive Redesign:** The entire UI has been overhauled for mobile usage. Earlier layouts that suffered from overlapping or unreadable text are now "near perfect."
-* **Scrollable Navigation:** Tabs in the Admin and Waiter panels are now horizontally scrollable on small screens, ensuring no functionality is cut off.
-* **Non-Overflowing Containers:** Containers and grids now scale dynamically to fit phone screens without breaking the page width.
+### 📱 User Interface (UI) Enhancements
+* **Waiter Dashboard Redesign (Mobile):** Completely overhauled the mobile UI for Waiters to match the modern aesthetic of the Chef and Admin dashboards. Improved layout for better visibility in high-paced environments.
+* **New Tab System:** Introduced a tabbed interface for the Waiter section, such as Dining
+* **UX Optimization:** Relocated the Close and Generate Receipt buttons to more ergonomic positions based on mobile thumb-reach patterns.
 
-### 🤵 Waiter & UI Enhancements
-* **Smart Table Occupancy:** Waiters now see the real-time status of a table (Occupied/Available) instead of the older technical Order ID, allowing for faster seating decisions.
-* **Viewport-Aware Modals:** Fixed a bug where receipts and modals would load in the center of the total webpage instead of the center of the visible screen.
-* **Redesigned Footer:** A fresh, modern UI for the website footer to match the updated dashboard aesthetics.
-* **Admin Cleanup:** The word "Table" was visible twice in the admin panel; this has been fixed for a cleaner look.
+### 🐛 Bug Fixes
+* **Admin Section Glitches:** Resolved a random color-rendering bug where tabs would occasionally display incorrect theme colors inconsistent with the main brand palette.
+* **Navigation Fixes:** Fixed a persistent scroll error in the Landing Page navigation bar that hindered smooth scrolling on mobile browsers.
+* **Tab Scroll Correction:** Fixed the Gradient Overlay logic in the Admin Dashboard Tab Scroll to ensure smooth visual transitions.
+* **System Logic:** Patched a Version Fallback error that occurred during specific edge-case deployment triggers.
 
 ---
 
 ## 📜 Version History
 
-### **v1.4.0 (Current Dev)**
+### **v1.4.1 (Current)**
+* **Parity Update:** Synchronized Waiter mobile UI with Admin/Chef dashboards.
+* **Bug Patch:** Fixed Navbar scrolling and Admin tab color glitches.
+* **Architecture:** Added Tab support for future Takeaway/Delivery modes.
+
+### **v1.4.0 (Mobile Optimization, Responsive UI & Waiter UX)**
 #### 📱 UI/UX & Mobile
 * **Mobile Overhaul:** Full CSS refactor for phone/tablet compatibility.
 * **Fixed Modal Positioning:** Centered receipts within the active viewport.

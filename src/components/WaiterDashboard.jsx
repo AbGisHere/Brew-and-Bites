@@ -42,6 +42,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
   const [preview, setPreview] = useState(null)
   const [receipts, setReceipts] = useState([])
   const [settings, setSettings] = useState({ autoSubmitToChef: true })
+  const [activeTab, setActiveTab] = useState('dine-in');
 
   const isUpdating = useRef(false);
   
@@ -500,31 +501,23 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
     <>
       <style>{hoverStyles}</style>
       <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-2 sm:px-4 py-4 sm:py-8'}`}>
+      {/* Mobile Only - Welcome and Logout */}
       {!embedded && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
-          <div className="mb-3 sm:mb-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-0 sm:mb-1">Waiter Dashboard</h1>
-            <p className="text-sm sm:text-base text-gray-600 hidden sm:block">Manage your tables and orders efficiently</p>
-          </div>
-          
-          <div className="flex items-center justify-between sm:space-x-4 md:space-x-8">
+        <>
+          <div className="md:hidden mb-4 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">Welcome,</span>
               <span className="text-sm font-semibold text-primary">{user?.username}</span>
             </div>
-            
-            <div className="w-px h-6 sm:h-8 bg-gray-300 mx-2"></div>
-            
             <button
-              className="animated-button group relative inline-flex items-center justify-center text-sm sm:text-base"
+              className="animated-button group relative inline-flex items-center justify-center"
               onClick={logout}
               style={{
                 '--color': '#8B5A2B',
                 '--hover-color': '#5D4037',
                 padding: '8px 20px',
-                fontSize: '14px',
-                minWidth: '120px',
-                height: '40px',
+                minWidth: '100px',
+                height: '36px',
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
@@ -540,21 +533,22 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
                 boxShadow: '0 0 0 2px #8B5A2B',
+                fontSize: '14px'
               }}
             >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                 <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                 Logout
               </span>
               <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                 <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <style jsx>{`
                 .animated-button:hover { 
-                  box-shadow: 0 0 0 8px transparent !important; 
+                  box-shadow: 0 0 0 12px transparent !important; 
                   color: white !important; 
                   border-radius: 12px !important; 
                 }
@@ -567,24 +561,212 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                 .animated-button:hover .text { 
                   transform: translateX(12px) !important; 
                 }
+                .animated-button:hover svg { 
+                  fill: white !important; 
+                }
                 .animated-button:active { 
                   transform: scale(0.95) !important; 
                   box-shadow: 0 0 0 4px #8B5A2B !important; 
                 }
                 .animated-button:hover .circle { 
-                  width: 200px !important; 
-                  height: 200px !important; 
+                  width: 220px !important; 
+                  height: 220px !important; 
                   opacity: 1 !important; 
-                  background-color: '#5D4037' !important; 
-                }
-                .animated-button:hover svg { 
-                  fill: white !important; 
+                  background-color: #5D4037 !important;
                 }
               `}</style>
             </button>
           </div>
-        </div>
+
+          <div className="flex flex-col items-center text-center md:flex-row md:items-center md:justify-between md:text-left mb-6 md:mb-8">
+            <div className="mb-4 md:mb-0">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Waiter Dashboard</h1>
+              <p className="text-gray-600 md:mb-0">Manage your tables and orders efficiently</p>
+            </div>
+            
+            <div className="hidden md:flex items-center space-x-8">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">Welcome,</span>
+                <span className="text-sm font-semibold text-primary">{user?.username}</span>
+              </div>
+              
+              <div className="w-px h-8 bg-gray-300"></div>
+              
+              <button
+                className="animated-button group relative inline-flex items-center justify-center"
+                onClick={logout}
+                style={{
+                  '--color': '#8B5A2B',
+                  '--hover-color': '#5D4037',
+                  padding: '8px 20px',
+                  minWidth: '120px',
+                  height: '40px',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  border: '2px solid',
+                  borderColor: 'transparent',
+                  fontWeight: '500',
+                  backgroundColor: 'transparent',
+                  borderRadius: '100px',
+                  color: '#8B5A2B',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                  boxShadow: '0 0 0 2px #8B5A2B',
+                  fontSize: '14px'
+                }}
+              >
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  Logout
+                </span>
+                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <style jsx>{`
+                  .animated-button:hover { 
+                    box-shadow: 0 0 0 8px transparent !important; 
+                    color: white !important; 
+                    border-radius: 12px !important; 
+                  }
+                  .animated-button:hover .arr-1 { 
+                    right: -25% !important; 
+                  }
+                  .animated-button:hover .arr-2 { 
+                    left: 16px !important; 
+                  }
+                  .animated-button:hover .text { 
+                    transform: translateX(0) !important; 
+                  }
+                  .animated-button:active { 
+                    transform: scale(0.95) !important; 
+                    box-shadow: 0 0 0 4px #8B5A2B !important; 
+                  }
+                  .animated-button:hover .circle { 
+                    width: 200px !important; 
+                    height: 200px !important; 
+                    opacity: 1 !important; 
+                    background-color: #5D4037 !important; 
+                  }
+                  .animated-button:hover svg { 
+                    fill: white !important; 
+                  }
+                  .animated-button:active .circle { 
+                    opacity: 1; 
+                    width: 200%; 
+                    height: 500%; 
+                  }
+                `}</style>
+              </button>
+            </div>
+          </div>
+        </>
       )}
+
+      {/* Tabs */}
+      <div className="relative">
+        <div className="flex overflow-x-auto pb-3 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap gap-3 mb-6 md:justify-start justify-start scrollbar-hide">
+          {[
+            { id: 'dine-in', label: 'Dine In' },
+          ].map(t => {
+            const isActive = activeTab === t.id;
+            const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
+            const hoverColor = '#3E2723';
+            
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
+                  isActive ? 'active' : ''
+                }`}
+                style={{
+                  '--color': buttonColor,
+                  '--hover-color': hoverColor,
+                  '--box-shadow': `0 0 0 2px ${buttonColor}`,
+                  '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
+                  padding: '12px 24px',
+                  minWidth: '140px',
+                  margin: '4px',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  border: '2px solid',
+                  borderColor: 'transparent',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  backgroundColor: isActive ? hoverColor : 'transparent',
+                  borderRadius: '100px',
+                  color: isActive ? 'white' : buttonColor,
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                  boxShadow: `0 0 0 2px ${buttonColor}`
+                }}
+              >
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)', display: 'flex', alignItems: 'center' }}>
+                  {t.label}
+                </span>
+                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                </svg>
+                <style jsx>{`
+                  .animated-button:hover .arr-1,
+                  .animated-button:hover .arr-2 {
+                    fill: white !important;
+                  }
+                  .animated-button:hover { 
+                    box-shadow: 0 0 0 12px transparent !important; 
+                    color: white !important; 
+                    border-radius: 12px !important; 
+                  }
+                  .animated-button:hover .arr-1 { 
+                    right: -25% !important; 
+                  }
+                  .animated-button:hover .arr-2 { 
+                    left: 16px !important; 
+                  }
+                  .animated-button:hover .text { 
+                    transform: translateX(12px) !important; 
+                  }
+                  .animated-button:hover svg { 
+                    fill: ${hoverColor} !important; 
+                  }
+                  .animated-button:active { 
+                    transform: scale(0.95) !important; 
+                    box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                  }
+                  .animated-button:hover .circle { 
+                    width: 220px !important; 
+                    height: 220px !important; 
+                    opacity: 1 !important; 
+                    background-color: ${hoverColor} !important;
+                  }
+                  .active { 
+                    box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                    background-color: ${hoverColor} !important; 
+                    color: white !important; 
+                  }
+                  .active svg { 
+                    fill: white !important; 
+                  }
+                `}</style>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <section className="bg-white p-4 rounded shadow">
@@ -849,83 +1031,93 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                     </li>
                   ))}
                 </ul>
-                <div className="text-right mt-2 text-sm">Discount: ₹{Number(activeOrder.discount||0).toFixed(2)}</div>
-                <div className="text-right font-semibold">Total: ₹{(activeOrder.total || 0).toFixed(2)}</div>
-                <div className="text-right mt-2">
-                  <button
-                    className="animated-button group relative inline-flex items-center justify-center"
-                    onClick={closeOrder}
-                    style={{
-                      '--color': '#8B5A2B',
-                      '--hover-color': '#5D4037',
-                      padding: '8px 20px',
-                      fontSize: '14px',
-                      minWidth: '220px',
-                      height: '40px',
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      border: '2px solid',
-                      borderColor: 'transparent',
-                      fontWeight: '500',
-                      backgroundColor: 'transparent',
-                      borderRadius: '100px',
-                      color: '#8B5A2B',
-                      cursor: 'pointer',
-                      overflow: 'hidden',
-                      transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                      boxShadow: '0 0 0 2px #8B5A2B',
-                      marginLeft: 'auto',
-                      marginTop: '16px'
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                      <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                      Close & Generate Receipt
-                    </span>
-                    <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                    <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                      <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <style jsx>{`
-                      button:hover { 
-                        box-shadow: 0 0 0 8px transparent !important; 
-                        color: white !important; 
-                        border-radius: 8px !important; 
-                      }
-                      button:hover .arr-1 { 
-                        right: -25% !important; 
-                      }
-                      button:hover .arr-2 { 
-                        left: 16px !important; 
-                      }
-                      button:hover .text { 
-                        transform: translateX(0) !important; 
-                      }
-                      button:active { 
-                        transform: scale(0.95) !important; 
-                        box-shadow: 0 0 0 4px #8B5A2B !important; 
-                      }
-                      button:hover .circle { 
-                        width: 200px !important; 
-                        height: 200px !important; 
-                        opacity: 1 !important; 
-                        background-color: #5D4037 !important; 
-                      }
-                      button:hover svg { 
-                        fill: white !important; 
-                      }
-                      button:active .circle { 
-                        opacity: 1; 
-                        width: 200%; 
-                        height: 500%; 
-                      }
-                    `}</style>
-                  </button>
+                <div className="flex justify-between items-start mt-2">
+                  <div className="w-40">
+                    <button
+                      onClick={closeOrder}
+                      className="animated-button group relative inline-flex items-center justify-center flex-shrink-0"
+                      style={{
+                        '--color': '#D4A76A',
+                        '--hover-color': '#3E2723',
+                        padding: '10px 18px',
+                        minWidth: '220px',
+                        margin: '2px',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        border: '2px solid',
+                        borderColor: 'transparent',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        backgroundColor: 'transparent',
+                        borderRadius: '100px',
+                        color: '#D4A76A',
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)',
+                        boxShadow: '0 0 0 2px #D4A76A',
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                        touchAction: 'manipulation',
+                        WebkitAppearance: 'none',
+                        marginLeft: 'auto',
+                        margin: '0'
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                        <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                        Close & Generate Receipt
+                      </span>
+                      <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                      <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                        <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <style jsx>{`
+                        button:hover { 
+                          box-shadow: 0 0 0 8px transparent !important; 
+                          color: white !important; 
+                          border-radius: 8px !important; 
+                        }
+                        button:hover .arr-1 { 
+                          right: -25% !important; 
+                        }
+                        button:hover .arr-2 { 
+                          left: 16px !important; 
+                        }
+                        button:hover .text { 
+                          transform: translateX(0) !important; 
+                        }
+                        button:active { 
+                          transform: scale(0.95) !important; 
+                          box-shadow: 0 0 0 4px #8B5A2B !important; 
+                        }
+                        button:hover .circle { 
+                          width: 200px !important; 
+                          height: 200px !important; 
+                          opacity: 1 !important; 
+                          background-color: #5D4037 !important; 
+                        }
+                        button:hover svg { 
+                          fill: white !important; 
+                        }
+                        button:active .circle { 
+                          opacity: 1; 
+                          width: 200%; 
+                          height: 500%; 
+                        }
+                      `}</style>
+                    </button>
+                  </div>
+                  <div className="flex-1"></div>
+                  <div className="text-right">
+                    <div className="text-sm">Discount: ₹{Number(activeOrder.discount||0).toFixed(2)}</div>
+                    <div className="font-semibold">Total: ₹{(activeOrder.total || 0).toFixed(2)}</div>
+                  </div>
                 </div>
               </>
             )}

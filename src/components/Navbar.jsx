@@ -110,11 +110,11 @@ export default function Navbar({ isMenuOpen, setIsMenuOpen, onAdminLogin, onWait
     <>
       <style>{buttonStyles}</style>
       <header
-        className={`fixed w-full z-40 transition-all duration-300 ${
+        className={`fixed w-full z-40 transition-all duration-300 overflow-x-hidden ${
           scrolled ? 'bg-white shadow-md py-2' : 'bg-white/70 backdrop-blur py-3'
         }`}
       >
-        <div className="container mx-auto px-6 flex justify-between items-center">
+        <div className="w-full max-w-[calc(100%-2rem)] mx-auto px-4 flex justify-between items-center">
           <Link
             to="home"
             smooth
@@ -126,7 +126,7 @@ export default function Navbar({ isMenuOpen, setIsMenuOpen, onAdminLogin, onWait
           </Link>
 
           {/* Desktop */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
             {navItems.map((item) => (
               <NavLink key={item.to} to={item.to}>
                 {item.name}

@@ -24,6 +24,11 @@ app.get('/', (req, res) => {
     res.send("Backend is running!");
 });
 
+// Version endpoint
+app.get('/api/version', (req, res) => {
+    res.json({ version: '1.4.1' });
+});
+
 // B. SEED ROUTE (This replaces your store.js seedData)
 // Run this ONCE to fill your database
 app.get('/api/seed', async (req, res) => {
@@ -129,10 +134,10 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ message: "Invalid password" });
         }
 
-        // 4. Check if site is closed and user is not super admin (AbG)
+        // 4. Check if site is closed - only allow super admin (AbG) to log in
         if (settings.siteClosed && user.username.toLowerCase() !== 'abg') {
             return res.status(403).json({ 
-                message: "The Site has been closed, contact Owner" 
+                message: "The site is currently closed. Contact the Owner/Creator" 
             });
         }
 
@@ -410,44 +415,61 @@ app.get('/api/settings', async (req, res) => {
             });
         }
         
-        // Check if user is super admin (AbG)
+        // Check if user is authenticated
         const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            // In a real app, you would verify the JWT token here
-            // For now, we'll just check the username in the token
-            const user = await User.findById(token);
-            if (user && user.username.toLowerCase() === 'abg') {
-                // Super admin gets all settings
-                return res.json(settings);
-            }
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            // Return settings without sensitive data for unauthenticated users
+            const { _id, ...publicSettings } = settings.toObject();
+            return res.json(publicSettings);
+        }
+
+        // Get user from token
+        const token = authHeader.split(' ')[1];
+        const currentUser = await User.findById(token);
+        if (!currentUser) {
+            const { _id, ...publicSettings } = settings.toObject();
+            return res.json(publicSettings);
         }
         
-        // For non-super admins, don't include siteClosed in the response
-        const { siteClosed, ...rest } = settings.toObject();
-        res.json(rest);
-    } catch (error) {
-        console.error('Error fetching settings:', error);
+        // For authenticated users, return all settings
+        // The UI will handle hiding the siteClosed toggle for non-super admins
+        res.json(settings);
+    } catch (e) {
+        console.error('Error getting settings:', e);
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
 
+// 5.1 UPDATE SETTINGS
 app.put('/api/settings', async (req, res) => {
     try {
-        // Check if user is super admin (AbG)
+        // Check if user is authenticated
         const authHeader = req.headers.authorization;
-        let isSuperAdmin = false;
-        
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            // In a real app, you would verify the JWT token here
-            // For now, we'll just check the username in the token
-            const user = await User.findById(token);
-            isSuperAdmin = user && user.username.toLowerCase() === 'abg';
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Unauthorized' });
         }
+
+        const token = authHeader.split(' ')[1];
+        const currentUser = await User.findById(token);
+        if (!currentUser) {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        // Only allow admins to update settings
+        if (currentUser.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // Check if user is super admin (case-insensitive check)
+        const isSuperAdmin = currentUser.username.toLowerCase() === 'abg';
         
         // Get current settings
-        let settings = await Settings.findOne() || new Settings({ autoSubmitToChef: true, siteClosed: false });
+        let settings = await Settings.findOne() || new Settings({ 
+            autoSubmitToChef: true, 
+            siteClosed: false,
+            taxEnabled: false,
+            taxRate: 0
+        });
         
         // Prepare update object
         const update = { ...req.body };
@@ -460,15 +482,9 @@ app.put('/api/settings', async (req, res) => {
         // Update settings
         settings = await Settings.findOneAndUpdate(
             {},
-            update,
+            { $set: update },
             { new: true, upsert: true, setDefaultsOnInsert: true }
         );
-        
-        // If not super admin, don't return siteClosed in the response
-        if (!isSuperAdmin) {
-            const { siteClosed, ...rest } = settings.toObject();
-            return res.json(rest);
-        }
         
         res.json(settings);
     } catch (e) {
@@ -479,15 +495,6 @@ app.put('/api/settings', async (req, res) => {
 
 // 6. RECEIPTS & SALES
 app.get('/api/receipts', async (req, res) => {
-    // In a real app, you might want to limit this to the last 100 receipts
-    const receipts = await Order.find({ status: 'closed' }).sort({ createdAt: -1 });
-    res.json(receipts);
-});
-
-// --- ORDER ROUTES (Add to server/index.js) ---
-
-// 1. GET OPEN ORDERS (For Chef/Waiter)
-app.get('/api/orders', async (req, res) => {
     try {
         const status = req.query.status; // e.g., ?status=open
         const filter = status ? { status: status } : {};

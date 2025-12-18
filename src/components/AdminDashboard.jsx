@@ -113,26 +113,82 @@ function FeaturedDishesManager() {
         </div>
         
         {/* Category tabs */}
-        <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
-          {Object.keys(menu).map(category => (
-            <button
-              key={category}
-              onClick={() => {
-                setActiveCategory(category)
-                setSearchTerm('') 
-              }}
-              className={`animated-button tab ${activeCategory === category ? 'active' : ''}`}
-              style={{
-                '--ab-color': activeCategory === category ? '#3b82f6' : '#9CA3AF',
-                '--ab-hover': '#1e40af'
-              }}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-              <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
-                {(menu[category] || []).filter(i => i.featured !== false).length}
-              </span>
-            </button>
-          ))}
+        <div className="relative">
+          <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
+            {Object.keys(menu).map(category => {
+              const isActive = activeCategory === category;
+              const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
+              const hoverColor = '#3E2723';
+              
+              return (
+                <button
+                  key={category}
+                  onClick={() => {
+                    setActiveCategory(category)
+                    setSearchTerm('') 
+                  }}
+                  className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
+                    isActive ? 'active' : ''
+                  }`}
+                  style={{
+                    '--color': buttonColor,
+                    '--hover-color': hoverColor,
+                    '--box-shadow': `0 0 0 2px ${buttonColor}`,
+                    '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
+                    padding: '8px 16px',
+                    minWidth: '120px',
+                    margin: '2px',
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    border: '2px solid',
+                    borderColor: 'transparent',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    backgroundColor: isActive ? hoverColor : 'transparent',
+                    borderRadius: '100px',
+                    color: isActive ? 'white' : buttonColor,
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                    boxShadow: `0 0 0 2px ${buttonColor}`
+                  }}
+                >
+                  <span className="text" style={{ position: 'relative', zIndex: 1, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full" style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)' }}>
+                      {(menu[category] || []).filter(i => i.featured !== false).length}
+                    </span>
+                  </span>
+                  <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                  <style jsx>{`
+                    .animated-button:hover { 
+                      box-shadow: 0 0 0 8px transparent !important; 
+                      color: white !important; 
+                      border-radius: 12px !important; 
+                    }
+                    .animated-button:active { 
+                      transform: scale(0.95) !important; 
+                      box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                    }
+                    .animated-button:hover .circle { 
+                      width: 200px !important; 
+                      height: 200px !important; 
+                      opacity: 1 !important; 
+                      background-color: ${hoverColor} !important;
+                    }
+                    .active { 
+                      box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                      background-color: ${hoverColor} !important; 
+                      color: white !important; 
+                    }
+                  `}</style>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Dishes list */}
@@ -177,7 +233,7 @@ function FeaturedDishesManager() {
             <div className="text-center py-8">
               <div className="text-gray-400 mb-2">
                 <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <p className="text-gray-500">
@@ -192,7 +248,22 @@ function FeaturedDishesManager() {
                     '--ab-hover': '#1e40af',
                     padding: '4px 12px',
                     fontSize: '14px',
-                    boxShadow: '0 0 0 1px #3b82f6'
+                    minWidth: '150px',
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    border: '2px solid',
+                    borderColor: 'transparent',
+                    fontWeight: '600',
+                    backgroundColor: 'transparent',
+                    borderRadius: '100px',
+                    color: '#D4A76A',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                    boxShadow: '0 0 0 2px #D4A76A'
                   }}
                 >
                   Clear search
@@ -325,7 +396,9 @@ function CouponManager() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {form.type === 'percent' ? 'Discount %' : 'Amount (₹)'}
+                    {form.type === 'percent' 
+                      ? 'Discount %' 
+                      : 'Amount (₹)'}
                   </label>
                   <div className="relative rounded-md shadow-sm">
                     <input
@@ -383,11 +456,13 @@ function CouponManager() {
                 disabled={isLoading}
                 className="animated-button group relative inline-flex items-center justify-center"
                 style={{
+                  '--color': '#D4A76A',
+                  '--hover-color': '#3E2723',
                   padding: '8px 24px',
                   fontSize: '15px',
                   minWidth: '150px',
                   position: 'relative',
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '4px',
@@ -554,27 +629,42 @@ function SettingsPanel({ onBack }) {
       .catch(err => console.error(err));
   }, []);
 
-  // 2. Save Settings
-  const handleSave = async () => {
-    try {
-      setIsSaving(true)
-      setSaveStatus('Saving...')
-      
-      await fetch(`${API_URL}/api/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
-      });
-
-      setSaveStatus('Settings saved successfully!')
-      setTimeout(() => setSaveStatus(''), 3000)
-    } catch (error) {
-      setSaveStatus('Failed to save settings')
-      console.error('Error saving settings:', error)
-    } finally {
-      setIsSaving(false)
+  // In AdminDashboard.jsx, update the handleSave function:
+const handleSave = async () => {
+  try {
+    setIsSaving(true)
+    setSaveStatus('Saving...')
+    
+    const token = localStorage.getItem('cafe_auth_user');
+    if (!token) {
+      throw new Error('Not authenticated');
     }
+    const user = JSON.parse(token);
+    
+    const response = await fetch(`${API_URL}/api/settings`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user.id}`
+      },
+      body: JSON.stringify(settings)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save settings');
+    }
+
+    const updatedSettings = await response.json();
+    setSettings(updatedSettings);
+    setSaveStatus('Settings saved successfully!');
+    setTimeout(() => setSaveStatus(''), 3000);
+  } catch (error) {
+    setSaveStatus(error.message || 'Failed to save settings');
+    console.error('Error saving settings:', error);
+  } finally {
+    setIsSaving(false);
   }
+}
 
   const handleToggleAutoSubmit = (e) => {
     const newSettings = { ...settings, autoSubmitToChef: e.target.checked }
@@ -985,7 +1075,7 @@ export default function AdminDashboard({ onExit }) {
         const tableData = receiptsToExport.map(receipt => {
           const tableName = receipt.tableId 
             ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`) 
-            : (receipt.deliveryType === 'home' ? 'Home Delivery' : 'Takeaway');
+            : 'Takeaway';
           
           return [
             receipt._id.slice(-6).toUpperCase(),
@@ -1497,7 +1587,7 @@ export default function AdminDashboard({ onExit }) {
         </div>
         <button
           onClick={logout}
-          className="px-3 py-1.5 text-sm rounded-full border border-amber-700 text-amber-700 hover:bg-amber-50 transition-colors"
+          className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm"
         >
           Logout
         </button>
@@ -1527,7 +1617,6 @@ export default function AdminDashboard({ onExit }) {
               padding: '8px 20px',
               fontSize: '14px',
               minWidth: '120px',
-              height: '40px',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -1589,9 +1678,6 @@ export default function AdminDashboard({ onExit }) {
       </div>
 
       <div className="relative">
-        <div className="md:hidden absolute left-0 right-0 top-1/2 h-12 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-white to-transparent w-8 z-10"></div>
-        <div className="md:hidden absolute right-0 top-1/2 h-12 -translate-y-1/2 pointer-events-none bg-gradient-to-l from-white to-transparent w-8 z-10"></div>
-        
         <div className="flex overflow-x-auto pb-3 px-4 md:px-0 md:overflow-visible md:flex-wrap gap-3 mb-6 md:justify-start justify-start scrollbar-hide">
           {[
             { id: 'menu', label: 'Menu' },
@@ -1619,7 +1705,7 @@ export default function AdminDashboard({ onExit }) {
                   '--box-shadow': `0 0 0 2px ${buttonColor}`,
                   '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
                   padding: '12px 24px',
-                  minWidth: '120px',
+                  minWidth: '140px',
                   margin: '4px',
                   position: 'relative',
                   display: 'flex',
@@ -1629,35 +1715,62 @@ export default function AdminDashboard({ onExit }) {
                   borderColor: 'transparent',
                   fontSize: '14px',
                   fontWeight: '600',
-                  backgroundColor: 'transparent',
+                  backgroundColor: isActive ? hoverColor : 'transparent',
                   borderRadius: '100px',
-                  color: buttonColor,
+                  color: isActive ? 'white' : buttonColor,
                   cursor: 'pointer',
                   overflow: 'hidden',
                   transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
                   boxShadow: `0 0 0 2px ${buttonColor}`
                 }}
               >
-                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
-                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)', display: 'flex', alignItems: 'center' }}>
                   {t.label}
                 </span>
                 <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
                 <style jsx>{`
-                  .animated-button:hover { box-shadow: 0 0 0 12px transparent !important; color: ${hoverColor} !important; border-radius: 12px !important; }
-                  .animated-button:hover .arr-1 { right: -25% !important; }
-                  .animated-button:hover .arr-2 { left: 16px !important; }
-                  .animated-button:hover .text { transform: translateX(12px) !important; }
-                  .animated-button:hover svg { fill: ${hoverColor} !important; }
-                  .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px ${buttonColor} !important; }
-                  .animated-button:hover .circle { width: 220px !important; height: 220px !important; opacity: 1 !important; }
-                  .active { box-shadow: 0 0 0 4px ${buttonColor} !important; background-color: ${hoverColor} !important; color: white !important; }
-                  .active svg { fill: white !important; }
+                  .animated-button:hover .arr-1,
+                  .animated-button:hover .arr-2 {
+                    fill: white !important;
+                  }
+                  .animated-button:hover { 
+                    box-shadow: 0 0 0 12px transparent !important; 
+                    color: white !important; 
+                    border-radius: 12px !important; 
+                  }
+                  .animated-button:hover .arr-1 { 
+                    right: -25% !important; 
+                  }
+                  .animated-button:hover .arr-2 { 
+                    left: 16px !important; 
+                  }
+                  .animated-button:hover .text { 
+                    transform: translateX(12px) !important; 
+                  }
+                  .animated-button:active { 
+                    transform: scale(0.95) !important; 
+                    box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                  }
+                  .animated-button:hover .circle { 
+                    width: 220px !important; 
+                    height: 220px !important; 
+                    opacity: 1 !important; 
+                    background-color: ${hoverColor} !important;
+                  }
+                  .active { 
+                    box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                    background-color: ${hoverColor} !important; 
+                    color: white !important; 
+                  }
+                  .active svg { 
+                    fill: white !important; 
+                  }
                 `}</style>
               </button>
             );

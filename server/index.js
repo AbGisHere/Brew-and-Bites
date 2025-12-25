@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 
 // Version endpoint
 app.get('/api/version', (req, res) => {
-    res.json({ version: '1.4.1' });
+    res.json({ version: '1.4.2' });
 });
 
 // B. SEED ROUTE (This replaces your store.js seedData)
@@ -501,6 +501,18 @@ app.get('/api/receipts', async (req, res) => {
         const orders = await Order.find(filter);
         res.json(orders);
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 7. GET ALL ORDERS (Required for Chef Dashboard)
+app.get('/api/orders', async (req, res) => {
+    try {
+        // Fetch all orders regardless of status
+        // The frontend handles filtering (Active vs Completed)
+        const orders = await Order.find();
+        res.json(orders);
+    } catch (e) { 
+        res.status(500).json({ error: e.message }); 
+    }
 });
 
 // 2. START OR GET ACTIVE ORDER FOR A TABLE

@@ -1,5 +1,5 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.4.1-green.svg)
+![Version](https://img.shields.io/badge/version-1.4.2-green.svg)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now fully optimized for a mobile-first experience.
 
@@ -8,24 +8,19 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
-## 🚀 What's New in v1.4.1 (UI Consistency & Performance Patch)
-
-### 📱 User Interface (UI) Enhancements
-* **Waiter Dashboard Redesign (Mobile):** Completely overhauled the mobile UI for Waiters to match the modern aesthetic of the Chef and Admin dashboards. Improved layout for better visibility in high-paced environments.
-* **New Tab System:** Introduced a tabbed interface for the Waiter section, such as Dining
-* **UX Optimization:** Relocated the Close and Generate Receipt buttons to more ergonomic positions based on mobile thumb-reach patterns.
+## 🚀 What's New in v1.4.2 (Minor Bugs)
 
 ### 🐛 Bug Fixes
-* **Admin Section Glitches:** Resolved a random color-rendering bug where tabs would occasionally display incorrect theme colors inconsistent with the main brand palette.
-* **Navigation Fixes:** Fixed a persistent scroll error in the Landing Page navigation bar that hindered smooth scrolling on mobile browsers.
-* **Tab Scroll Correction:** Fixed the Gradient Overlay logic in the Admin Dashboard Tab Scroll to ensure smooth visual transitions.
-* **System Logic:** Patched a Version Fallback error that occurred during specific edge-case deployment triggers.
+* **Chef Dashboard:** Resolved a server.js error which stopped the chef order dashboard from rendering.
 
 ---
 
 ## 📜 Version History
 
-### **v1.4.1 (Current)**
+### **v1.4.2 (Current)**
+* **Bug Fixes:** Resolved backend issues for chef dashboard.
+
+### **v1.4.1 (UI Consistency & Performance Patch)**
 * **Parity Update:** Synchronized Waiter mobile UI with Admin/Chef dashboards.
 * **Bug Patch:** Fixed Navbar scrolling and Admin tab color glitches.
 * **Architecture:** Added Tab support for future Takeaway/Delivery modes.

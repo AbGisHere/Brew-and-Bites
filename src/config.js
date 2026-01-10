@@ -1,9 +1,8 @@
 // src/config.js
 
-// TEMPORARY: Hardcoded for Production Release v1.5.6
-// We are forcing the app to use the Render Backend.
-const API_URL = 'https://brewandbites-backend.onrender.com';
-
-console.log("🚀 FORCE MODE: API URL set to:", API_URL);
+// This logic automatically switches to API URL based on where the site is running.
+const API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:5001'                            // Localhost (Your Laptop)
+    : 'https://brewandbites-backend.onrender.com';              // Cloud (Your Live Server)
 
 export default API_URL;

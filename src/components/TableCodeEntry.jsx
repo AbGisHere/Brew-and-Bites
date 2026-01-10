@@ -25,6 +25,8 @@ export default function TableCodeEntry() {
     setError('')
 
     try {
+      console.log('🔍 Using API_URL:', API_URL)
+      console.log('🔍 Table code:', tableCode)
       const response = await fetch(`${API_URL}/api/tables/by-code/${tableCode}`)
       const data = await response.json()
 

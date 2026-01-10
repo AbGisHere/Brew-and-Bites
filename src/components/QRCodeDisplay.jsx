@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 
 export default function QRCodeDisplay({ url, tableName, tableCode }) {
   const [qrCodeUrl, setQrCodeUrl] = useState('')
+  const [displayUrl, setDisplayUrl] = useState('') // New state to hold the "fixed" URL
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -11,14 +12,27 @@ export default function QRCodeDisplay({ url, tableName, tableCode }) {
         return;
     }
 
-    // Use external API to generate visual QR
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`
+    // --- FIX START: Replace localhost with current domain ---
+    let finalUrl = url;
+    
+    // If the database has a localhost link (e.g. http://localhost:5000/menu/...)
+    // We replace the "http://localhost:5000" part with the current browser URL (e.g. https://your-site.com)
+    if (url.includes('localhost')) {
+        // window.location.origin gives you "https://your-website.com"
+        finalUrl = url.replace(/http:\/\/localhost:\d+/, window.location.origin);
+    }
+    
+    // Save the fixed URL so we can display it in the text below
+    setDisplayUrl(finalUrl);
+    // --- FIX END ---
+
+    // Use external API to generate visual QR using the FINAL URL
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(finalUrl)}`
     setQrCodeUrl(qrApiUrl)
     setLoading(false)
   }, [url])
 
   // FIX: Fetch the image as a blob to force download
-  // (Prevents browser from just opening the image in a new tab)
   const downloadQRCode = async () => {
     try {
         const response = await fetch(qrCodeUrl);
@@ -78,9 +92,9 @@ export default function QRCodeDisplay({ url, tableName, tableCode }) {
               </code>
             </div>
             
-            {/* Truncate URL visual to keep it clean */}
+            {/* Display the FIXED URL here, not the old 'url' prop */}
             <p className="text-[10px] text-gray-400 max-w-[200px] truncate mx-auto mt-2 select-all">
-                {url}
+                {displayUrl}
             </p>
           </div>
         </>

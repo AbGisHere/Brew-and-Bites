@@ -1,7 +1,7 @@
 // src/components/CustomerOrdering.jsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import API_URL from '../config' // Standard Import
+import API_URL from '../config'
 
 export default function CustomerOrdering() {
   const [menu, setMenu] = useState([])
@@ -12,10 +12,15 @@ export default function CustomerOrdering() {
   const [error, setError] = useState('')
   const [currentOrder, setCurrentOrder] = useState(null)
   const [orderStatus, setOrderStatus] = useState(null)
+  
+  // New State for Collapsible Categories
+  // Stores true if a category is collapsed (hidden), false if open
+  const [collapsedCategories, setCollapsedCategories] = useState({})
+
   const navigate = useNavigate()
 
   useEffect(() => {
-    // 1. Get table info from URL or LocalStorage
+    // 1. Get table info
     const urlParams = new URLSearchParams(window.location.search)
     const tableCode = urlParams.get('table')
     
@@ -24,7 +29,7 @@ export default function CustomerOrdering() {
       if (storedTable) {
         setTable(JSON.parse(storedTable))
       } else {
-        navigate('/') // Redirect to code entry if missing
+        navigate('/') 
         return
       }
     } else {
@@ -35,7 +40,7 @@ export default function CustomerOrdering() {
     fetchMenu()
   }, [navigate])
 
-  // 3. Polling Logic (Checks status every 3 seconds)
+  // 3. Polling Logic
   useEffect(() => {
     if (currentOrder && currentOrder._id) {
       const interval = setInterval(async () => {
@@ -54,13 +59,31 @@ export default function CustomerOrdering() {
     }
   }, [currentOrder])
 
+  // --- Helpers ---
+
+  // Group menu items by category efficiently
+  const groupedMenu = useMemo(() => {
+    return menu.reduce((acc, item) => {
+      const category = item.category || 'Others'; // Fallback if no category
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(item);
+      return acc;
+    }, {});
+  }, [menu]);
+
+  // Toggle category visibility
+  const toggleCategory = (category) => {
+    setCollapsedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }))
+  }
+
   const fetchTableInfo = async (tableCode) => {
     try {
       const response = await fetch(`${API_URL}/api/tables/by-code/${tableCode}`)
       const data = await response.json()
-      
       if (!response.ok) throw new Error(data.error || 'Invalid table code')
-      
       setTable(data)
       localStorage.setItem('currentTable', JSON.stringify(data))
     } catch (err) {
@@ -92,12 +115,11 @@ export default function CustomerOrdering() {
     })
   }
 
-  const removeFromCart = (itemId) => {
-    setCart(prev => prev.filter(i => i._id !== itemId))
-  }
-
   const updateQuantity = (itemId, newQty) => {
-    if (newQty <= 0) return removeFromCart(itemId)
+    if (newQty <= 0) {
+        setCart(prev => prev.filter(i => i._id !== itemId))
+        return
+    }
     setCart(prev => prev.map(i => i._id === itemId ? { ...i, qty: newQty } : i))
   }
 
@@ -109,7 +131,7 @@ export default function CustomerOrdering() {
     return cartTotal + orderTotal
   }
 
-  // --- Order Submission (The Critical Part) ---
+  // --- Order Submission ---
   const submitOrder = async () => {
     if (cart.length === 0) return setError('Cart is empty')
     if (!table?._id) return setError('Table info missing')
@@ -118,7 +140,7 @@ export default function CustomerOrdering() {
     setError('')
 
     try {
-      // Step A: Start or Get Active Order
+      // Step A: Start/Get Order
       const orderRes = await fetch(`${API_URL}/api/orders/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,33 +150,27 @@ export default function CustomerOrdering() {
       const orderData = await orderRes.json()
       if (!orderRes.ok) throw new Error(orderData.error || 'Failed to start order')
 
-      // Step B: Prepare New Items
+      // Step B: Prepare Items
       const newItems = cart.map(item => ({
         itemId: item._id,
         name: item.name,
         price: item.price,
         qty: item.qty,
-        status: 'preparing' // Default status for chef
+        status: 'preparing'
       }))
 
-      // Step C: Smart Merge (Combine with existing items if they exist)
-      // We create a copy of existing items to avoid mutation issues
+      // Step C: Smart Merge
       let finalItems = orderData.items ? [...orderData.items] : []
-      
       newItems.forEach(newItem => {
-        // Check if this item is already in the order
         const existingIdx = finalItems.findIndex(i => i.itemId === newItem.itemId && i.status === 'preparing')
-        
         if (existingIdx >= 0) {
-            // If it exists and is still preparing, just bump the quantity
             finalItems[existingIdx].qty += newItem.qty
         } else {
-            // Otherwise add as a new line item
             finalItems.push(newItem)
         }
       })
 
-      // Step D: Send Update to Backend
+      // Step D: Update Backend
       const updateRes = await fetch(`${API_URL}/api/orders/${orderData._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -162,14 +178,12 @@ export default function CustomerOrdering() {
       })
 
       if (!updateRes.ok) throw new Error('Failed to update order items')
-
       const finalOrder = await updateRes.json()
       
-      // Step E: Success State
       setCurrentOrder(finalOrder)
       setOrderStatus('preparing')
-      setCart([]) // Clear cart
-      alert('Order placed successfully! The kitchen has been notified.')
+      setCart([])
+      alert('Order placed successfully!')
 
     } catch (err) {
       console.error(err)
@@ -198,36 +212,73 @@ export default function CustomerOrdering() {
 
       <div className="max-w-4xl mx-auto p-4 grid gap-6 lg:grid-cols-3">
         
-        {/* LEFT COLUMN: MENU */}
+        {/* LEFT COLUMN: MENU (Now Categorized) */}
         <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Menu</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-                {menu.map(item => (
-                    <div key={item._id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col justify-between">
-                        <div>
-                            <div className="flex justify-between items-start">
-                                <h3 className="font-bold text-gray-800">{item.name}</h3>
-                                <span className="text-primary font-bold">₹{item.price}</span>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-1 mb-3">{item.description}</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Menu</h2>
+            
+            {/* Iterate over Categories */}
+            {Object.keys(groupedMenu).length === 0 ? (
+                <div className="text-center py-10 text-gray-500">No menu items available.</div>
+            ) : (
+                Object.entries(groupedMenu).map(([category, items]) => {
+                    const isCollapsed = collapsedCategories[category];
+                    
+                    return (
+                        <div key={category} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                            {/* Category Header */}
+                            <button 
+                                onClick={() => toggleCategory(category)}
+                                className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                            >
+                                <h3 className="text-lg font-bold text-gray-800">{category}</h3>
+                                <div className="text-gray-500">
+                                    {/* Chevron Icon Logic */}
+                                    {isCollapsed ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    )}
+                                </div>
+                            </button>
+
+                            {/* Category Items (Collapsible Content) */}
+                            {!isCollapsed && (
+                                <div className="p-4 grid gap-4 sm:grid-cols-2 animate-fadeIn">
+                                    {items.map(item => (
+                                        <div key={item._id} className="bg-white p-4 rounded-lg border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+                                            <div>
+                                                <div className="flex justify-between items-start">
+                                                    <h4 className="font-bold text-gray-800">{item.name}</h4>
+                                                    <span className="text-primary font-bold">₹{item.price}</span>
+                                                </div>
+                                                <p className="text-sm text-gray-500 mt-1 mb-3">{item.description}</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => addToCart(item)} 
+                                                className="w-full bg-blue-50 text-blue-600 font-semibold py-2 rounded hover:bg-blue-100 transition-colors"
+                                            >
+                                                Add to Cart
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                        <button 
-                            onClick={() => addToCart(item)} 
-                            className="w-full bg-blue-50 text-blue-600 font-semibold py-2 rounded hover:bg-blue-100 transition-colors"
-                        >
-                            Add to Cart
-                        </button>
-                    </div>
-                ))}
-            </div>
+                    )
+                })
+            )}
         </div>
 
-        {/* RIGHT COLUMN: CART & STATUS */}
+        {/* RIGHT COLUMN: CART & STATUS (Unchanged) */}
         <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 sticky top-20">
                 <h2 className="text-xl font-bold mb-4 text-gray-900">Your Order</h2>
                 
-                {/* 1. Items already sent to kitchen */}
+                {/* 1. Kitchen Status */}
                 {currentOrder?.items?.length > 0 && (
                     <div className="mb-6 border-b pb-4">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Kitchen Status</h3>
@@ -248,7 +299,7 @@ export default function CustomerOrdering() {
                     </div>
                 )}
 
-                {/* 2. Items currently in cart */}
+                {/* 2. New Cart Items */}
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">New Items (Cart)</h3>
                 {cart.length === 0 ? (
                     <p className="text-sm text-gray-400 italic mb-4">Cart is empty</p>
@@ -270,7 +321,7 @@ export default function CustomerOrdering() {
                     </div>
                 )}
 
-                {/* 3. Totals & Action */}
+                {/* 3. Totals */}
                 <div className="pt-4 border-t border-gray-100">
                     <div className="flex justify-between items-center mb-4">
                         <span className="text-gray-600">Total Bill</span>

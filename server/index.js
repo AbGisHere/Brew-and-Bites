@@ -81,14 +81,14 @@ await User.create(hashedUsers);
 // 3. Insert Menu (We flatten your categories)
 const menuData = [
     // Coffee
-    { category: 'coffee', name: 'Espresso', description: 'Rich and aromatic single shot', price: 3.5, featured: true },
-    { category: 'coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.5, featured: true },
+    { category: 'Coffee', name: 'Espresso', description: 'Rich and aromatic single shot', price: 3.5, featured: true },
+    { category: 'Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.5, featured: true },
     // Breakfast
-    { category: 'breakfast', name: 'Avocado Toast', description: 'Sourdough, avo, tomatoes, feta', price: 9.99, featured: true },
+    { category: 'Breakfast', name: 'Avocado Toast', description: 'Sourdough, avo, tomatoes, feta', price: 9.99, featured: true },
     // Lunch
-    { category: 'lunch', name: 'Club Sandwich', description: 'Turkey, bacon, lettuce, tomato', price: 11.99, featured: true },
+    { category: 'Lunch', name: 'Club Sandwich', description: 'Turkey, bacon, lettuce, tomato', price: 11.99, featured: true },
     // Desserts
-    { category: 'desserts', name: 'Chocolate Cake', description: 'Rich cake with ganache', price: 6.5, featured: true }
+    { category: 'Desserts', name: 'Chocolate Cake', description: 'Rich cake with ganache', price: 6.5, featured: true }
 ];
 await Menu.insertMany(menuData);
 

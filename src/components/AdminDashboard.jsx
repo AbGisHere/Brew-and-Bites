@@ -1811,13 +1811,17 @@ export default function AdminDashboard({ onExit }) {
             <form onSubmit={addItem} className="space-y-3">
               <div>
                 <label className="text-sm">Category</label>
-                <select 
-                  value={form.category} 
-                  onChange={e => setForm(f => ({...f, category: e.target.value}))} 
+                <input
+                  list="category-options"
+                  value={form.category}
+                  onChange={e => setForm(f => ({...f, category: e.target.value}))}
                   className="input w-full"
-                >
-                  {categories.map(c=> <option key={c} value={c}>{c}</option>)}
-                </select>
+                  placeholder="Select or type a new category..."
+                  required
+                />
+                <datalist id="category-options">
+                  {categories.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div>
                 <label className="text-sm">Name</label>

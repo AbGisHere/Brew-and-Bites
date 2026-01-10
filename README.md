@@ -1,10 +1,50 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.5.5-green.svg)
+![Version](https://img.shields.io/badge/version-1.7.0-green.svg)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now featuring a complete customer self-service ordering experience with QR codes and real-time order tracking.
 
 **🔗 Live Demo:** [https://brew-and-bites.vercel.app](https://brew-and-bites.vercel.app)  
 *(Note: The backend is hosted on a free instance. Please allow 30-60 seconds for server to wake up on the first load!)*
+
+---
+
+## 🚀 What's New in v1.7.0 (Production Stability & Configuration Management)
+
+### 🔧 Configuration & Deployment Fixes
+* **Dynamic API Configuration:** Enhanced environment detection for seamless local and production deployments.
+* **Table Code Seeding:** Implemented predictable test codes (910474, 139631) for consistent testing and development.
+* **CORS Optimization:** Improved cross-origin resource sharing configuration for production stability.
+* **Mixed Content Resolution:** Eliminated mixed content errors on Vercel deployment.
+
+### 🛠️ Technical Improvements
+* **Enhanced Debugging:** Added comprehensive logging for API URL verification and troubleshooting.
+* **Environment Detection:** Smart switching between localhost and production API endpoints.
+* **Error Handling:** Better validation and error reporting for API calls.
+* **Code Cleanup:** Removed hardcoded URLs and improved configuration management.
+
+### 🔒 Stability Enhancements
+* **Production-Ready Deployment:** Forced production API URL configuration for reliable cloud deployment.
+* **Consistent Testing Environment:** Standardized table codes for development and testing workflows.
+* **Improved Logging:** Enhanced debugging capabilities for easier troubleshooting.
+
+---
+
+## 🎯 Recent Feature Highlights (v1.6.0 - v1.7.0)
+
+### 📱 Enhanced Customer Experience
+* **Collapsible Menu Categories:** Customers can now collapse/expand menu sections for easier navigation on mobile devices.
+* **Improved Real-Time Tracking:** Better polling logic for instant order status updates with enhanced error recovery.
+* **Streamlined QR Code Flow:** More reliable QR code generation with better fallback mechanisms.
+
+### 🔧 Developer Experience
+* **Predictable Test Environment:** Fixed table codes (910474, 139631) for consistent development and testing.
+* **Enhanced Code Documentation:** Comprehensive comments and improved code readability across all components.
+* **Dynamic Configuration:** Smart environment detection eliminates manual configuration between local and production deployments.
+
+### 🚀 Production Readiness
+* **Zero-Configuration Deployment:** Eliminated mixed content errors and CORS issues for seamless Vercel deployment.
+* **Enhanced Debugging:** Comprehensive logging for troubleshooting API connectivity issues.
+* **Performance Optimizations:** Reduced bundle sizes and improved component rendering efficiency.
 
 ---
 
@@ -35,6 +75,47 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 ---
 
 ## 📜 Version History
+
+### **v1.7.0 (Production Stability & Configuration Management)**
+* **Dynamic API Configuration:** Enhanced environment detection for seamless local and production deployments.
+* **Table Code Seeding:** Implemented predictable test codes (910474, 139631) for consistent testing.
+* **CORS Optimization:** Improved cross-origin resource sharing configuration for production stability.
+* **Mixed Content Resolution:** Eliminated mixed content errors on Vercel deployment.
+* **Enhanced Debugging:** Added comprehensive logging for API URL verification.
+* **Environment Detection:** Smart switching between localhost and production API endpoints.
+
+### **v1.6.0 (Code Quality & User Experience Enhancement)**
+* **Enhanced Code Documentation:** Added comprehensive comments and improved code readability across all components.
+* **Customer Ordering UX Improvements:** 
+  * **Collapsible Menu Categories:** New feature to collapse/expand menu categories for better navigation.
+  * **Improved Polling Logic:** Enhanced real-time order status tracking with better error handling.
+  * **Streamlined Navigation:** Better redirect logic for missing table information.
+* **QR Code Display Refactoring:** 
+  * **Improved Error Handling:** Better validation and fallback mechanisms for QR code generation.
+  * **Enhanced Loading States:** More reliable loading indicators and error messages.
+  * **Code Cleanup:** Removed redundant dependencies and improved component structure.
+* **Table Code Entry Improvements:**
+  * **Better User Feedback:** Enhanced validation messages and error handling.
+  * **Streamlined Logic:** Simplified table validation flow for improved reliability.
+* **Performance Optimizations:** Reduced bundle size and improved component rendering efficiency.
+
+### **v1.5.10 (Table Code & API Configuration Fix)**
+* **Fixed Table Code Seeding:** Predictable test codes for consistent development.
+* **Enhanced Debugging:** Improved logging for API URL verification.
+* **CORS Configuration:** Better setup for production deployment.
+
+### **v1.5.9 (Hardcoded Localhost Fix)**
+* **Dynamic API URL:** Replaced hardcoded localhost with dynamic configuration.
+* **Environment Detection:** Improved switching between local and production URLs.
+* **CORS Error Resolution:** Fixed persistent cross-origin issues.
+
+### **v1.5.8 (Configuration Restoration)**
+* **Smart Environment Detection:** Restored dynamic API configuration.
+* **Mixed Content Fix:** Eliminated errors on Vercel deployment.
+
+### **v1.5.7 (Production API Enforcement)**
+* **Critical Fix:** Removed localhost logic for production stability.
+* **Hardcoded Production URL:** Ensured reliable cloud deployment.
 
 ### **v1.5.0 (Customer Ordering Revolution)**
 * **Customer Self-Service Portal:** Complete customer-facing ordering system with QR code access.

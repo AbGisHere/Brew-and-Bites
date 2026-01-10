@@ -2,7 +2,7 @@
   "_id": {
     "$oid": "693c7e07018fc0c3ee9b07ed"
   },
-  "category": "coffee",
+  "category": "Coffee",
   "name": "Espresso",
   "description": "Rich and aromatic single shot",
   "price": 349,
@@ -13,7 +13,7 @@
   "_id": {
     "$oid": "693c7e07018fc0c3ee9b07ee"
   },
-  "category": "coffee",
+  "category": "Coffee",
   "name": "Cappuccino",
   "description": "Espresso with steamed milk and foam",
   "price": 449,
@@ -24,7 +24,7 @@
   "_id": {
     "$oid": "693c7e07018fc0c3ee9b07ef"
   },
-  "category": "breakfast",
+  "category": "Breakfast",
   "name": "Avocado Toast",
   "description": "Sourdough, avo, tomatoes, feta",
   "price": 999,
@@ -35,7 +35,7 @@
   "_id": {
     "$oid": "693c7e07018fc0c3ee9b07f0"
   },
-  "category": "lunch",
+  "category": "Lunch",
   "name": "Club Sandwich",
   "description": "Turkey, bacon, lettuce, tomato",
   "price": 699,
@@ -46,7 +46,7 @@
   "_id": {
     "$oid": "693c7e07018fc0c3ee9b07f1"
   },
-  "category": "desserts",
+  "category": "Desserts",
   "name": "Chocolate Cake",
   "description": "Rich cake with ganache",
   "price": 649,

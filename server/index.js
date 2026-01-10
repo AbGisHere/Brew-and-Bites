@@ -91,27 +91,11 @@ const menuData = [
 ];
 await Menu.insertMany(menuData);
 
-// 4. Insert Tables with unique 6-digit codes
+// 4. Insert Tables with fixed codes
 const tables = [
-    { name: 'Table 1' },
-    { name: 'Table 2' }
+    { name: 'Table 1', tableCode: '910474', qrCode: `https://localhost:3000/order?code=910474` },
+    { name: 'Table 2', tableCode: '139631', qrCode: `https://localhost:3000/order?code=139631` }
 ];
-
-// Generate unique codes for each table
-for (let i = 0; i < tables.length; i++) {
-    let code;
-    let isUnique = false;
-    
-    // Generate unique 6-digit code
-    while (!isUnique) {
-        code = Math.floor(100000 + Math.random() * 900000).toString();
-        // For seeding, we'll assume uniqueness since we're generating fresh
-        isUnique = true;
-    }
-    
-    tables[i].tableCode = code;
-    tables[i].qrCode = `https://localhost:3000/order?code=${code}`;
-}
 
 await Table.insertMany(tables);
 

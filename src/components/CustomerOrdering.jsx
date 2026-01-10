@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import API_URL from '../config'
 
 export default function CustomerOrdering() {
   const [menu, setMenu] = useState([])
@@ -40,7 +41,7 @@ export default function CustomerOrdering() {
       console.log('Starting polling for order:', currentOrder._id)
       const interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://localhost:5001/api/orders/${currentOrder._id}`)
+          const response = await fetch(`${API_URL}/api/orders/${currentOrder._id}`)
           if (response.ok) {
             const orderData = await response.json()
             setOrderStatus(orderData.status)
@@ -59,7 +60,7 @@ export default function CustomerOrdering() {
 
   const fetchTableInfo = async (tableCode) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/tables/by-code/${tableCode}`)
+      const response = await fetch(`${API_URL}/api/tables/by-code/${tableCode}`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -76,7 +77,7 @@ export default function CustomerOrdering() {
 
   const fetchMenu = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/menu')
+      const response = await fetch(`${API_URL}/api/menu`)
       const data = await response.json()
       setMenu(data)
     } catch (err) {
@@ -147,7 +148,7 @@ export default function CustomerOrdering() {
       console.log('Table ID:', table._id)
       
       // Start order for the table (this will return existing order if one exists)
-      const orderResponse = await fetch('http://localhost:5001/api/orders/start', {
+      const orderResponse = await fetch(`${API_URL}/api/orders/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -196,7 +197,7 @@ export default function CustomerOrdering() {
       }
 
       // Update the order with all items
-      const updateResponse = await fetch(`http://localhost:5001/api/orders/${orderData._id}`, {
+      const updateResponse = await fetch(`${API_URL}/api/orders/${orderData._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

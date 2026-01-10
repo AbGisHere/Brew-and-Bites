@@ -10,7 +10,7 @@ const { User, Menu, Table, Coupon, Settings, Order } = require('./models/Schemas
 const { seedDatabase } = require('./utils/autoSeed');
 
 const app = express();
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 
 // 1. Connect to DB and auto-seed
 const initializeDatabase = async () => {

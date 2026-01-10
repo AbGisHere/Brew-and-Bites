@@ -146,6 +146,7 @@ export default function CustomerOrdering() {
     try {
       console.log('Submitting order for table:', table)
       console.log('Table ID:', table._id)
+      console.log('Table object:', JSON.stringify(table, null, 2))
       
       // Start order for the table (this will return existing order if one exists)
       const orderResponse = await fetch(`${API_URL}/api/orders/start`, {
@@ -157,10 +158,11 @@ export default function CustomerOrdering() {
       })
 
       const orderData = await orderResponse.json()
+      console.log('Order response status:', orderResponse.status)
       console.log('Order response:', orderData)
 
       if (!orderResponse.ok) {
-        throw new Error(orderData.error || 'Failed to create order')
+        throw new Error(orderData.error || `Failed to create order (Status: ${orderResponse.status})`)
       }
 
       // Prepare items to add

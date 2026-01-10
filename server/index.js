@@ -29,7 +29,7 @@ initializeDatabase();
 
     // 2. Middleware
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173'], // Add your Frontend URL here
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'https://brew-and-bites.vercel.app'], // Add your Frontend URL here
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']

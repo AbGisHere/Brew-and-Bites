@@ -10,8 +10,7 @@ const statusColors = {
   ready: 'bg-blue-100 text-blue-800',
   served: 'bg-green-100 text-green-800',
   'ready-to-serve': 'bg-blue-100 text-blue-800',
-  'preparing-order': 'bg-yellow-100 text-yellow-800',
-  'served': 'bg-green-100 text-green-800'
+  'preparing-order': 'bg-yellow-100 text-yellow-800'
 }
 
 const statusLabels = {
@@ -19,8 +18,7 @@ const statusLabels = {
   ready: 'Ready to Serve',
   served: 'Served',
   'ready-to-serve': 'Ready to Serve',
-  'preparing-order': 'Preparing Order',
-  'served': 'Served'
+  'preparing-order': 'Preparing Order'
 }
 
 // Helper to map MongoDB _id to the id your UI expects
@@ -1063,8 +1061,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         userSelect: 'none',
                         touchAction: 'manipulation',
                         WebkitAppearance: 'none',
-                        marginLeft: 'auto',
-                        margin: '0'
+                        marginLeft: 'auto'
                       }}
                     >
                       <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>

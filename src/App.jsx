@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import About from './components/About'
@@ -39,6 +39,7 @@ function App() {
           <>
             {!user ? (
               <Routes>
+                {/* 1. LANDING PAGE */}
                 <Route path="/" element={
                   <>
                     <Navbar 
@@ -62,10 +63,19 @@ function App() {
                     />
                   </>
                 } />
+
+                {/* 2. CUSTOMER PORTAL */}
+                {/* /order -> The Entry Screen (Enter Code) */}
                 <Route path="/order" element={<TableCodeEntry />} />
+                
+                {/* /customer-order -> The Actual Menu (Ordering System) */}
                 <Route path="/customer-order" element={<CustomerOrdering />} />
+
+                {/* Catch-all redirect */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             ) : (
+              // 3. STAFF DASHBOARDS (Protected)
               <>
                 {user.role === 'admin' ? (
                   <AdminDashboard onExit={() => window.location.reload()} />

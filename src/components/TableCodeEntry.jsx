@@ -1,223 +1,94 @@
+// src/components/TableCodeEntry.jsx
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import API_URL from '../config'
+import API_URL from '../config' // THE CRITICAL IMPORT
 
 export default function TableCodeEntry() {
-  const [tableCode, setTableCode] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [code, setCode] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  const handleInputChange = (e) => {
-    const value = e.target.value
-    const numericValue = value.replace(/[^0-9]/g, '').slice(0, 6)
-    setTableCode(numericValue)
-    setError('')
-  }
-
-  const handleSubmit = async () => {
-    if (tableCode.length !== 6) {
-      setError('Please enter exactly 6 digits')
-      return
-    }
-
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     setLoading(true)
     setError('')
 
+    // 1. Debugging Logs (Check your console!)
+    console.log('🔍 Connecting to Backend at:', API_URL)
+    console.log('🔍 Checking Code:', code)
+
     try {
-      console.log('🔍 Using API_URL:', API_URL)
-      console.log('🔍 Table code:', tableCode)
-      const response = await fetch(`${API_URL}/api/tables/by-code/${tableCode}`)
+      // 2. The Dynamic Fetch (No more localhost hardcoding)
+      const response = await fetch(`${API_URL}/api/tables/by-code/${code}`)
       const data = await response.json()
 
       if (!response.ok) {
         throw new Error(data.error || 'Invalid table code')
       }
 
+      // 3. Success Logic
+      console.log('✅ Access Granted:', data)
       localStorage.setItem('currentTable', JSON.stringify(data))
-      navigate(`/customer-order?table=${tableCode}`)
+      
+      // Redirect to the Menu (Standardized route)
+      navigate(`/customer-order?table=${code}`)
+      
     } catch (err) {
-      setError(err.message)
+      console.error('❌ Login Failed:', err)
+      setError(err.message || 'Could not verify code. Please check your connection.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleQRScan = () => {
-    const scannedCode = prompt('Enter the 6-digit table code from QR scan:')
-    if (scannedCode) {
-      const numericCode = scannedCode.replace(/[^0-9]/g, '').slice(0, 6)
-      setTableCode(numericCode)
-    }
-  }
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-      backgroundColor: '#f9fafb'
-    }}>
-      <div style={{
-        maxWidth: '28rem',
-        width: '100%',
-        backgroundColor: 'white',
-        borderRadius: '0.5rem',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-        padding: '2rem'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: 'bold',
-            color: '#111827',
-            marginBottom: '0.5rem'
-          }}>
-            Welcome to Brew & Bites
-          </h1>
-          <p style={{ color: '#6b7280' }}>
-            Enter your table code to start ordering
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-8 border border-gray-100">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Brew & Bites</h1>
+          <p className="text-gray-500 mt-2">Please enter your table code to view the menu</p>
         </div>
 
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{
-            display: 'block',
-            fontSize: '0.875rem',
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: '0.5rem'
-          }}>
-            Table Code (6 digits)
-          </label>
-          <div style={{ position: 'relative' }}>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="code" className="sr-only">Table Code</label>
             <input
+              id="code"
               type="text"
-              value={tableCode}
-              onChange={handleInputChange}
-              placeholder="000000"
-              style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                border: '2px solid #d1d5db',
-                borderRadius: '0.5rem',
-                fontSize: '1.125rem',
-                fontWeight: '600',
-                textAlign: 'center',
-                letterSpacing: '0.1em',
-                outline: 'none'
-              }}
-              maxLength={6}
+              maxLength="6"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} // Integers only
+              placeholder="000 000"
+              className="w-full text-center text-4xl font-mono tracking-[0.5em] py-4 border-2 border-gray-200 rounded-lg focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all placeholder-gray-300 text-gray-800"
+              required
+              autoComplete="off"
             />
-            {tableCode.length > 0 && (
-              <div style={{
-                position: 'absolute',
-                right: '0.75rem',
-                top: '50%',
-                transform: 'translateY(-50%)'
-              }}>
-                <div style={{
-                  width: '0.5rem',
-                  height: '0.5rem',
-                  borderRadius: '50%',
-                  backgroundColor: tableCode.length === 6 ? '#10b981' : '#f59e0b'
-                }}></div>
-              </div>
-            )}
           </div>
-          <p style={{
-            fontSize: '0.75rem',
-            color: '#6b7280',
-            marginTop: '0.25rem'
-          }}>
-            Enter the 6-digit code from your table
-          </p>
-        </div>
 
-        {error && (
-          <div style={{
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#dc2626',
-            padding: '0.75rem 1rem',
-            borderRadius: '0.5rem',
-            marginBottom: '1.5rem'
-          }}>
-            {error}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <button
-            onClick={handleSubmit}
-            disabled={loading || tableCode.length !== 6}
-            style={{
-              width: '100%',
-              backgroundColor: loading || tableCode.length !== 6 ? '#9ca3af' : '#8b5a2b',
-              color: 'white',
-              fontWeight: '600',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.5rem',
-              cursor: loading || tableCode.length !== 6 ? 'not-allowed' : 'pointer',
-              opacity: loading || tableCode.length !== 6 ? 0.5 : 1
-            }}
-          >
-            {loading ? 'Validating...' : 'Start Ordering'}
-          </button>
+          {error && (
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-center text-sm font-medium border border-red-100 animate-pulse">
+              ⚠️ {error}
+            </div>
+          )}
 
           <button
-            onClick={handleQRScan}
-            style={{
-              width: '100%',
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              fontWeight: '600',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem'
-            }}
+            type="submit"
+            disabled={loading || code.length < 6}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-            </svg>
-            Scan QR Code
+            {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Verifying...
+                </span>
+            ) : 'View Menu'}
           </button>
-        </div>
-
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <button
-            onClick={() => window.location.href = '/'}
-            style={{
-              color: '#6b7280',
-              fontSize: '0.875rem',
-              cursor: 'pointer'
-            }}
-          >
-            ← Back to Home
-          </button>
-        </div>
-
-        <div style={{
-          marginTop: '1.5rem',
-          padding: '1rem',
-          backgroundColor: '#eff6ff',
-          borderRadius: '0.5rem'
-        }}>
-          <p style={{
-            fontSize: '0.875rem',
-            color: '#1e40af'
-          }}>
-            <strong>Test Codes:</strong><br />
-            Table 1: 910474<br />
-            Table 2: 139631
-          </p>
-        </div>
+        </form>
+        
+        <p className="text-center text-xs text-gray-400 mt-6">
+            Trouble connecting? Ask a waiter for help.
+        </p>
       </div>
     </div>
   )

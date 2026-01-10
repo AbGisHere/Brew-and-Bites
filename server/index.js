@@ -1,4 +1,4 @@
-    // server/index.js
+// server/index.js
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const cors = require('cors');
@@ -10,7 +10,8 @@ const { User, Menu, Table, Coupon, Settings, Order } = require('./models/Schemas
 const { seedDatabase } = require('./utils/autoSeed');
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+// Use the PORT environment variable provided by the render host, defaulting to 5001 only if not set.
+const PORT = process.env.PORT || 5001; 
 
 // 1. Connect to DB and auto-seed
 const initializeDatabase = async () => {

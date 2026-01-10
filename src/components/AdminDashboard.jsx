@@ -972,6 +972,7 @@ export default function AdminDashboard({ onExit }) {
   const [salesTotal, setSalesTotal] = useState(0)
   const [preview, setPreview] = useState(null)
   const [qrModal, setQrModal] = useState({ open: false, table: null })
+  const [recentlyGeneratedCodes, setRecentlyGeneratedCodes] = useState(new Set())
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
@@ -1312,7 +1313,7 @@ export default function AdminDashboard({ onExit }) {
       const [menuRes, tableRes, receiptRes, userRes, settingRes] = await Promise.all([
          fetch(`${API_URL}/api/menu`),
          fetch(`${API_URL}/api/tables`),
-         fetch(`${API_URL}/api/receipts`),
+         fetch(`${API_URL}/api/receipts?status=closed`),
          fetch(`${API_URL}/api/users`),
          fetch(`${API_URL}/api/settings`)
       ]);
@@ -1437,6 +1438,13 @@ export default function AdminDashboard({ onExit }) {
 
   // 6. GENERATE TABLE CODES AND QR CODES
   const generateTableCodes = async () => {
+    // Confirm before regenerating all codes
+    const confirmMessage = "This will generate NEW table codes and QR codes for ALL tables, replacing existing ones. Customers using old codes will need to scan the new QR codes. Continue?";
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/api/tables/generate-codes`, {
         method: 'POST',
@@ -1448,10 +1456,26 @@ export default function AdminDashboard({ onExit }) {
       }
       
       const data = await response.json();
-      alert('Table codes and QR codes generated successfully!');
+      
+      // Track newly generated codes for visual feedback
+      const newCodes = new Set(data.tables.map(t => t.tableCode));
+      setRecentlyGeneratedCodes(newCodes);
+      
+      // Clear the highlight after 5 seconds
+      setTimeout(() => {
+        setRecentlyGeneratedCodes(new Set());
+      }, 5000);
+      
+      // Show detailed success message
+      const tableCount = data.tables.length;
+      const codesList = data.tables.map(t => `${t.name}: ${t.tableCode}`).join('\n');
+      
+      alert(`✅ Successfully generated new codes for ${tableCount} table(s)!\n\nNew Table Codes:\n${codesList}\n\nQR codes have been updated automatically.`);
+      
       loadAllData(); // Refresh the tables data
     } catch(e) { 
-      alert(e.message || 'Error generating table codes');
+      console.error('Error generating table codes:', e);
+      alert(`❌ Error generating table codes: ${e.message || 'Unknown error'}`);
     }
   }
 
@@ -2414,7 +2438,11 @@ export default function AdminDashboard({ onExit }) {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <code className="px-2 py-1 text-sm font-mono rounded bg-blue-100 text-blue-800">
+                              <code className={`px-2 py-1 text-sm font-mono rounded transition-all duration-500 ${
+                                recentlyGeneratedCodes.has(t.tableCode) 
+                                  ? 'bg-green-100 text-green-800 ring-2 ring-green-300 ring-opacity-50 animate-pulse' 
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
                                 {t.tableCode || 'Not generated'}
                               </code>
                               {t.tableCode && (

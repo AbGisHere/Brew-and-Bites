@@ -19,7 +19,7 @@ export default function QRCodeDisplay({ url, tableName, tableCode }) {
     // We replace the "http://localhost:5000" part with the current browser URL (e.g. https://your-site.com)
     if (url.includes('localhost')) {
         // window.location.origin gives you "https://your-website.com"
-        finalUrl = url.replace(/http:\/\/localhost:\d+/, window.location.origin);
+        finalUrl = url.replace(/https?:\/\/localhost:\d+/, window.location.origin);
     }
     
     // Save the fixed URL so we can display it in the text below

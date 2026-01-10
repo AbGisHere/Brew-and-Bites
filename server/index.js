@@ -144,26 +144,25 @@ app.post('/api/tables/generate-codes', async (req, res) => {
     try {
         const tables = await Table.find();
         
-        // Generate unique 6-digit codes and QR codes for tables that don't have them
+        // Generate unique 6-digit codes and QR codes for ALL tables
         for (const table of tables) {
-            if (!table.tableCode) {
-                let code;
-                let isUnique = false;
-                
-                // Generate unique 6-digit code
-                while (!isUnique) {
-                    code = Math.floor(100000 + Math.random() * 900000).toString();
-                    const existingTable = await Table.findOne({ tableCode: code });
-                    if (!existingTable) {
-                        isUnique = true;
-                    }
+            let code;
+            let isUnique = false;
+            
+            // Generate unique 6-digit code
+            while (!isUnique) {
+                code = Math.floor(100000 + Math.random() * 900000).toString();
+                const existingTable = await Table.findOne({ tableCode: code, _id: { $ne: table._id } });
+                if (!existingTable) {
+                    isUnique = true;
                 }
-                
-                table.tableCode = code;
-                // For now, we'll generate a simple URL that includes the table code
-                table.qrCode = `https://localhost:3000/order?code=${code}`;
-                await table.save();
             }
+            
+            table.tableCode = code;
+            // Generate dynamic URL using the frontend URL from settings or fallback to localhost
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            table.qrCode = `${frontendUrl}/order?table=${code}`;
+            await table.save();
         }
         
         res.json({ message: "Table codes and QR codes generated successfully", tables });

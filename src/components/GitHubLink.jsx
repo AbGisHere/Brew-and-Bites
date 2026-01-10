@@ -1,24 +1,11 @@
 import { useEffect, useState } from 'react';
 
 export default function GitHubLink() {
-  const [version, setVersion] = useState('');
+  const [version, setVersion] = useState('1.7.1');
 
   useEffect(() => {
-    // Fetch version from backend
-    const fetchVersion = async () => {
-      try {
-        const response = await fetch('/api/version');
-        if (response.ok) {
-          const data = await response.json();
-          setVersion(data.version);
-        }
-      } catch (error) {
-        console.error('Error fetching version:', error);
-        setVersion('1.7.0'); // Fallback version
-      }
-    };
-
-    fetchVersion();
+    // Use hardcoded version since we don't have a version endpoint
+    setVersion('1.7.1');
   }, []);
 
   return (

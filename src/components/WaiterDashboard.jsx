@@ -56,7 +56,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
         fetch(`${API_URL}/api/tables`),
         fetch(`${API_URL}/api/menu`),
         fetch(`${API_URL}/api/settings`),
-        fetch(`${API_URL}/api/receipts`)
+        fetch(`${API_URL}/api/receipts?status=closed`)
       ]);
 
       if (!tableRes.ok || !menuRes.ok) return;

@@ -1,10 +1,37 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.7.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.7.1-green.svg)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now featuring a complete customer self-service ordering experience with QR codes and real-time order tracking.
 
 **🔗 Live Demo:** [https://brew-and-bites.vercel.app](https://brew-and-bites.vercel.app)  
 *(Note: The backend is hosted on a free instance. Please allow 30-60 seconds for server to wake up on the first load!)*
+
+---
+
+## 🚀 What's New in v1.7.1 (UI Enhancement & Visual Polish)
+
+### 🎨 Visual Design Improvements
+* **Stunning Background Pattern**: Implemented beautiful conic gradient background with chocolate-themed color palette across the entire website
+* **Enhanced Flip Menu Cards**: Redesigned menu cards with horizontal flip animation, decorative SVG icons, and animated floating circles
+* **Footer Color Harmony**: Updated footer colors to perfectly match the chocolate background pattern using gradient design
+* **Clean Layout**: Removed unwanted white space below footer for seamless page finish
+
+### 🎯 Menu Experience Enhancements
+* **Horizontal Flip Animation**: Menu cards now flip left-to-right on hover with smooth 3D transitions
+* **Decorative Elements**: Added animated floating circles and gradient effects to menu cards
+* **Visual Icons**: Integrated custom SVG icons for enhanced visual appeal
+* **Responsive Design**: Optimized menu card layout for all screen sizes
+
+### 🔧 Technical Improvements
+* **Console Error Fixes**: Resolved all SVG attribute warnings by converting to React-compatible camelCase
+* **Version Display**: Fixed version fetching errors in Footer and GitHubLink components
+* **Code Quality**: Cleaned up SVG implementations and style prop handling
+* **Performance**: Optimized CSS animations and transitions for smooth performance
+
+### 🐛 Bug Fixes
+* **Receipt Generation Fix**: Fixed automatic receipt generation issue - receipts now only appear when "Close & Generate Receipt" is clicked
+* **API Filtering**: Updated receipts endpoints to only fetch closed orders, not active ones
+* **SVG Compatibility**: Fixed React SVG attribute warnings across all components
 
 ---
 
@@ -29,7 +56,13 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
-## 🎯 Recent Feature Highlights (v1.6.0 - v1.7.0)
+## 🎯 Recent Feature Highlights (v1.6.0 - v1.7.1)
+
+### 🎨 Visual Design & User Experience (v1.7.1)
+* **Stunning Background Pattern**: Beautiful conic gradient background with chocolate-themed color palette across entire website
+* **Enhanced Flip Menu Cards**: Horizontal flip animation with decorative SVG icons and animated floating circles
+* **Footer Color Harmony**: Gradient footer design that perfectly matches the background pattern
+* **Seamless Layout**: Clean page finish with no unwanted white space
 
 ### 📱 Enhanced Customer Experience
 * **Collapsible Menu Categories:** Customers can now collapse/expand menu sections for easier navigation on mobile devices.
@@ -40,11 +73,13 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 * **Predictable Test Environment:** Fixed table codes (910474, 139631) for consistent development and testing.
 * **Enhanced Code Documentation:** Comprehensive comments and improved code readability across all components.
 * **Dynamic Configuration:** Smart environment detection eliminates manual configuration between local and production deployments.
+* **Console Error-Free:** Resolved all SVG attribute warnings and version fetching issues.
 
 ### 🚀 Production Readiness
 * **Zero-Configuration Deployment:** Eliminated mixed content errors and CORS issues for seamless Vercel deployment.
 * **Enhanced Debugging:** Comprehensive logging for troubleshooting API connectivity issues.
 * **Performance Optimizations:** Reduced bundle sizes and improved component rendering efficiency.
+* **Receipt Generation Control**: Fixed automatic receipt generation - now only appears when explicitly closing orders.
 
 ---
 
@@ -75,6 +110,14 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 ---
 
 ## 📜 Version History
+
+### **v1.7.1 (UI Enhancement & Visual Polish)**
+* **Stunning Background Pattern**: Implemented beautiful conic gradient background with chocolate-themed color palette across the entire website
+* **Enhanced Flip Menu Cards**: Redesigned menu cards with horizontal flip animation, decorative SVG icons, and animated floating circles
+* **Footer Color Harmony**: Updated footer colors to perfectly match the chocolate background pattern using gradient design
+* **Receipt Generation Fix**: Fixed automatic receipt generation issue - receipts now only appear when "Close & Generate Receipt" is clicked
+* **Console Error Fixes**: Resolved all SVG attribute warnings and version fetching errors
+* **Clean Layout**: Removed unwanted white space below footer for seamless page finish
 
 ### **v1.7.0 (Production Stability & Configuration Management)**
 * **Dynamic API Configuration:** Enhanced environment detection for seamless local and production deployments.

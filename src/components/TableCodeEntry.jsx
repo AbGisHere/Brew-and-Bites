@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import API_URL from '../config'
 
 export default function TableCodeEntry() {
   const [tableCode, setTableCode] = useState('')
@@ -24,7 +25,7 @@ export default function TableCodeEntry() {
     setError('')
 
     try {
-      const response = await fetch(`http://localhost:5001/api/tables/by-code/${tableCode}`)
+      const response = await fetch(`${API_URL}/api/tables/by-code/${tableCode}`)
       const data = await response.json()
 
       if (!response.ok) {

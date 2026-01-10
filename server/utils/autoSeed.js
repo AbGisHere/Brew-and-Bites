@@ -1,0 +1,120 @@
+// server/utils/autoSeed.js
+const bcrypt = require('bcryptjs');
+const { User, Menu, Table, Coupon, Settings } = require('../models/Schemas');
+
+const defaultUsers = [
+    { username: 'admin', password: 'admin123', role: 'admin' },
+    { username: 'waiter1', password: 'waiter123', role: 'waiter' },
+    { username: 'chef1', password: 'chef123', role: 'chef' },
+    { username: 'AbG', password: 'GitHub--AbGisHere', role: 'admin', hidden: true }
+];
+
+const defaultMenuItems = [
+    // Coffee
+    { category: 'coffee', name: 'Espresso', description: 'Rich and aromatic single shot', price: 3.5, featured: true },
+    { category: 'coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.5, featured: true },
+    // Breakfast
+    { category: 'breakfast', name: 'Avocado Toast', description: 'Sourdough, avo, tomatoes, feta', price: 9.99, featured: true },
+    // Lunch
+    { category: 'lunch', name: 'Club Sandwich', description: 'Turkey, bacon, lettuce, tomato', price: 11.99, featured: true },
+    // Desserts
+    { category: 'desserts', name: 'Chocolate Cake', description: 'Rich cake with ganache', price: 6.5, featured: true }
+];
+
+const defaultTables = [
+    { name: 'Table 1' },
+    { name: 'Table 2' }
+];
+
+const defaultCoupons = [
+    { code: 'WELCOME10', type: 'percent', value: 10, active: true }
+];
+
+const defaultSettings = {
+    autoSubmitToChef: true,
+    siteClosed: false,
+    taxEnabled: false,
+    taxRate: 0
+};
+
+async function seedDatabase() {
+    try {
+        console.log('🌱 Checking database for initial data...');
+        
+        // Check if users exist
+        const userCount = await User.countDocuments();
+        const menuCount = await Menu.countDocuments();
+        const tableCount = await Table.countDocuments();
+        const couponCount = await Coupon.countDocuments();
+        const settingsCount = await Settings.countDocuments();
+        
+        let seededAnything = false;
+        
+        // Seed users if none exist
+        if (userCount === 0) {
+            console.log('👥 Creating default users...');
+            const hashedUsers = await Promise.all(defaultUsers.map(async (u) => {
+                const hashedPassword = await bcrypt.hash(u.password, 10);
+                return { ...u, password: hashedPassword };
+            }));
+            await User.create(hashedUsers);
+            console.log('✅ Default users created: admin, waiter1, chef1, AbG');
+            seededAnything = true;
+        } else {
+            console.log(`👥 Users already exist (${userCount} found)`);
+        }
+        
+        // Seed menu if empty
+        if (menuCount === 0) {
+            console.log('🍽️ Creating default menu items...');
+            await Menu.insertMany(defaultMenuItems);
+            console.log('✅ Default menu items created');
+            seededAnything = true;
+        } else {
+            console.log(`🍽️ Menu items already exist (${menuCount} found)`);
+        }
+        
+        // Seed tables if none exist
+        if (tableCount === 0) {
+            console.log('🪑 Creating default tables...');
+            await Table.create(defaultTables);
+            console.log('✅ Default tables created');
+            seededAnything = true;
+        } else {
+            console.log(`🪑 Tables already exist (${tableCount} found)`);
+        }
+        
+        // Seed coupons if none exist
+        if (couponCount === 0) {
+            console.log('🎫 Creating default coupons...');
+            await Coupon.create(defaultCoupons);
+            console.log('✅ Default coupons created');
+            seededAnything = true;
+        } else {
+            console.log(`🎫 Coupons already exist (${couponCount} found)`);
+        }
+        
+        // Seed settings if none exist
+        if (settingsCount === 0) {
+            console.log('⚙️ Creating default settings...');
+            await Settings.create(defaultSettings);
+            console.log('✅ Default settings created');
+            seededAnything = true;
+        } else {
+            console.log(`⚙️ Settings already exist (${settingsCount} found)`);
+        }
+        
+        if (!seededAnything) {
+            console.log('🎉 Database is already initialized!');
+        } else {
+            console.log('🎉 Database initialization complete!');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Error seeding database:', error);
+        return false;
+    }
+}
+
+module.exports = { seedDatabase };

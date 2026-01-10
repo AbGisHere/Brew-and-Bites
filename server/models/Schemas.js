@@ -23,6 +23,8 @@ const MenuItemSchema = new mongoose.Schema({
 // 3. TABLES
 const TableSchema = new mongoose.Schema({
     name: { type: String, required: true },
+    tableCode: { type: String, required: true, unique: true }, // 6-digit unique code
+    qrCode: { type: String }, // QR code data URL
     activeOrderId: { type: String, default: null } // We will store the Order ID string here
 });
 

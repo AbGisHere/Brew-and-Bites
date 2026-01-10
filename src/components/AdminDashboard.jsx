@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 // REMOVED: import { store } from '../store' 
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
+import QRCodeDisplay from './QRCodeDisplay'
 import WaiterDashboard from './WaiterDashboard'
 // Import jsPDF with CommonJS require since the module import is causing issues
 const { jsPDF } = window.jspdf || {};
@@ -163,7 +164,7 @@ function FeaturedDishesManager() {
                     </span>
                   </span>
                   <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                  <style jsx>{`
+                  <style>{`
                     .animated-button:hover { 
                       box-shadow: 0 0 0 8px transparent !important; 
                       color: white !important; 
@@ -491,7 +492,7 @@ function CouponManager() {
                 <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
-                <style jsx>{`
+                <style>{`
                   .animated-button:hover { 
                     box-shadow: 0 0 0 8px transparent !important; 
                     color: white !important; 
@@ -507,6 +508,11 @@ function CouponManager() {
                     height: 200px !important; 
                     opacity: 1 !important; 
                     background-color: #3E2723 !important; 
+                  }
+                  .active { 
+                    box-shadow: 0 0 0 4px #D4A76A !important; 
+                    background-color: #3E2723 !important; 
+                    color: white !important; 
                   }
                 `}</style>
               </button>
@@ -869,7 +875,7 @@ const handleSave = async () => {
                 <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
-                <style jsx>{`
+                <style>{`
                   .animated-button:hover:not(:disabled) { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
                   .animated-button:hover:not(:disabled) .arr-1 { right: -25% !important; }
                   .animated-button:hover:not(:disabled) .arr-2 { left: 16px !important; }
@@ -965,6 +971,7 @@ export default function AdminDashboard({ onExit }) {
   const [receipts, setReceipts] = useState([])
   const [salesTotal, setSalesTotal] = useState(0)
   const [preview, setPreview] = useState(null)
+  const [qrModal, setQrModal] = useState({ open: false, table: null })
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
@@ -1428,6 +1435,26 @@ export default function AdminDashboard({ onExit }) {
       } catch(e) { alert(e.message) }
   }
 
+  // 6. GENERATE TABLE CODES AND QR CODES
+  const generateTableCodes = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/tables/generate-codes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate table codes');
+      }
+      
+      const data = await response.json();
+      alert('Table codes and QR codes generated successfully!');
+      loadAllData(); // Refresh the tables data
+    } catch(e) { 
+      alert(e.message || 'Error generating table codes');
+    }
+  }
+
   // 6. ADD USER (API)
   const addWaiter = async () => {
     const username = prompt('Waiter username')
@@ -1644,7 +1671,7 @@ export default function AdminDashboard({ onExit }) {
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                 <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <style jsx>{`
+              <style>{`
                 .animated-button:hover { 
                   box-shadow: 0 0 0 8px transparent !important; 
                   color: white !important; 
@@ -1734,7 +1761,7 @@ export default function AdminDashboard({ onExit }) {
                 <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
-                <style jsx>{`
+                <style>{`
                   .animated-button:hover .arr-1,
                   .animated-button:hover .arr-2 {
                     fill: white !important;
@@ -1857,7 +1884,7 @@ export default function AdminDashboard({ onExit }) {
                     Cancel
                   </span>
                   <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                  <style jsx>{`
+                  <style>{`
                     .animated-button:hover:not(:disabled) { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
                     .animated-button:hover:not(:disabled) .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
                     .animated-button:active:not(:disabled) { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
@@ -1898,7 +1925,7 @@ export default function AdminDashboard({ onExit }) {
                   <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                     <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                   </svg>
-                  <style jsx>{`
+                  <style>{`
                     .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
                     .animated-button:hover .arr-1 { right: -25% !important; }
                     .animated-button:hover .arr-2 { left: 16px !important; }
@@ -2278,7 +2305,53 @@ export default function AdminDashboard({ onExit }) {
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                 <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
               </svg>
-              <style jsx>{`
+              <style>{`
+                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                .animated-button:hover .arr-1 { right: -25% !important; }
+                .animated-button:hover .arr-2 { left: 16px !important; }
+                .animated-button:hover .text { transform: translateX(12px) !important; }
+                .animated-button:hover svg { fill: white !important; }
+                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
+                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
+              `}</style>
+            </button>
+            
+            <button 
+              onClick={generateTableCodes}
+              className="animated-button group relative inline-flex items-center justify-center"
+              style={{
+                '--color': '#D4A76A',
+                '--hover-color': '#3E2723',
+                padding: '8px 24px',
+                fontSize: '14px',
+                minWidth: '160px',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                border: '2px solid',
+                borderColor: 'transparent',
+                fontWeight: '600',
+                backgroundColor: 'transparent',
+                borderRadius: '100px',
+                color: '#D4A76A',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                boxShadow: '0 0 0 2px #D4A76A'
+              }}
+            >
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+              </svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                Generate QR Codes
+              </span>
+              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+              </svg>
+              <style>{`
                 .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
                 .animated-button:hover .arr-1 { right: -25% !important; }
                 .animated-button:hover .arr-2 { left: 16px !important; }
@@ -2297,20 +2370,87 @@ export default function AdminDashboard({ onExit }) {
                 No tables found. Add your first table to get started.
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 w-full">
-                {tables.map(t => {
-                  const hasActiveOrder = t.activeOrderId;
-                  return (
-                    <div key={t.id || t._id} className="px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors w-full">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 8v8a2 2 0 002 2h10a2 2 0 002-2V8m-7 4h4" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900 truncate max-w-[150px] sm:max-w-none">{t.name}</div>
-                          <div className="flex items-center mt-1">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Table Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Table Code
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        QR Code
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {tables.map(t => {
+                      const hasActiveOrder = t.activeOrderId;
+                      return (
+                        <tr key={t.id || t._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 8v8a2 2 0 002 2h10a2 2 0 002-2V8m-7 4h4" />
+                                </svg>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{t.name}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <code className="px-2 py-1 text-sm font-mono rounded bg-blue-100 text-blue-800">
+                                {t.tableCode || 'Not generated'}
+                              </code>
+                              {t.tableCode && (
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(t.tableCode);
+                                    alert('Table code copied to clipboard!');
+                                  }}
+                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                                  title="Copy code"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center">
+                              {t.qrCode ? (
+                                <>
+                                  <img 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(t.qrCode)}`}
+                                    alt={`QR Code for ${t.name}`}
+                                    className="w-12 h-12 border border-gray-200 rounded"
+                                  />
+                                  <button
+                                    onClick={() => setQrModal({ open: true, table: t })}
+                                    className="ml-3 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors border border-blue-200"
+                                  >
+                                    VIEW
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-sm text-gray-500">Not generated</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               hasActiveOrder 
                                 ? 'bg-red-100 text-red-800' 
@@ -2318,44 +2458,45 @@ export default function AdminDashboard({ onExit }) {
                             }`}>
                               {hasActiveOrder ? 'Occupied' : 'Available'}
                             </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {/* UPDATE: Handle both View (Edit) and Take Order scenarios via Modal */}
-                        {hasActiveOrder ? (
-                          <button
-                            onClick={() => setOrderingTableId(t.id || t._id)}
-                            className="px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 rounded-md transition-colors border border-amber-200"
-                          >
-                            View / Edit Order
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setOrderingTableId(t.id || t._id)}
-                            className="px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 rounded-md transition-colors border border-green-200"
-                          >
-                            Take Order
-                          </button>
-                        )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end gap-2">
+                              {hasActiveOrder ? (
+                                <button
+                                  onClick={() => setOrderingTableId(t.id || t._id)}
+                                  className="px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 rounded-md transition-colors border border-amber-200"
+                                >
+                                  View / Edit Order
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setOrderingTableId(t.id || t._id)}
+                                  className="px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 rounded-md transition-colors border border-green-200"
+                                >
+                                  Take Order
+                                </button>
+                              )}
 
-                        <button
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to delete Table ${t.name}? This action cannot be undone.`)) {
-                              deleteTable(t.id || t._id);
-                            }
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                          title="Delete Table"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete Table ${t.name}? This action cannot be undone.`)) {
+                                    deleteTable(t.id || t._id);
+                                  }
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                title="Delete Table"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -2406,7 +2547,7 @@ export default function AdminDashboard({ onExit }) {
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                 <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
               </svg>
-              <style jsx>{`
+              <style>{`
                 .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
                 .animated-button:hover .arr-1 { right: -25% !important; }
                 .animated-button:hover .arr-2 { left: 16px !important; }
@@ -2452,7 +2593,7 @@ export default function AdminDashboard({ onExit }) {
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                 <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
               </svg>
-              <style jsx>{`
+              <style>{`
                 .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
                 .animated-button:hover .arr-1 { right: -25% !important; }
                 .animated-button:hover .arr-2 { left: 16px !important; }
@@ -2519,7 +2660,7 @@ export default function AdminDashboard({ onExit }) {
                 <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
-                <style jsx>{`
+                <style>{`
                   .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
                   .animated-button:hover .arr-1 { right: -25% !important; }
                   .animated-button:hover .arr-2 { left: 16px !important; }
@@ -2638,6 +2779,40 @@ export default function AdminDashboard({ onExit }) {
 
       {tab==='settings' && (
         <SettingsPanel onBack={() => setTab('menu')} />
+      )}
+
+      {/* QR Code Modal */}
+      {qrModal.open && qrModal.table && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Table QR Code</h3>
+              <button
+                onClick={() => setQrModal({ open: false, table: null })}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <QRCodeDisplay 
+              url={qrModal.table.qrCode}
+              tableName={qrModal.table.name}
+              tableCode={qrModal.table.tableCode}
+            />
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setQrModal({ open: false, table: null })}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

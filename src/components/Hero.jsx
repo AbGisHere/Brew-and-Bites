@@ -18,14 +18,12 @@ export default function Hero() {
           >
             View Our Menu
           </Link>
-          <Link
-            to="contact"
-            smooth={true}
-            duration={500}
+          <button
+            onClick={() => window.location.href = '/order'}
             className="bg-transparent hover:bg-white hover:bg-opacity-10 text-white border-2 border-white font-semibold py-3 px-8 rounded-full transition-all transform hover:scale-105"
           >
-            Reserve a Table
-          </Link>
+            ORDER NOW
+          </button>
         </div>
       </div>
       

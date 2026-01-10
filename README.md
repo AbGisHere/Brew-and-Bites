@@ -1,21 +1,54 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.4.2-green.svg)
+![Version](https://img.shields.io/badge/version-1.5.0-green.svg)
 
-A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now fully optimized for a mobile-first experience.
+A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now featuring a complete customer self-service ordering experience with QR codes and real-time order tracking.
 
 **🔗 Live Demo:** [https://brew-and-bites.vercel.app](https://brew-and-bites.vercel.app)  
-*(Note: The backend is hosted on a free instance. Please allow 30-60 seconds for the server to wake up on the first load!)*
+*(Note: The backend is hosted on a free instance. Please allow 30-60 seconds for server to wake up on the first load!)*
 
 ---
 
-## 🚀 What's New in v1.4.2 (Minor Bugs)
+## 🚀 What's New in v1.5.0 (Customer Ordering Revolution)
 
-### 🐛 Bug Fixes
-* **Chef Dashboard:** Resolved a server.js error which stopped the chef order dashboard from rendering.
+### ✨ Major New Features
+* **Customer Self-Service Portal:** Complete customer-facing ordering system with QR code access.
+* **Table Code Authentication:** Secure 6-digit unique codes for each table.
+* **Real-Time Order Tracking:** Live status updates (Preparing → Prepared → Served).
+* **Smart Order Merging:** Seamlessly add items to existing orders without creating duplicates.
+* **Unified Cart Display:** Single view showing both cart items and existing ordered items with status tags.
+* **Mobile-Optimized Interface:** Responsive design perfect for smartphones and tablets.
+
+### 🎨 Customer Experience Enhancements
+* **Intuitive Cart Management:** Add, remove, and adjust quantities before ordering.
+* **Visual Status Indicators:** Color-coded tags (Yellow/Blue/Green) for item status.
+* **Order History:** Complete view of all ordered items with individual pricing.
+* **Real-Time Polling:** Automatic status updates every 3 seconds.
+* **Clean UI/UX:** Streamlined interface with no duplicate sections.
+
+### 🔧 Technical Improvements
+* **QR Code Generation:** Automatic QR code creation for all tables with unique URLs.
+* **Enhanced API Endpoints:** New routes for table validation and order polling.
+* **Fixed Currency Display:** All prices now show in INR (₹) instead of USD.
+* **Improved Error Handling:** Better validation and user feedback throughout ordering flow.
+* **Animated Admin Buttons:** Consistent theme styling across all admin controls.
 
 ---
 
 ## 📜 Version History
+
+### **v1.5.0 (Customer Ordering Revolution)**
+* **Customer Self-Service Portal:** Complete customer-facing ordering system with QR code access.
+* **Table Code Authentication:** Secure 6-digit unique codes for each table.
+* **Real-Time Order Tracking:** Live status updates (Preparing → Prepared → Served).
+* **Smart Order Merging:** Seamlessly add items to existing orders without creating duplicates.
+* **Unified Cart Display:** Single view showing both cart items and existing ordered items with status tags.
+* **Mobile-Optimized Interface:** Responsive design perfect for smartphones and tablets.
+
+### **v1.4.3 (Auto-Seeding)**
+* **Automatic Database Seeding:** Default accounts (admin, waiter1, chef1, AbG) are now automatically created when the server starts with an empty database.
+* **Smart Initialization:** The system checks for existing data and only seeds missing collections to prevent duplicates.
+* **Zero Configuration:** No manual database setup required - just start the server and everything is ready!
+* **Bug Fixes:** Resolved a server.js error which stopped the chef order dashboard from rendering.
 
 ### **v1.4.2 (Current)**
 * **Bug Fixes:** Resolved backend issues for chef dashboard.
@@ -74,7 +107,17 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ## 🌟 Comprehensive Feature List
 
-### 👑 Admin Module (Control Center)
+### � Customer Module (Self-Service Ordering)
+A complete customer-facing portal for seamless self-service ordering experience.
+* **QR Code Access:** Scan table QR codes to instantly access the ordering interface.
+* **Secure Authentication:** 6-digit unique table codes for secure access control.
+* **Interactive Menu:** Browse menu items with prices, descriptions, and categories.
+* **Smart Cart Management:** Add items, adjust quantities, and review before ordering.
+* **Real-Time Order Tracking:** Live status updates with color-coded indicators.
+* **Order Merging:** Add items to existing orders without creating duplicates.
+* **Mobile-First Design:** Optimized for smartphones and tablets with responsive layout.
+
+### �👑 Admin Module (Control Center)
 The Admin dashboard is the brain of the operation, allowing full control over the restaurant's data and settings.
 * **Menu Management:**
     * **CRUD Operations:** Add, Edit, and Delete menu items.
@@ -170,6 +213,14 @@ Start the server:
 
 npm run dev
 ```
+
+**🌱 Auto-Seeding:** On first startup, the system automatically creates default accounts:
+- **admin** (password: admin123) - Administrator access
+- **waiter1** (password: waiter123) - Waiter access  
+- **chef1** (password: chef123) - Chef access
+- **AbG** (password: GitHub--AbGisHere) - Super admin (hidden)
+
+The system also seeds default menu items, tables, coupons, and settings automatically!
 3. Frontend Setup
 Open a new terminal (keep the server running).
 

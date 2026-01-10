@@ -1,0 +1,40 @@
+[{
+  "_id": {
+    "$oid": "693c7e06018fc0c3ee9b07e7"
+  },
+  "username": "chef1",
+  "password": "$2b$10$MDUuglYXoZyExT/o64IROup.S19QlAdGOdiGKA/Z4db577SlDM81C",
+  "role": "chef",
+  "hidden": false,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693c7e06018fc0c3ee9b07e6"
+  },
+  "username": "waiter1",
+  "password": "$2b$10$cZuTJ4EO6HheadThXtImGOAgdarrQyV0oDwRsUCEub79vC1TXpXKW",
+  "role": "waiter",
+  "hidden": false,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693c7e06018fc0c3ee9b07e5"
+  },
+  "username": "admin",
+  "password": "$2b$10$AfN2iiYY7K8WU4iP1ZukC.DtqlvzJ.2gNlBxry5/pkZmeCrje7yxe",
+  "role": "admin",
+  "hidden": false,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693c7e06018fc0c3ee9b07e8"
+  },
+  "username": "AbG",
+  "password": "$2b$10$XR4GIp.dahPdVXoABGJJMu3sLpudg3Zd/jO6iEH/H9wb3tLGkxjP6",
+  "role": "admin",
+  "hidden": true,
+  "__v": 0
+}]

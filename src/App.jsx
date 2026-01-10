@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import About from './components/About'
@@ -11,6 +12,8 @@ import LoginModal from './components/LoginModal'
 import AdminDashboard from './components/AdminDashboard'
 import WaiterDashboard from './components/WaiterDashboard'
 import ChefDashboard from './components/ChefDashboard'
+import TableCodeEntry from './components/TableCodeEntry'
+import CustomerOrdering from './components/CustomerOrdering'
 import { useAuth } from './context/AuthContext'
 
 function App() {
@@ -26,49 +29,57 @@ function App() {
   }, [])
   
   return (
-    <div className="min-h-screen flex flex-col">
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
-          <Loader />
-        </div>
-      ) : (
-        <>
-          {!user ? (
-            <>
-              <Navbar 
-                isMenuOpen={isMenuOpen} 
-                setIsMenuOpen={setIsMenuOpen}
-                onAdminLogin={() => { setLoginRole('admin'); setLoginOpen(true) }}
-                onWaiterLogin={() => { setLoginRole('staff'); setLoginOpen(true) }}
-              />
-              <main className="flex-grow">
-                <Hero />
-                <About />
-                <Menu />
-                <Gallery />
-                <Contact />
-              </main>
-              <Footer />
-              <LoginModal 
-                open={loginOpen} 
-                onClose={() => setLoginOpen(false)} 
-                defaultRole={loginRole}
-              />
-            </>
-          ) : (
-            <>
-              {user.role === 'admin' ? (
-                <AdminDashboard onExit={() => window.location.reload()} />
-              ) : user.role === 'chef' ? (
-                <ChefDashboard onExit={() => window.location.reload()} />
-              ) : (
-                <WaiterDashboard onExit={() => window.location.reload()} />
-              )}
-            </>
-          )}
-        </>
-      )}
-    </div>
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <Loader />
+          </div>
+        ) : (
+          <>
+            {!user ? (
+              <Routes>
+                <Route path="/" element={
+                  <>
+                    <Navbar 
+                      isMenuOpen={isMenuOpen} 
+                      setIsMenuOpen={setIsMenuOpen}
+                      onAdminLogin={() => { setLoginRole('admin'); setLoginOpen(true) }}
+                      onWaiterLogin={() => { setLoginRole('staff'); setLoginOpen(true) }}
+                    />
+                    <main className="flex-grow">
+                      <Hero />
+                      <About />
+                      <Menu />
+                      <Gallery />
+                      <Contact />
+                    </main>
+                    <Footer />
+                    <LoginModal 
+                      open={loginOpen} 
+                      onClose={() => setLoginOpen(false)} 
+                      defaultRole={loginRole}
+                    />
+                  </>
+                } />
+                <Route path="/order" element={<TableCodeEntry />} />
+                <Route path="/customer-order" element={<CustomerOrdering />} />
+              </Routes>
+            ) : (
+              <>
+                {user.role === 'admin' ? (
+                  <AdminDashboard onExit={() => window.location.reload()} />
+                ) : user.role === 'chef' ? (
+                  <ChefDashboard onExit={() => window.location.reload()} />
+                ) : (
+                  <WaiterDashboard onExit={() => window.location.reload()} />
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </Router>
   )
 }
 

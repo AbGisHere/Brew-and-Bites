@@ -1,0 +1,55 @@
+[{
+  "_id": {
+    "$oid": "693c7e07018fc0c3ee9b07ed"
+  },
+  "category": "coffee",
+  "name": "Espresso",
+  "description": "Rich and aromatic single shot",
+  "price": 349,
+  "featured": true,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693c7e07018fc0c3ee9b07ee"
+  },
+  "category": "coffee",
+  "name": "Cappuccino",
+  "description": "Espresso with steamed milk and foam",
+  "price": 449,
+  "featured": true,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693c7e07018fc0c3ee9b07ef"
+  },
+  "category": "breakfast",
+  "name": "Avocado Toast",
+  "description": "Sourdough, avo, tomatoes, feta",
+  "price": 999,
+  "featured": true,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693c7e07018fc0c3ee9b07f0"
+  },
+  "category": "lunch",
+  "name": "Club Sandwich",
+  "description": "Turkey, bacon, lettuce, tomato",
+  "price": 699,
+  "featured": true,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693c7e07018fc0c3ee9b07f1"
+  },
+  "category": "desserts",
+  "name": "Chocolate Cake",
+  "description": "Rich cake with ganache",
+  "price": 649,
+  "featured": true,
+  "__v": 0
+}]

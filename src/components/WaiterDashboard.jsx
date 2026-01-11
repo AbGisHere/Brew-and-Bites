@@ -1124,7 +1124,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
       <ReceiptModal 
         open={!!preview}
         onClose={()=>setPreview(null)}
-        receipt={preview}
+        receipt={{...preview, ...settings}}
         canEdit={false} // Receipts viewed here are historical/read-only
       />
     </div>

@@ -41,7 +41,28 @@ const SettingsSchema = new mongoose.Schema({
     autoSubmitToChef: { type: Boolean, default: true },
     siteClosed: { type: Boolean, default: false },
     taxEnabled: { type: Boolean, default: false },
-    taxRate: { type: Number, default: 0, min: 0, max: 100 }
+    taxRate: { type: Number, default: 0, min: 0, max: 100 },
+    
+    // Restaurant Information (with show/hide toggles)
+    showRestaurantName: { type: Boolean, default: true },
+    restaurantName: { type: String, default: '' },
+    showRestaurantAddress: { type: Boolean, default: true },
+    restaurantAddress: { type: String, default: '' },
+    showContactNumber: { type: Boolean, default: true },
+    contactNumber: { type: String, default: '' },
+    showEmail: { type: Boolean, default: true },
+    email: { type: String, default: '' },
+    showRestaurantLogo: { type: Boolean, default: true },
+    restaurantLogo: { type: String, default: '' }, // Base64 encoded image or URL
+    
+    // Tax & Regulatory Information (with show/hide toggles)
+    showGSTNumber: { type: Boolean, default: false },
+    gstNumber: { type: String, default: '' },
+    showFSSAINumber: { type: Boolean, default: false },
+    fssaiNumber: { type: String, default: '' },
+    
+    // Additional Options
+    includeQRInInvoice: { type: Boolean, default: true }
 });
 
 // 6. ORDERS (Complex Structure)

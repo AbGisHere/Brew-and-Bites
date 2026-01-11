@@ -437,19 +437,70 @@ app.post('/api/login', async (req, res) => {
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
-    // 4.1 MIGRATION: Add tax fields to existing settings
+    // 4.1 MIGRATION: Add invoice settings fields to existing settings
     app.get('/api/migrate/settings', async (req, res) => {
         try {
             const settings = await Settings.findOne();
             if (settings) {
-                // If taxEnabled doesn't exist, add it with default value
+                // Add existing tax fields if they don't exist
                 if (settings.taxEnabled === undefined) {
                     settings.taxEnabled = false;
                 }
-                // If taxRate doesn't exist, add it with default value
                 if (settings.taxRate === undefined) {
                     settings.taxRate = 0;
                 }
+                
+                // Add restaurant information fields
+                if (settings.showRestaurantName === undefined) {
+                    settings.showRestaurantName = true;
+                }
+                if (settings.restaurantName === undefined) {
+                    settings.restaurantName = '';
+                }
+                if (settings.showRestaurantAddress === undefined) {
+                    settings.showRestaurantAddress = true;
+                }
+                if (settings.restaurantAddress === undefined) {
+                    settings.restaurantAddress = '';
+                }
+                if (settings.showContactNumber === undefined) {
+                    settings.showContactNumber = true;
+                }
+                if (settings.contactNumber === undefined) {
+                    settings.contactNumber = '';
+                }
+                if (settings.showEmail === undefined) {
+                    settings.showEmail = true;
+                }
+                if (settings.email === undefined) {
+                    settings.email = '';
+                }
+                if (settings.showRestaurantLogo === undefined) {
+                    settings.showRestaurantLogo = true;
+                }
+                if (settings.restaurantLogo === undefined) {
+                    settings.restaurantLogo = '';
+                }
+                
+                // Add tax & regulatory information fields
+                if (settings.showGSTNumber === undefined) {
+                    settings.showGSTNumber = false;
+                }
+                if (settings.gstNumber === undefined) {
+                    settings.gstNumber = '';
+                }
+                if (settings.showFSSAINumber === undefined) {
+                    settings.showFSSAINumber = false;
+                }
+                if (settings.fssaiNumber === undefined) {
+                    settings.fssaiNumber = '';
+                }
+                
+                // Add additional options
+                if (settings.includeQRInInvoice === undefined) {
+                    settings.includeQRInInvoice = true;
+                }
+                
                 await settings.save();
                 res.json({ message: 'Settings migrated successfully', settings });
             } else {
@@ -458,13 +509,31 @@ app.post('/api/login', async (req, res) => {
                     autoSubmitToChef: true, 
                     siteClosed: false,
                     taxEnabled: false,
-                    taxRate: 0
+                    taxRate: 0,
+                    // Restaurant Information
+                    showRestaurantName: true,
+                    restaurantName: '',
+                    showRestaurantAddress: true,
+                    restaurantAddress: '',
+                    showContactNumber: true,
+                    contactNumber: '',
+                    showEmail: true,
+                    email: '',
+                    showRestaurantLogo: true,
+                    restaurantLogo: '',
+                    // Tax & Regulatory Information
+                    showGSTNumber: false,
+                    gstNumber: '',
+                    showFSSAINumber: false,
+                    fssaiNumber: '',
+                    // Additional Options
+                    includeQRInInvoice: true
                 });
                 res.json({ message: 'Default settings created', settings: newSettings });
             }
         } catch (error) {
             console.error('Migration error:', error);
-            res.status(500).json({ error: 'Migration failed', details: error.message });
+            res.status(500).json({ error: 'Migration failed' });
         }
     });
 
@@ -478,7 +547,25 @@ app.post('/api/login', async (req, res) => {
                     autoSubmitToChef: true, 
                     siteClosed: false,
                     taxEnabled: false,
-                    taxRate: 0
+                    taxRate: 0,
+                    // Restaurant Information
+                    showRestaurantName: true,
+                    restaurantName: '',
+                    showRestaurantAddress: true,
+                    restaurantAddress: '',
+                    showContactNumber: true,
+                    contactNumber: '',
+                    showEmail: true,
+                    email: '',
+                    showRestaurantLogo: true,
+                    restaurantLogo: '',
+                    // Tax & Regulatory Information
+                    showGSTNumber: false,
+                    gstNumber: '',
+                    showFSSAINumber: false,
+                    fssaiNumber: '',
+                    // Additional Options
+                    includeQRInInvoice: true
                 });
             }
             
@@ -535,7 +622,25 @@ app.post('/api/login', async (req, res) => {
                 autoSubmitToChef: true, 
                 siteClosed: false,
                 taxEnabled: false,
-                taxRate: 0
+                taxRate: 0,
+                // Restaurant Information
+                showRestaurantName: true,
+                restaurantName: '',
+                showRestaurantAddress: true,
+                restaurantAddress: '',
+                showContactNumber: true,
+                contactNumber: '',
+                showEmail: true,
+                email: '',
+                showRestaurantLogo: true,
+                restaurantLogo: '',
+                // Tax & Regulatory Information
+                showGSTNumber: false,
+                gstNumber: '',
+                showFSSAINumber: false,
+                fssaiNumber: '',
+                // Additional Options
+                includeQRInInvoice: true
             });
             
             // Prepare update object

@@ -912,16 +912,16 @@ const handleSave = async () => {
       {settingsTab === 'general' && (
         <Section title="General Settings">
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <h4 className="font-medium">Order Submission (Waiter)</h4>
-                <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex-1">
+                <h5 className="font-medium text-sm">Order Submission (Waiter)</h5>
+                <p className="text-xs text-gray-600">
                   {settings.autoSubmitToChef 
                     ? 'Orders taken by Waiters are automatically sent to the kitchen when items are added.'
                     : 'Orders taken by Waiters require manual submission to the kitchen.'}
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex items-center cursor-pointer ml-4">
                 <input 
                   type="checkbox" 
                   className="sr-only peer" 

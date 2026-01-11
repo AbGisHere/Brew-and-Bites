@@ -11,6 +11,7 @@ import { FiStar, FiUsers, FiUserPlus } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
+import { MenuItem, colors } from './SharedButtonStyles.jsx'
 
 // Helper to map MongoDB _id to the id your UI expects
 const mapId = (data) => {
@@ -2647,46 +2648,41 @@ export default function AdminDashboard({ onExit }) {
           </Section>
 
           <Section title="Menu Items">
-            <div className="space-y-4 max-h-[480px] overflow-auto pr-2">
-              {categories.map(cat => (
-                <div key={cat}>
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold capitalize">{cat}</h4>
-                    {isEditing && form.category === cat && (
-                      <button 
-                        className="text-sm text-gray-500 hover:text-gray-700"
-                        onClick={resetForm}
-                      >
-                        Cancel Edit
-                      </button>
-                    )}
+            <div style={{ 
+              maxHeight: '500px', 
+              overflow: 'auto',
+              padding: '0 30px 0 10px',
+              margin: '0 -20px 0 -10px'
+            }}>
+              <div className="space-y-4">
+                {categories.map(cat => (
+                  <div key={cat}>
+                    <div className="flex justify-between items-center mb-2" style={{ padding: '0 10px' }}>
+                      <h4 className="font-semibold capitalize">{cat}</h4>
+                      {isEditing && form.category === cat && (
+                        <button 
+                          className="text-sm text-gray-500 hover:text-gray-700"
+                          onClick={resetForm}
+                        >
+                          Cancel Edit
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-2" style={{ padding: '0 10px' }}>
+                      {menu[cat].map(item => (
+                        <MenuItem
+                          key={item.id}
+                          item={item}
+                          showActions={true}
+                          onEdit={() => editItem(cat, item)}
+                          onDelete={() => deleteItem(cat, item.id)}
+                          className="flex items-start justify-between"
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <ul className="space-y-2">
-                    {menu[cat].map(item => (
-                      <li key={item.id} className="border rounded p-3 flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium">{item.name} <span className="text-primary font-semibold">₹{item.price.toFixed(2)}</span></div>
-                          <div className="text-sm text-gray-600">{item.description}</div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button 
-                            className="text-blue-600 hover:text-blue-800" 
-                            onClick={() => editItem(cat, item)}
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            className="text-red-600 hover:text-red-800" 
-                            onClick={() => deleteItem(cat, item.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </Section>
 

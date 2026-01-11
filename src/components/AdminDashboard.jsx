@@ -12,6 +12,14 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 
+// Helper to map MongoDB _id to the id your UI expects
+const mapId = (data) => {
+  if (!data) return data;
+  if (Array.isArray(data)) return data.map(d => ({ ...d, id: d._id || d.id }));
+  if (typeof data === 'object') return { ...data, id: data._id || data.id };
+  return data;
+};
+
 // --- HELPER: Convert backend data to your UI format ---
 const processMenuData = (items) => {
   return items.reduce((acc, item) => {
@@ -148,13 +156,20 @@ function FeaturedDishesManager() {
                     borderColor: 'transparent',
                     fontSize: '14px',
                     fontWeight: '500',
-                    backgroundColor: isActive ? hoverColor : 'transparent',
+                    backgroundColor: isActive ? hoverColor : 'rgba(212, 167, 106, 0.15)',
                     borderRadius: '100px',
                     color: isActive ? 'white' : buttonColor,
                     cursor: 'pointer',
                     overflow: 'hidden',
                     transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                    boxShadow: `0 0 0 2px ${buttonColor}`
+                    boxShadow: `0 0 0 2px ${buttonColor}`,
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    background: isActive 
+                      ? hoverColor 
+                      : 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                    border: `1px solid rgba(212, 167, 106, 0.3)`,
+                    boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`
                   }}
                 >
                   <span className="text" style={{ position: 'relative', zIndex: 1, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -168,7 +183,12 @@ function FeaturedDishesManager() {
                     .animated-button:hover { 
                       box-shadow: 0 0 0 8px transparent !important; 
                       color: white !important; 
-                      border-radius: 12px !important; 
+                      border-radius: 12px !important;
+                      backdropFilter: 'blur(16px) !important',
+                      WebkitBackdropFilter: 'blur(16px) !important',
+                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                      border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                      boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
                     }
                     .animated-button:active { 
                       transform: scale(0.95) !important; 
@@ -183,7 +203,11 @@ function FeaturedDishesManager() {
                     .active { 
                       box-shadow: 0 0 0 4px ${buttonColor} !important; 
                       background-color: ${hoverColor} !important; 
-                      color: white !important; 
+                      color: white !important;
+                      backdropFilter: 'blur(12px) !important',
+                      WebkitBackdropFilter: 'blur(12px) !important',
+                      border: '1px solid rgba(212, 167, 106, 0.4) !important',
+                      boxShadow: '0 8px 32px rgba(212, 167, 106, 0.2), 0 0 0 4px ${buttonColor} !important' !important;
                     }
                   `}</style>
                 </button>
@@ -470,7 +494,7 @@ function CouponManager() {
                   border: '2px solid',
                   borderColor: 'transparent',
                   fontWeight: '600',
-                  backgroundColor: 'transparent',
+                  backgroundColor: 'rgba(212, 167, 106, 0.15)',
                   borderRadius: '100px',
                   color: '#D4A76A',
                   cursor: 'pointer',
@@ -479,7 +503,12 @@ function CouponManager() {
                   boxShadow: '0 0 0 2px #D4A76A',
                   opacity: isLoading ? 0.7 : 1,
                   pointerEvents: isLoading ? 'none' : 'auto',
-                  height: '40px'
+                  height: '40px',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                  border: '1px solid rgba(212, 167, 106, 0.3)',
+                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
                 }}
               >
                 <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -496,7 +525,12 @@ function CouponManager() {
                   .animated-button:hover { 
                     box-shadow: 0 0 0 8px transparent !important; 
                     color: white !important; 
-                    border-radius: 12px !important; 
+                    border-radius: 12px !important;
+                    backdropFilter: 'blur(16px) !important',
+                    WebkitBackdropFilter: 'blur(16px) !important',
+                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                    border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                    boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
                   }
                   .animated-button:hover .arr-1 { right: -25% !important; }
                   .animated-button:hover .arr-2 { left: 16px !important; }
@@ -512,7 +546,11 @@ function CouponManager() {
                   .active { 
                     box-shadow: 0 0 0 4px #D4A76A !important; 
                     background-color: #3E2723 !important; 
-                    color: white !important; 
+                    color: white !important;
+                    backdropFilter: 'blur(12px) !important',
+                    WebkitBackdropFilter: 'blur(12px) !important',
+                    border: '1px solid rgba(212, 167, 106, 0.4) !important',
+                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.2), 0 0 0 4px #D4A76A !important' !important;
                   }
                 `}</style>
               </button>
@@ -846,13 +884,20 @@ const handleSave = async () => {
                 borderColor: 'transparent',
                 fontSize: '14px',
                 fontWeight: '600',
-                backgroundColor: isActive ? hoverColor : 'transparent',
+                backgroundColor: isActive ? hoverColor : 'rgba(212, 167, 106, 0.15)',
                 borderRadius: '100px',
                 color: isActive ? 'white' : buttonColor,
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: `0 0 0 2px ${buttonColor}`
+                boxShadow: `0 0 0 2px ${buttonColor}`,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                background: isActive 
+                  ? hoverColor 
+                  : 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                border: `1px solid rgba(212, 167, 106, 0.3)`,
+                boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`
               }}
             >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -873,7 +918,12 @@ const handleSave = async () => {
                 .animated-button:hover { 
                   box-shadow: 0 0 0 12px transparent !important; 
                   color: white !important; 
-                  border-radius: 12px !important; 
+                  border-radius: 12px !important;
+                  backdropFilter: 'blur(16px) !important',
+                  WebkitBackdropFilter: 'blur(16px) !important',
+                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 12px transparent !important' !important;
                 }
                 .animated-button:hover .arr-1 { 
                   right: -25% !important; 
@@ -901,6 +951,10 @@ const handleSave = async () => {
                   box-shadow: 0 0 0 4px ${buttonColor} !important; 
                   background-color: ${hoverColor} !important; 
                   color: white !important; 
+                  backdropFilter: 'blur(12px) !important',
+                  WebkitBackdropFilter: 'blur(12px) !important',
+                  border: '1px solid rgba(212, 167, 106, 0.4) !important',
+                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.2), 0 0 0 4px ${buttonColor} !important' !important;
                 }
               `}</style>
             </button>
@@ -1323,13 +1377,20 @@ const handleSave = async () => {
               border: '2px solid',
               borderColor: 'transparent',
               fontWeight: '600',
-              backgroundColor: 'transparent',
+              backgroundColor: 'rgba(156, 163, 175, 0.15)',
               borderRadius: '100px',
               color: '#9CA3AF',
-              cursor: 'pointer',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
               overflow: 'hidden',
               transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-              boxShadow: '0 0 0 2px #9CA3AF'
+              boxShadow: '0 0 0 2px #9CA3AF',
+              opacity: isSaving ? 0.7 : 1,
+              pointerEvents: isSaving ? 'none' : 'auto',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              background: 'linear-gradient(135deg, rgba(156, 163, 175, 0.25) 0%, rgba(156, 163, 175, 0.1) 100%)',
+              border: '1px solid rgba(156, 163, 175, 0.3)',
+              boxShadow: '0 8px 32px rgba(156, 163, 175, 0.15), 0 0 0 2px #9CA3AF'
             }}
             disabled={isSaving}
           >
@@ -1343,6 +1404,24 @@ const handleSave = async () => {
             <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
               <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
             </svg>
+            <style>{`
+              .animated-button:hover:not(:disabled) { 
+                box-shadow: 0 0 0 8px transparent !important; 
+                color: white !important; 
+                border-radius: 12px !important;
+                backdropFilter: 'blur(16px) !important',
+                WebkitBackdropFilter: 'blur(16px) !important',
+                background: 'linear-gradient(135deg, rgba(156, 163, 175, 0.4) 0%, rgba(156, 163, 175, 0.2) 100%) !important',
+                border: '1px solid rgba(156, 163, 175, 0.5) !important',
+                boxShadow: '0 12px 40px rgba(156, 163, 175, 0.25), 0 0 0 8px transparent !important' !important;
+              }
+              .animated-button:hover:not(:disabled) .arr-1 { right: -25% !important; }
+              .animated-button:hover:not(:disabled) .arr-2 { left: 16px !important; }
+              .animated-button:hover:not(:disabled) .text { transform: translateX(12px) !important; }
+              .animated-button:hover:not(:disabled) svg { fill: white !important; }
+              .animated-button:active:not(:disabled) { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #9CA3AF !important; }
+              .animated-button:hover:not(:disabled) .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #4B5563 !important; }
+            `}</style>
           </button>
           <button
             onClick={handleSave}
@@ -1360,13 +1439,20 @@ const handleSave = async () => {
               border: '2px solid',
               borderColor: 'transparent',
               fontWeight: '600',
-              backgroundColor: 'transparent',
+              backgroundColor: 'rgba(212, 167, 106, 0.15)',
               borderRadius: '100px',
               color: '#D4A76A',
-              cursor: 'pointer',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
               overflow: 'hidden',
               transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-              boxShadow: '0 0 0 2px #D4A76A'
+              boxShadow: '0 0 0 2px #D4A76A',
+              opacity: isSaving ? 0.7 : 1,
+              pointerEvents: isSaving ? 'none' : 'auto',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+              border: '1px solid rgba(212, 167, 106, 0.3)',
+              boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
             }}
             disabled={isSaving}
           >
@@ -1381,7 +1467,16 @@ const handleSave = async () => {
               <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
             </svg>
             <style>{`
-              .animated-button:hover:not(:disabled) { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+              .animated-button:hover:not(:disabled) { 
+                box-shadow: 0 0 0 8px transparent !important; 
+                color: white !important; 
+                border-radius: 12px !important;
+                backdropFilter: 'blur(16px) !important',
+                WebkitBackdropFilter: 'blur(16px) !important',
+                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+              }
               .animated-button:hover:not(:disabled) .arr-1 { right: -25% !important; }
               .animated-button:hover:not(:disabled) .arr-2 { left: 16px !important; }
               .animated-button:hover:not(:disabled) .text { transform: translateX(12px) !important; }
@@ -1477,6 +1572,7 @@ export default function AdminDashboard({ onExit }) {
   const [qrModal, setQrModal] = useState({ open: false, table: null })
   const [recentlyGeneratedCodes, setRecentlyGeneratedCodes] = useState(new Set())
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
+  const [settings, setSettings] = useState({ autoSubmitToChef: true })
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
     endDate: ''
@@ -1836,13 +1932,15 @@ export default function AdminDashboard({ onExit }) {
       setTableMap(tableMapping);
       
       const rData = await receiptRes.json();
-      setReceipts(rData);
-      setSalesTotal(rData.reduce((sum, r) => sum + (r.total || 0), 0));
+      const receiptsData = mapId(rData) || [];
+      setReceipts(receiptsData);
+      setSalesTotal(receiptsData.reduce((sum, r) => sum + (r.total || 0), 0));
 
       setUsers(await userRes.json());
       
       const sData = await settingRes.json();
       setSiteClosed(sData.siteClosed || false);
+      setSettings(sData);
 
     } catch (err) { console.error("Load error:", err); }
   }, []);
@@ -2103,17 +2201,17 @@ export default function AdminDashboard({ onExit }) {
       }
 
       // Update the local state to reflect the changes
-      const updatedReceipt = await response.json();
+      const updatedReceipt = mapId(await response.json());
       
       // Update the receipts list
       setReceipts(prevReceipts => 
         prevReceipts.map(r => 
-          r._id === updatedReceipt._id ? { ...r, ...updatedReceipt } : r
+          r.id === updatedReceipt.id ? { ...r, ...updatedReceipt } : r
         )
       );
       
       // Update the preview if it's open
-      if (preview && preview._id === updatedReceipt._id) {
+      if (preview && preview.id === updatedReceipt.id) {
         setPreview(updatedReceipt);
       }
       
@@ -2179,13 +2277,18 @@ export default function AdminDashboard({ onExit }) {
               border: '2px solid',
               borderColor: 'transparent',
               fontWeight: '500',
-              backgroundColor: 'transparent',
+              backgroundColor: 'rgba(139, 90, 43, 0.15)',
               borderRadius: '100px',
               color: '#8B5A2B',
               cursor: 'pointer',
               overflow: 'hidden',
               transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-              boxShadow: '0 0 0 2px #8B5A2B'
+              boxShadow: '0 0 0 2px #8B5A2B',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              background: 'linear-gradient(135deg, rgba(139, 90, 43, 0.25) 0%, rgba(139, 90, 43, 0.1) 100%)',
+              border: '1px solid rgba(139, 90, 43, 0.3)',
+              boxShadow: '0 8px 32px rgba(139, 90, 43, 0.15), 0 0 0 2px #8B5A2B'
             }}
           >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -2202,7 +2305,12 @@ export default function AdminDashboard({ onExit }) {
                 .animated-button:hover { 
                   box-shadow: 0 0 0 8px transparent !important; 
                   color: white !important; 
-                  border-radius: 12px !important; 
+                  border-radius: 12px !important;
+                  backdropFilter: 'blur(16px) !important',
+                  WebkitBackdropFilter: 'blur(16px) !important',
+                  background: 'linear-gradient(135deg, rgba(139, 90, 43, 0.4) 0%, rgba(139, 90, 43, 0.2) 100%) !important',
+                  border: '1px solid rgba(139, 90, 43, 0.5) !important',
+                  boxShadow: '0 12px 40px rgba(139, 90, 43, 0.25), 0 0 0 8px transparent !important' !important;
                 }
                 .animated-button:hover .arr-1 { 
                   right: -25% !important; 
@@ -2269,13 +2377,20 @@ export default function AdminDashboard({ onExit }) {
                   borderColor: 'transparent',
                   fontSize: '14px',
                   fontWeight: '600',
-                  backgroundColor: isActive ? hoverColor : 'transparent',
+                  backgroundColor: isActive ? hoverColor : 'rgba(212, 167, 106, 0.15)',
                   borderRadius: '100px',
                   color: isActive ? 'white' : buttonColor,
                   cursor: 'pointer',
                   overflow: 'hidden',
                   transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                  boxShadow: `0 0 0 2px ${buttonColor}`
+                  boxShadow: `0 0 0 2px ${buttonColor}`,
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  background: isActive 
+                    ? hoverColor 
+                    : 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                  border: `1px solid rgba(212, 167, 106, 0.3)`,
+                  boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`
                 }}
               >
                 <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -2296,7 +2411,12 @@ export default function AdminDashboard({ onExit }) {
                   .animated-button:hover { 
                     box-shadow: 0 0 0 12px transparent !important; 
                     color: white !important; 
-                    border-radius: 12px !important; 
+                    border-radius: 12px !important;
+                    backdropFilter: 'blur(16px) !important',
+                    WebkitBackdropFilter: 'blur(16px) !important',
+                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                    border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                    boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 12px transparent !important' !important;
                   }
                   .animated-button:hover .arr-1 { 
                     right: -25% !important; 
@@ -2309,7 +2429,7 @@ export default function AdminDashboard({ onExit }) {
                   }
                   .animated-button:active { 
                     transform: scale(0.95) !important; 
-                    box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                    box-shadow: 0 0 0 4px #D4A76A !important; 
                   }
                   .animated-button:hover .circle { 
                     width: 220px !important; 
@@ -2321,6 +2441,10 @@ export default function AdminDashboard({ onExit }) {
                     box-shadow: 0 0 0 4px ${buttonColor} !important; 
                     background-color: ${hoverColor} !important; 
                     color: white !important; 
+                    backdropFilter: 'blur(12px) !important',
+                    WebkitBackdropFilter: 'blur(12px) !important',
+                    border: '1px solid rgba(212, 167, 106, 0.4) !important',
+                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.2), 0 0 0 4px ${buttonColor} !important' !important;
                   }
                   .active svg { 
                     fill: white !important; 
@@ -2401,14 +2525,19 @@ export default function AdminDashboard({ onExit }) {
                     border: '2px solid',
                     borderColor: 'transparent',
                     fontWeight: '600',
-                    backgroundColor: 'transparent',
+                    backgroundColor: 'rgba(212, 167, 106, 0.15)',
                     borderRadius: '100px',
                     color: '#D4A76A',
                     cursor: !isEditing ? 'not-allowed' : 'pointer',
                     overflow: 'hidden',
                     transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
                     boxShadow: '0 0 0 2px #D4A76A',
-                    opacity: isEditing ? 1 : 0.6
+                    opacity: isEditing ? 1 : 0.6,
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                    border: '1px solid rgba(212, 167, 106, 0.3)',
+                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
                   }}
                 >
                   <span className="text" style={{ position: 'relative', zIndex: 1, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -2416,9 +2545,26 @@ export default function AdminDashboard({ onExit }) {
                   </span>
                   <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
                   <style>{`
-                    .animated-button:hover:not(:disabled) { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
-                    .animated-button:hover:not(:disabled) .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
-                    .animated-button:active:not(:disabled) { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
+                    .animated-button:hover:not(:disabled) { 
+                      box-shadow: 0 0 0 8px transparent !important; 
+                      color: white !important; 
+                      border-radius: 12px !important;
+                      backdropFilter: 'blur(16px) !important',
+                      WebkitBackdropFilter: 'blur(16px) !important',
+                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                      border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                      boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+                    }
+                    .animated-button:hover:not(:disabled) .circle { 
+                      width: 200px !important; 
+                      height: 200px !important; 
+                      opacity: 1 !important; 
+                      background-color: #3E2723 !important; 
+                    }
+                    .animated-button:active:not(:disabled) { 
+                      transform: scale(0.95) !important; 
+                      box-shadow: 0 0 0 4px #D4A76A !important; 
+                    }
                   `}</style>
                 </button>
                 <button 
@@ -2437,13 +2583,18 @@ export default function AdminDashboard({ onExit }) {
                     border: '2px solid',
                     borderColor: 'transparent',
                     fontWeight: '600',
-                    backgroundColor: 'transparent',
+                    backgroundColor: 'rgba(212, 167, 106, 0.15)',
                     borderRadius: '100px',
                     color: '#D4A76A',
                     cursor: 'pointer',
                     overflow: 'hidden',
                     transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                    boxShadow: '0 0 0 2px #D4A76A'
+                    boxShadow: '0 0 0 2px #D4A76A',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                    border: '1px solid rgba(212, 167, 106, 0.3)',
+                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
                   }}
                 >
                   <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -2457,13 +2608,38 @@ export default function AdminDashboard({ onExit }) {
                     <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                   </svg>
                   <style>{`
-                    .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
-                    .animated-button:hover .arr-1 { right: -25% !important; }
-                    .animated-button:hover .arr-2 { left: 16px !important; }
-                    .animated-button:hover .text { transform: translateX(12px) !important; }
-                    .animated-button:hover svg { fill: white !important; }
-                    .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
-                    .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
+                    .animated-button:hover { 
+                      box-shadow: 0 0 0 8px transparent !important; 
+                      color: white !important; 
+                      border-radius: 12px !important;
+                      backdropFilter: 'blur(16px) !important',
+                      WebkitBackdropFilter: 'blur(16px) !important',
+                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                      border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                      boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+                    }
+                    .animated-button:hover .arr-1 { 
+                      right: -25% !important; 
+                    }
+                    .animated-button:hover .arr-2 { 
+                      left: 16px !important; 
+                    }
+                    .animated-button:hover .text { 
+                      transform: translateX(12px) !important; 
+                    }
+                    .animated-button:hover svg { 
+                      fill: white !important; 
+                    }
+                    .animated-button:active { 
+                      transform: scale(0.95) !important; 
+                      box-shadow: 0 0 0 4px #D4A76A !important; 
+                    }
+                    .animated-button:hover .circle { 
+                      width: 200px !important; 
+                      height: 200px !important; 
+                      opacity: 1 !important; 
+                      background-color: #3E2723 !important; 
+                    }
                   `}</style>
                 </button>
               </div>
@@ -2698,8 +2874,8 @@ export default function AdminDashboard({ onExit }) {
                     }
                   })
                   .map((r) => (
-                  <tr key={r._id} className="border-b hover:bg-gray-50 min-w-max">
-                    <td className="p-2">{r._id.slice(-6)}</td>
+                  <tr key={r.id} className="border-b hover:bg-gray-50 min-w-max">
+                    <td className="p-2">{r.id.slice(-6)}</td>
                     <td className="p-2">{new Date(r.createdAt).toLocaleString()}</td>
                     <td className="p-2">
                       {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
@@ -2713,7 +2889,7 @@ export default function AdminDashboard({ onExit }) {
                         View
                       </button>
                       <button 
-                        onClick={() => deleteReceipt(r._id)}
+                        onClick={() => deleteReceipt(r.id)}
                         className="text-red-600 hover:underline"
                       >
                         Delete
@@ -2782,7 +2958,7 @@ export default function AdminDashboard({ onExit }) {
           canEdit={true}
           onDelete={deleteReceipt}
           onUpdate={async (items) => {
-            const success = await updateReceipt(preview._id, items);
+            const success = await updateReceipt(preview.id, items);
             if (success) {
               // Refresh the data to ensure everything is in sync
               loadAllData();
@@ -2817,13 +2993,18 @@ export default function AdminDashboard({ onExit }) {
                 border: '2px solid',
                 borderColor: 'transparent',
                 fontWeight: '600',
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(212, 167, 106, 0.15)',
                 borderRadius: '100px',
                 color: '#D4A76A',
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A'
+                boxShadow: '0 0 0 2px #D4A76A',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                border: '1px solid rgba(212, 167, 106, 0.3)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
               }}
             >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -2837,7 +3018,16 @@ export default function AdminDashboard({ onExit }) {
                 <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
               </svg>
               <style>{`
-                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                .animated-button:hover { 
+                  box-shadow: 0 0 0 8px transparent !important; 
+                  color: white !important; 
+                  border-radius: 12px !important;
+                  backdropFilter: 'blur(16px) !important',
+                  WebkitBackdropFilter: 'blur(16px) !important',
+                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+                }
                 .animated-button:hover .arr-1 { right: -25% !important; }
                 .animated-button:hover .arr-2 { left: 16px !important; }
                 .animated-button:hover .text { transform: translateX(12px) !important; }
@@ -2863,13 +3053,18 @@ export default function AdminDashboard({ onExit }) {
                 border: '2px solid',
                 borderColor: 'transparent',
                 fontWeight: '600',
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(212, 167, 106, 0.15)',
                 borderRadius: '100px',
                 color: '#D4A76A',
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A'
+                boxShadow: '0 0 0 2px #D4A76A',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                border: '1px solid rgba(212, 167, 106, 0.3)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
               }}
             >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -2883,7 +3078,16 @@ export default function AdminDashboard({ onExit }) {
                 <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
               </svg>
               <style>{`
-                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                .animated-button:hover { 
+                  box-shadow: 0 0 0 8px transparent !important; 
+                  color: white !important; 
+                  border-radius: 12px !important;
+                  backdropFilter: 'blur(16px) !important',
+                  WebkitBackdropFilter: 'blur(16px) !important',
+                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+                }
                 .animated-button:hover .arr-1 { right: -25% !important; }
                 .animated-button:hover .arr-2 { left: 16px !important; }
                 .animated-button:hover .text { transform: translateX(12px) !important; }
@@ -3063,13 +3267,18 @@ export default function AdminDashboard({ onExit }) {
                 border: '2px solid',
                 borderColor: 'transparent',
                 fontWeight: '600',
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(212, 167, 106, 0.15)',
                 borderRadius: '100px',
                 color: '#D4A76A',
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A'
+                boxShadow: '0 0 0 2px #D4A76A',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                border: '1px solid rgba(212, 167, 106, 0.3)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
               }}
             >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -3083,7 +3292,16 @@ export default function AdminDashboard({ onExit }) {
                 <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
               </svg>
               <style>{`
-                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                .animated-button:hover { 
+                  box-shadow: 0 0 0 8px transparent !important; 
+                  color: white !important; 
+                  border-radius: 12px !important;
+                  backdropFilter: 'blur(16px) !important',
+                  WebkitBackdropFilter: 'blur(16px) !important',
+                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+                }
                 .animated-button:hover .arr-1 { right: -25% !important; }
                 .animated-button:hover .arr-2 { left: 16px !important; }
                 .animated-button:hover .text { transform: translateX(12px) !important; }
@@ -3109,13 +3327,18 @@ export default function AdminDashboard({ onExit }) {
                 border: '2px solid',
                 borderColor: 'transparent',
                 fontWeight: '600',
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(212, 167, 106, 0.15)',
                 borderRadius: '100px',
                 color: '#D4A76A',
                 cursor: 'pointer',
                 overflow: 'hidden',
                 transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A'
+                boxShadow: '0 0 0 2px #D4A76A',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                border: '1px solid rgba(212, 167, 106, 0.3)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
               }}
             >
               <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -3129,7 +3352,16 @@ export default function AdminDashboard({ onExit }) {
                 <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
               </svg>
               <style>{`
-                .animated-button:hover { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+                .animated-button:hover { 
+                  box-shadow: 0 0 0 8px transparent !important; 
+                  color: white !important; 
+                  border-radius: 12px !important;
+                  backdropFilter: 'blur(16px) !important',
+                  WebkitBackdropFilter: 'blur(16px) !important',
+                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+                }
                 .animated-button:hover .arr-1 { right: -25% !important; }
                 .animated-button:hover .arr-2 { left: 16px !important; }
                 .animated-button:hover .text { transform: translateX(12px) !important; }

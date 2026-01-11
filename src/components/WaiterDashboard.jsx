@@ -81,7 +81,10 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
       setMenu(groupedMenu);
 
       setSettings(await settingRes.json());
-      setReceipts(mapId(await receiptRes.json()) || []);
+      const receiptsData = mapId(await receiptRes.json()) || [];
+      // Sort receipts from latest to oldest (newest first)
+      const sortedReceipts = receiptsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setReceipts(sortedReceipts);
 
       // Fetch Active Order
       if (selectedTable) {
@@ -456,11 +459,69 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
   // Add style tag for hover effects
   const hoverStyles = `
     .menu-item:hover {
-      background-color: #F5E9DD !important;
-      color: #5D4037 !important;
-      transform: translateY(-2px);
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: rgba(212, 167, 106, 0.15) !important;
+      transform: scale(0.98) !important;
+      box-shadow: '0 6px 32px -2px rgba(212, 167, 106, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.1)' !important;
+      border: '1px solid rgba(212, 167, 106, 0.3)' !important;
+    }
+    
+    .menu-item:active {
+      background: rgba(212, 167, 106, 0.2) !important;
+      transform: scale(0.96) !important;
+      border: '2px solid rgba(212, 167, 106, 0.5)' !important;
+      outline: 'none' !important;
+      box-shadow: '0 4px 20px -2px rgba(212, 167, 106, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(212, 167, 106, 0.15)' !important;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    }
+    
+    .menu-item:focus {
+      outline: 'none' !important;
+      border: '1px solid rgba(212, 167, 106, 0.3)' !important;
+    }
+    
+    .menu-item:hover span,
+    .menu-item:hover div {
+      color: #3E2723 !important;
+    }
+    
+    .menu-item:hover .text-primary {
+      color: #D4A76A !important;
+    }
+    
+    /* Current order button hover states */
+    .order-item-btn:hover {
+      background: rgba(212, 167, 106, 0.12) !important;
+      border: '1px solid rgba(212, 167, 106, 0.3)' !important;
+      color: #3E2723 !important;
+      outline: none !important;
+    }
+    
+    .delete-btn:hover {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border: '1px solid rgba(239, 68, 68, 0.3)' !important;
+      color: #dc2626 !important;
+      outline: none !important;
+    }
+    
+    .status-btn:hover {
+      background: rgba(34, 197, 94, 0.2) !important;
+      border: '1px solid rgba(34, 197, 94, 0.4)' !important;
+      color: #14532d !important;
+      outline: none !important;
+    }
+    
+    .status-btn.yellow:hover {
+      background: rgba(250, 204, 21, 0.2) !important;
+      border: '1px solid rgba(250, 204, 21, 0.4)' !important;
+      color: #713f12 !important;
+      outline: none !important;
+    }
+    
+    .order-item-btn:focus,
+    .delete-btn:focus,
+    .status-btn:focus {
+      outline: none !important;
+      box-shadow: none !important;
     }
     
     /* Table button styles */
@@ -471,27 +532,36 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
     }
     
     .table-button:hover {
-      background-color: #F5E9DD !important;
+      background: linear-gradient(135deg, rgba(245, 233, 221, 0.4) 0%, rgba(245, 233, 221, 0.2) 100%) !important;
       color: #5D4037 !important;
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(212, 167, 106, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+      backdrop-filter: blur(6px) !important;
+      WebkitBackdropFilter: blur(6px) !important;
+      border-color: rgba(212, 167, 106, 0.2) !important;
     }
     
     .table-button:active {
       transform: translateY(1px) scale(0.97) !important;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
       transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      background-color: #E8D8C8 !important;
+      background: linear-gradient(135deg, rgba(232, 216, 200, 0.3) 0%, rgba(232, 216, 200, 0.1) 100%) !important;
+      backdrop-filter: blur(4px) !important;
+      WebkitBackdropFilter: blur(4px) !important;
     }
     
     .table-button.bg-primary {
-      background-color: #8B5A2B !important;
+      background: linear-gradient(135deg, rgba(62, 39, 35, 0.95) 0%, rgba(62, 39, 35, 0.85) 100%) !important;
       color: white !important;
-      border-color: #5D4037 !important;
+      border-color: #3E2723 !important;
     }
     
     .table-button.bg-primary:hover {
-      background-color: #7a4d24 !important;
+      background: linear-gradient(135deg, rgba(62, 39, 35, 0.9) 0%, rgba(62, 39, 35, 0.8) 100%) !important;
+      box-shadow: 0 4px 12px rgba(62, 39, 35, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+      backdrop-filter: blur(6px) !important;
+      WebkitBackdropFilter: blur(6px) !important;
+      border-color: rgba(62, 39, 35, 0.9) !important;
     }
   `;
 
@@ -700,13 +770,20 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   borderColor: 'transparent',
                   fontSize: '14px',
                   fontWeight: '600',
-                  backgroundColor: isActive ? hoverColor : 'transparent',
+                  backgroundColor: isActive ? hoverColor : 'rgba(212, 167, 106, 0.15)',
                   borderRadius: '100px',
                   color: isActive ? 'white' : buttonColor,
                   cursor: 'pointer',
                   overflow: 'hidden',
                   transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                  boxShadow: `0 0 0 2px ${buttonColor}`
+                  boxShadow: `0 0 0 2px ${buttonColor}`,
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  background: isActive 
+                    ? hoverColor 
+                    : 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                  border: `1px solid rgba(212, 167, 106, 0.3)`,
+                  boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`
                 }}
               >
                 <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -727,7 +804,12 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   .animated-button:hover { 
                     box-shadow: 0 0 0 12px transparent !important; 
                     color: white !important; 
-                    border-radius: 12px !important; 
+                    border-radius: 12px !important;
+                    backdropFilter: 'blur(16px) !important',
+                    WebkitBackdropFilter: 'blur(16px) !important',
+                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                    border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                    boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 12px transparent !important' !important;
                   }
                   .animated-button:hover .arr-1 { 
                     right: -25% !important; 
@@ -754,7 +836,11 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   .active { 
                     box-shadow: 0 0 0 4px ${buttonColor} !important; 
                     background-color: ${hoverColor} !important; 
-                    color: white !important; 
+                    color: white !important;
+                    backdropFilter: 'blur(12px) !important',
+                    WebkitBackdropFilter: 'blur(12px) !important',
+                    border: '1px solid rgba(212, 167, 106, 0.4) !important',
+                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.2), 0 0 0 4px ${buttonColor} !important' !important;
                   }
                   .active svg { 
                     fill: white !important; 
@@ -767,7 +853,13 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        <section className="bg-white p-4 rounded shadow">
+        <section className="bg-white p-4 rounded shadow" style={{
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+        }}>
           <h3 className="font-semibold mb-2">Tables</h3>
           <ul className="space-y-2 max-h-[400px] overflow-y-auto overflow-x-auto pr-1 py-2 -mr-1 w-full">
             {tables.map(t => (
@@ -778,10 +870,21 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                     selectedTable === t.id ? 'bg-primary text-white' : 'bg-gray-50'
                   }`}
                   style={{
-                    borderColor: selectedTable === t.id ? '#5D4037' : '#E5E7EB',
+                    borderColor: selectedTable === t.id ? '#3E2723' : '#E5E7EB',
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     transformOrigin: 'center',
-                    willChange: 'transform, box-shadow'
+                    willChange: 'transform, box-shadow',
+                    backdropFilter: selectedTable === t.id ? 'blur(8px)' : 'blur(4px)',
+                    WebkitBackdropFilter: selectedTable === t.id ? 'blur(8px)' : 'blur(4px)',
+                    background: selectedTable === t.id 
+                      ? 'linear-gradient(135deg, rgba(62, 39, 35, 0.95) 0%, rgba(62, 39, 35, 0.85) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%)',
+                    border: selectedTable === t.id 
+                      ? '1px solid rgba(62, 39, 35, 0.8)' 
+                      : '1px solid rgba(229, 231, 235, 0.6)',
+                    boxShadow: selectedTable === t.id 
+                      ? '0 2px 8px rgba(62, 39, 35, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
+                      : '0 1px 4px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                   }}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -824,21 +927,42 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                       border: '2px solid',
                       borderColor: 'transparent',
                       fontWeight: '600',
-                      backgroundColor: 'transparent',
+                      backgroundColor: 'rgba(212, 167, 106, 0.15)',
                       borderRadius: '100px',
                       color: '#D4A76A',
                       cursor: 'pointer',
                       overflow: 'hidden',
                       transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
                       boxShadow: '0 0 0 2px #D4A76A',
-                      height: '36px'
+                      height: '36px',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
                     }}
                   >
                     <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg>
                     <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>View</span>
                     <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
                     <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg>
-                    <style jsx>{`button:hover { box-shadow: 0 0 0 8px transparent !important; color: #D4A76A !important; border-radius: 12px !important; background-color: #3E2723 !important; } button:hover .arr-1 { right: -25% !important; } button:hover .arr-2 { left: 16px !important; } button:hover .text { transform: translateX(12px) !important; color: #D4A76A !important; } button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; } button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; } button:hover svg { fill: white !important; } button:active .circle { opacity: 1; width: 200%; height: 500%; }`}</style>
+                    <style jsx>{`button:hover { 
+                      box-shadow: 0 0 0 8px transparent !important; 
+                      color: white !important; 
+                      border-radius: 12px !important;
+                      backdropFilter: 'blur(16px) !important',
+                      WebkitBackdropFilter: 'blur(16px) !important',
+                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                      border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                      boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
+                    } 
+                    button:hover .arr-1 { right: -25% !important; } 
+                    button:hover .arr-2 { left: 16px !important; } 
+                    button:hover .text { transform: translateX(12px) !important; color: white !important; } 
+                    button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; } 
+                    button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; } 
+                    button:hover svg { fill: white !important; } 
+                    button:active .circle { opacity: 1; width: 200%; height: 500%; }`}</style>
                   </button>
                 </li>
               ))}
@@ -849,7 +973,13 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
           </div>
         </section>
 
-        <section className="bg-white p-4 rounded shadow md:col-span-2">
+        <section className="bg-white p-4 rounded shadow md:col-span-2" style={{
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+        }}>
           <h3 className="font-semibold mb-2">Menu</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {categories.map(cat => (
@@ -857,7 +987,19 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                 <h4 className="capitalize text-sm text-gray-500 mb-1">{cat}</h4>
                 <div className="space-y-2">
                   {menu[cat].map(item => (
-                    <button key={item.id} onClick={()=>addToOrder(item)} className="w-full border rounded p-2 text-left menu-item hover:shadow text-sm sm:text-base">
+                    <button key={item.id} onClick={()=>addToOrder(item)} className="w-full border rounded p-2 text-left menu-item hover:shadow text-sm sm:text-base" style={{
+                      backdropFilter: 'blur(40px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+                      background: 'rgba(212, 167, 106, 0.25)',
+                      borderRadius: '22px',
+                      border: '1px solid rgba(212, 167, 106, 0.2)',
+                      boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(212, 167, 106, 0.15)',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      color: '#3E2723'
+                    }}>
                       <div className="flex justify-between">
                         <span>{item.name}</span>
                         <span className="text-primary font-semibold">₹{item.price.toFixed(2)}</span>
@@ -934,7 +1076,27 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         }
                         
                         return (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusClass}`}>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusClass}`} style={{
+                          backdropFilter: 'blur(15px) saturate(120%)',
+                          WebkitBackdropFilter: 'blur(15px) saturate(120%)',
+                          background: statusClass.includes('green') 
+                            ? 'rgba(34, 197, 94, 0.08)'
+                            : statusClass.includes('blue') 
+                            ? 'rgba(59, 130, 246, 0.08)'
+                            : 'rgba(212, 167, 106, 0.08)',
+                          borderRadius: '6px',
+                          border: statusClass.includes('green')
+                            ? '1px solid rgba(34, 197, 94, 0.15)'
+                            : statusClass.includes('blue')
+                            ? '1px solid rgba(59, 130, 246, 0.15)'
+                            : '1px solid rgba(212, 167, 106, 0.15)',
+                          boxShadow: statusClass.includes('green')
+                            ? '0 1px 3px rgba(34, 197, 94, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
+                            : statusClass.includes('yellow')
+                            ? '0 1px 3px rgba(250, 204, 21, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
+                            : '0 1px 3px rgba(212, 167, 106, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
+                          transition: 'all 0.3s ease'
+                        }}>
                             {statusText}
                           </span>
                         );
@@ -962,7 +1124,15 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                       return acc;
                     }, {})
                   ).map(([key, it]) => (
-                    <li key={key} className="flex items-center justify-between gap-2 border rounded p-2 min-w-max w-full">
+                    <li key={key} className="flex items-center justify-between gap-2 border rounded p-2 min-w-max w-full" style={{
+                      backdropFilter: 'blur(20px) saturate(120%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                      background: 'rgba(212, 167, 106, 0.05)',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(212, 167, 106, 0.1)',
+                      boxShadow: '0 2px 8px rgba(212, 167, 106, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
+                      transition: 'all 0.3s ease'
+                    }}>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">
                           {it.name} {it.originalItems.length > 1 ? `×${it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}` : ''}
@@ -971,14 +1141,44 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <div className="flex items-center">
-                          <span className={`text-xs px-2 py-1 rounded ${statusColors[it.status || 'preparing']}`}>
+                          <span className={`text-xs px-2 py-1 rounded ${statusColors[it.status || 'preparing']}`} style={{
+                          backdropFilter: 'blur(15px) saturate(120%)',
+                          WebkitBackdropFilter: 'blur(15px) saturate(120%)',
+                          background: it.status === 'preparing' 
+                            ? 'rgba(212, 167, 106, 0.08)' 
+                            : it.status === 'served'
+                            ? 'rgba(34, 197, 94, 0.08)'
+                            : 'rgba(59, 130, 246, 0.08)',
+                          borderRadius: '6px',
+                          border: it.status === 'preparing'
+                            ? '1px solid rgba(212, 167, 106, 0.15)'
+                            : it.status === 'served'
+                            ? '1px solid rgba(34, 197, 94, 0.15)'
+                            : '1px solid rgba(59, 130, 246, 0.15)',
+                          boxShadow: it.status === 'preparing'
+                            ? '0 1px 3px rgba(212, 167, 106, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
+                            : it.status === 'served'
+                            ? '0 1px 3px rgba(34, 197, 94, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
+                            : '0 1px 3px rgba(0, 0, 0, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
+                          transition: 'all 0.3s ease'
+                        }}>
                             {statusLabels[it.status || 'preparing']}
                           </span>
                           {it.status === 'preparing' && (
                             <button
                               onClick={() => removeItem(it.itemId || it.id)}
-                              className="text-red-500 hover:text-red-700 ml-2"
+                              className="text-red-500 hover:text-red-700 ml-2 delete-btn"
                               title="Remove item"
+                              style={{
+                                backdropFilter: 'blur(20px) saturate(120%)',
+                                WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                boxShadow: '0 2px 6px rgba(239, 68, 68, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+                                transition: 'all 0.3s ease',
+                                padding: '4px'
+                              }}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -988,11 +1188,28 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         </div>
                         {(it.status === 'ready' || it.status === 'served') && (
                           <button
-                            className={`px-2 py-1 text-sm rounded ${
+                            className={`px-2 py-1 text-sm rounded status-btn ${
+                              it.status === 'ready' ? '' : 'yellow'
+                            } ${
                               it.status === 'ready' 
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200' 
                                 : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                             }`}
+                            style={{
+                              backdropFilter: 'blur(20px) saturate(120%)',
+                              WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                              background: it.status === 'ready' 
+                                ? 'rgba(34, 197, 94, 0.15)' 
+                                : 'rgba(250, 204, 21, 0.15)',
+                              borderRadius: '8px',
+                              border: it.status === 'ready' 
+                                ? '1px solid rgba(34, 197, 94, 0.3)' 
+                                : '1px solid rgba(250, 204, 21, 0.3)',
+                              boxShadow: it.status === 'ready'
+                                ? '0 2px 6px rgba(34, 197, 94, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                                : '0 2px 6px rgba(250, 204, 21, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+                              transition: 'all 0.3s ease'
+                            }}
                             onClick={() => toggleItemServed(activeOrder.id, it.itemId || it.id, it.status || 'ready')}
                           >
                             {it.status === 'ready' ? 'Mark Served' : 'Mark Not Served'}
@@ -1003,9 +1220,18 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         {it.status === 'preparing' ? (
                           <>
                             <button 
-                              className="px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+                              className="px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 order-item-btn"
                               onClick={() => changeQty(it.itemId || it.id, -1, it.status)}
                               disabled={it.qty <= 1}
+                              style={{
+                                backdropFilter: 'blur(20px) saturate(120%)',
+                                WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                background: 'rgba(212, 167, 106, 0.08)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(212, 167, 106, 0.2)',
+                                boxShadow: '0 2px 6px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+                                transition: 'all 0.3s ease'
+                              }}
                             >
                               -
                             </button>
@@ -1013,8 +1239,17 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                               ×{it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}
                             </div>
                             <button 
-                              className="px-2 py-1 border rounded hover:bg-gray-100"
+                              className="px-2 py-1 border rounded hover:bg-gray-100 order-item-btn"
                               onClick={() => changeQty(it.itemId || it.id, 1, it.status)}
+                              style={{
+                                backdropFilter: 'blur(20px) saturate(120%)',
+                                WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                background: 'rgba(212, 167, 106, 0.08)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(212, 167, 106, 0.2)',
+                                boxShadow: '0 2px 6px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+                                transition: 'all 0.3s ease'
+                              }}
                             >
                               +
                             </button>
@@ -1049,7 +1284,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         borderColor: 'transparent',
                         fontSize: '14px',
                         fontWeight: '500',
-                        backgroundColor: 'transparent',
+                        backgroundColor: 'rgba(212, 167, 106, 0.15)',
                         borderRadius: '100px',
                         color: '#D4A76A',
                         cursor: 'pointer',
@@ -1061,7 +1296,12 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         userSelect: 'none',
                         touchAction: 'manipulation',
                         WebkitAppearance: 'none',
-                        marginLeft: 'auto'
+                        marginLeft: 'auto',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
                       }}
                     >
                       <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -1078,7 +1318,12 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         button:hover { 
                           box-shadow: 0 0 0 8px transparent !important; 
                           color: white !important; 
-                          border-radius: 8px !important; 
+                          border-radius: 8px !important;
+                          backdropFilter: 'blur(16px) !important',
+                          WebkitBackdropFilter: 'blur(16px) !important',
+                          background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
+                          border: '1px solid rgba(212, 167, 106, 0.5) !important',
+                          boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
                         }
                         button:hover .arr-1 { 
                           right: -25% !important; 

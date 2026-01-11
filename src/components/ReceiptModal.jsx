@@ -13,9 +13,14 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
   const tax = subtotal * (taxRate / 100)
   const total = subtotal + tax - discount
 
-  // --- QR CODE URL ---
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(receipt.id || 'receipt')}`
-
+  // --- QR CODE FIX ---
+  // 1. Get the current domain (e.g. https://myapp.vercel.app or http://localhost:3000)
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  // 2. Build the full link. Change '/orders/' to whatever route allows viewing a receipt on your site.
+  const receiptLink = `${origin}/orders/${receipt.id}`;
+  // 3. Generate QR pointing to that link
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(receiptLink)}`
+  
   // --- PRINT FUNCTION (DIRECT / NO NEW TAB) ---
   const doPrint = () => {
     // 1. Get the content
@@ -351,18 +356,104 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
         </div>
         
         {canEdit && (
-          <div className="mt-4 p-3 border rounded no-print bg-gray-50">
-            <div className="font-semibold mb-2">Edit Receipt</div>
-            <div className="mb-3 flex items-end gap-2 flex-wrap">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Coupon</label>
-                <input value={couponInput} onChange={e=>setCouponInput(e.target.value)} className="border rounded px-2 py-1 w-24" placeholder="CODE" />
-              </div>
-              <button className="px-3 py-1 border rounded bg-white" onClick={()=>{ if (!couponInput.trim()) return; onCouponApply?.(couponInput.trim()) }}>Apply</button>
-              <button className="px-3 py-1 border rounded bg-white text-red-500" onClick={()=> onCouponRemove?.() }>Clear</button>
+          <div className="mt-6 p-6 border-2 border-gray-100 rounded-2xl no-print bg-white shadow-xl ring-1 ring-gray-200 ring-opacity-50">
+            <div className="flex items-center mb-4 pb-3 border-b border-gray-100">
+              <div className="w-1 h-6 bg-amber-600 rounded-full mr-3"></div>
+              <div className="text-lg font-bold text-gray-900">Edit Receipt</div>
             </div>
-            <div className="text-right mt-3">
-              <button className="px-4 py-2 bg-amber-700 text-white rounded font-medium" onClick={()=>{ onUpdate?.(items) }}>Save Changes</button>
+            <div className="mb-6 flex items-end gap-4 flex-wrap">
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Coupon Code</label>
+                <div className="relative">
+                  <input 
+                    value={couponInput} 
+                    onChange={e=>setCouponInput(e.target.value)} 
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-medium bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent focus:bg-white shadow-sm transition-all duration-200" 
+                    placeholder="Enter coupon code" 
+                  />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 opacity-0 hover:opacity-5 transition-opacity duration-200 pointer-events-none"></div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  className="px-6 py-3 border-2 border-gray-200 rounded-xl bg-white hover:bg-gray-50 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5" 
+                  onClick={()=>{ if (!couponInput.trim()) return; onCouponApply?.(couponInput.trim()) }}
+                >
+                  Apply
+                </button>
+                <button 
+                  className="px-6 py-3 border-2 border-red-200 rounded-xl bg-white hover:bg-red-50 text-sm font-semibold text-red-600 shadow-sm hover:shadow-md hover:border-red-300 transition-all duration-200 transform hover:-translate-y-0.5" 
+                  onClick={()=> onCouponRemove?.() }
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 shadow-inner">
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Tip:</span> Your changes will be saved immediately
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    className="animated-button group relative inline-flex items-center justify-center"
+                    onClick={()=>{ onUpdate?.(items) }}
+                    style={{
+                      '--color': '#D4A76A',
+                      '--hover-color': '#3E2723',
+                      padding: '10px 28px',
+                      fontSize: '14px',
+                      minWidth: '150px',
+                      position: 'relative',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      border: '2px solid',
+                      borderColor: 'transparent',
+                      fontWeight: '600',
+                      backgroundColor: 'transparent',
+                      borderRadius: '100px',
+                      color: '#D4A76A',
+                      cursor: 'pointer',
+                      overflow: 'hidden',
+                      transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                      boxShadow: '0 0 0 2px #D4A76A'
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                    <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      Save Changes
+                    </span>
+                    <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                    <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                    <style>{`
+                      .animated-button:hover { 
+                        box-shadow: 0 0 0 8px transparent !important; 
+                        color: white !important; 
+                        border-radius: 12px !important; 
+                      }
+                      .animated-button:hover .arr-1 { right: -25% !important; }
+                      .animated-button:hover .arr-2 { left: 16px !important; }
+                      .animated-button:hover .text { transform: translateX(12px) !important; }
+                      .animated-button:hover svg { fill: white !important; }
+                      .animated-button:active { 
+                        transform: scale(0.95) !important; 
+                        box-shadow: 0 0 0 4px #D4A76A !important; 
+                      }
+                      .animated-button:hover .circle { 
+                        width: 200px !important; 
+                        height: 200px !important; 
+                        opacity: 1 !important; 
+                        background-color: #3E2723 !important; 
+                      }
+                    `}</style>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

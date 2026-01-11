@@ -456,7 +456,7 @@ section {
 .menu-cards .title { font-size: 11px; max-width: 100%; display: flex; justify-content: space-between; }
 .menu-cards .title p { width: 70%; }
 .menu-cards .card-footer { color: #ffffff88; margin-top: 5px; font-size: 10px; }
-/* Input styles */
+/* Input styles - Glassmorphism theme */
 .input {
   border: 2px solid transparent;
   width: 100%;
@@ -464,18 +464,23 @@ section {
   padding-left: 0.8em;
   outline: none;
   overflow: hidden;
-  background-color: #F3F3F3;
-  border-radius: 10px;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  background: rgba(212, 167, 106, 0.12);
+  border-radius: 12px;
   transition: all 0.3s ease;
   font-size: 14px;
-  color: #2B2B2F;
+  color: #3E2723;
+  border: 1px solid rgba(212, 167, 106, 0.2);
+  box-shadow: 0 2px 8px -1px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
 }
 
 .input:hover,
 .input:focus {
-  border: 2px solid #D4A76A;
-  box-shadow: 0 0 0 4px rgba(212, 167, 106, 0.2);
-  background-color: white;
+  border: 1px solid rgba(212, 167, 106, 0.4);
+  box-shadow: 0 4px 16px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+  background: rgba(212, 167, 106, 0.18);
+  outline: none;
 }
 
 .input:disabled {
@@ -483,10 +488,14 @@ section {
   cursor: not-allowed;
 }
 
+.input::placeholder {
+  color: rgba(62, 39, 35, 0.6);
+}
+
 /* For select elements with input class */
 select.input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%232B2B2F' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23D4A76A' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.8em top 50%;
   background-size: 12px auto;

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 import { UserGroupIcon } from '@heroicons/react/24/outline'
-import { MenuItem, AnimatedButton, colors } from './SharedButtonStyles.jsx'; // <--- 1. IMPORT THIS
+import { MenuItem, AnimatedButton, colors, animatedButtonStyles, Section, tableButtonStyles, statusBadgeStyles, orderItemStyles, deleteButtonStyles, quantityButtonStyles } from '../styles/shared'; // <--- 1. IMPORT THIS
 
 const statusColors = {
   preparing: 'bg-yellow-100 text-yellow-800',
@@ -573,22 +573,24 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
       {/* Mobile Only - Welcome and Logout */}
       {!embedded && (
         <>
-          <div className="md:hidden mb-4 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">Welcome,</span>
-              <span className="text-sm font-semibold text-primary">{user?.username}</span>
+          <Section title="" className="md:hidden mb-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">Welcome,</span>
+                <span className="text-sm font-semibold text-primary">{user?.username}</span>
+              </div>
+              <AnimatedButton
+                onClick={logout}
+                color={colors.brown}
+                hoverColor={colors.brownDark}
+                padding="8px 20px"
+                minWidth="100px"
+                height="36px"
+              >
+                Logout
+              </AnimatedButton>
             </div>
-            <AnimatedButton
-              onClick={logout}
-              color={colors.brown}
-              hoverColor={colors.brownDark}
-              padding="8px 20px"
-              minWidth="100px"
-              height="36px"
-            >
-              Logout
-            </AnimatedButton>
-          </div>
+          </Section>
 
           <div className="flex flex-col items-center text-center md:flex-row md:items-center md:justify-between md:text-left mb-6 md:mb-8">
             <div className="mb-4 md:mb-0">
@@ -661,38 +663,27 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        <section className="bg-white p-4 rounded shadow" style={{
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-        }}>
-          <h3 className="font-semibold mb-2">Tables</h3>
+        <Section title="Tables">
           <ul className="space-y-2 max-h-[400px] overflow-y-auto overflow-x-auto pr-1 py-2 -mr-1 w-full">
             {tables.map(t => (
               <li key={t.id}>
                 <button
                   onClick={() => setSelectedTable(t.id)}
-                  className={`w-full text-left border rounded p-2 table-button transition-all ${
-                    selectedTable === t.id ? 'bg-primary text-white' : 'bg-gray-50'
-                  }`}
+                  className="w-full text-left border rounded p-2 transition-all"
                   style={{
-                    borderColor: selectedTable === t.id ? '#3E2723' : '#E5E7EB',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transformOrigin: 'center',
-                    willChange: 'transform, box-shadow',
-                    backdropFilter: selectedTable === t.id ? 'blur(8px)' : 'blur(4px)',
-                    WebkitBackdropFilter: selectedTable === t.id ? 'blur(8px)' : 'blur(4px)',
-                    background: selectedTable === t.id 
-                      ? 'linear-gradient(135deg, rgba(62, 39, 35, 0.95) 0%, rgba(62, 39, 35, 0.85) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%)',
-                    border: selectedTable === t.id 
-                      ? '1px solid rgba(62, 39, 35, 0.8)' 
-                      : '1px solid rgba(229, 231, 235, 0.6)',
-                    boxShadow: selectedTable === t.id 
-                      ? '0 2px 8px rgba(62, 39, 35, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                      : '0 1px 4px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    ...tableButtonStyles.base,
+                    ...(selectedTable === t.id ? tableButtonStyles.active : {}),
+                    ...(selectedTable === t.id && { ...tableButtonStyles.activeHover })
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!selectedTable === t.id) {
+                      Object.assign(e.target.style, tableButtonStyles.hover);
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!selectedTable === t.id) {
+                      Object.assign(e.target.style, tableButtonStyles.base);
+                    }
                   }}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -779,16 +770,9 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
               )}
             </ul>
           </div>
-        </section>
+        </Section>
 
-        <section className="bg-white p-4 rounded shadow md:col-span-2" style={{
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-        }}>
-          <h3 className="font-semibold mb-2">Menu</h3>
+        <Section title="Menu" className="md:col-span-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {categories.map(cat => (
               <div key={cat}>
@@ -906,7 +890,10 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   )}
                   {couponError && <div className="text-red-600">{couponError}</div>}
                 </div>
-                <ul className="text-sm space-y-2 overflow-x-auto w-full">
+                <div className="text-sm overflow-x-auto w-full" style={{
+                    ...orderItemStyles.base,
+                    padding: '16px'
+                  }}>
                   {Object.entries(
                     activeOrder.items.reduce((acc, item) => {
                       const key = `${item.name}_${item.status}_${item.itemId || item.id}`;
@@ -918,147 +905,155 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                       }
                       return acc;
                     }, {})
-                  ).map(([key, it]) => (
-                    <li key={key} className="flex items-center justify-between gap-2 border rounded p-2 min-w-max w-full" style={{
-                      backdropFilter: 'blur(20px) saturate(120%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                      background: 'rgba(212, 167, 106, 0.05)',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(212, 167, 106, 0.1)',
-                      boxShadow: '0 2px 8px rgba(212, 167, 106, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
-                      transition: 'all 0.3s ease'
-                    }}>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">
-                          {it.name} {it.originalItems.length > 1 ? `×${it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}` : ''}
+                  ).map(([key, it], index) => (
+                    <div key={key}>
+                      <div className="flex items-center justify-between gap-2 min-w-max w-full">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">
+                            {it.name} {it.originalItems.length > 1 ? `×${it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}` : ''}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">₹{it.price.toFixed(2)} each</div>
                         </div>
-                        <div className="text-xs text-gray-500 truncate">₹{it.price.toFixed(2)} each</div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="flex items-center">
-                          <span className={`text-xs px-2 py-1 rounded ${statusColors[it.status || 'preparing']}`} style={{
-                          backdropFilter: 'blur(15px) saturate(120%)',
-                          WebkitBackdropFilter: 'blur(15px) saturate(120%)',
-                          background: it.status === 'preparing' 
-                            ? 'rgba(212, 167, 106, 0.08)' 
-                            : it.status === 'served'
-                            ? 'rgba(34, 197, 94, 0.08)'
-                            : 'rgba(59, 130, 246, 0.08)',
-                          borderRadius: '6px',
-                          border: it.status === 'preparing'
-                            ? '1px solid rgba(212, 167, 106, 0.15)'
-                            : it.status === 'served'
-                            ? '1px solid rgba(34, 197, 94, 0.15)'
-                            : '1px solid rgba(59, 130, 246, 0.15)',
-                          boxShadow: it.status === 'preparing'
-                            ? '0 1px 3px rgba(212, 167, 106, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
-                            : it.status === 'served'
-                            ? '0 1px 3px rgba(34, 197, 94, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
-                            : '0 1px 3px rgba(0, 0, 0, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
-                          transition: 'all 0.3s ease'
-                        }}>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center">
+                            <span className="text-xs px-2 py-1 rounded" style={statusBadgeStyles[it.status || 'preparing']}>
                             {statusLabels[it.status || 'preparing']}
-                          </span>
-                          {it.status === 'preparing' && (
+                            </span>
+                            {it.status === 'preparing' && (
+                              <div 
+                                onClick={() => removeItem(it.itemId || it.id)}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer ml-2"
+                                style={{
+                                  ...animatedButtonStyles.menuItem,
+                                  background: 'rgba(239, 68, 68, 0.25)',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  boxShadow: '0 4px 24px rgba(239, 68, 68, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(239, 68, 68, 0.1)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  Object.assign(e.target.style, {
+                                    background: 'rgba(239, 68, 68, 0.15)',
+                                    transform: 'scale(0.98)',
+                                    boxShadow: '0 6px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(239, 68, 68, 0.08)'
+                                  });
+                                }}
+                                onMouseLeave={(e) => {
+                                  Object.assign(e.target.style, {
+                                    ...animatedButtonStyles.menuItem,
+                                    background: 'rgba(239, 68, 68, 0.25)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    boxShadow: '0 4px 24px rgba(239, 68, 68, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(239, 68, 68, 0.1)'
+                                  });
+                                }}
+                                onMouseDown={(e) => {
+                                  Object.assign(e.target.style, {
+                                    background: 'rgba(239, 68, 68, 0.2)',
+                                    transform: 'scale(0.96)',
+                                    border: '2px solid rgba(239, 68, 68, 0.5)',
+                                    outline: 'none',
+                                    boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(239, 68, 68, 0.15)',
+                                    transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                                  });
+                                }}
+                                onMouseUp={(e) => {
+                                  Object.assign(e.target.style, {
+                                    ...animatedButtonStyles.menuItem,
+                                    background: 'rgba(239, 68, 68, 0.25)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    boxShadow: '0 4px 24px rgba(239, 68, 68, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(239, 68, 68, 0.1)'
+                                  });
+                                }}
+                                title="Remove item"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          {(it.status === 'ready' || it.status === 'served') && (
                             <button
-                              onClick={() => removeItem(it.itemId || it.id)}
-                              className="text-red-500 hover:text-red-700 ml-2 delete-btn"
-                              title="Remove item"
+                              className={`px-2 py-1 text-sm rounded status-btn ${
+                                it.status === 'ready' ? '' : 'yellow'
+                              } ${
+                                it.status === 'ready' 
+                                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                  : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                              }`}
                               style={{
                                 backdropFilter: 'blur(20px) saturate(120%)',
                                 WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                background: 'rgba(239, 68, 68, 0.1)',
+                                background: it.status === 'ready' 
+                                  ? 'rgba(34, 197, 94, 0.15)' 
+                                  : 'rgba(250, 204, 21, 0.15)',
                                 borderRadius: '8px',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                boxShadow: '0 2px 6px rgba(239, 68, 68, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
-                                transition: 'all 0.3s ease',
-                                padding: '4px'
+                                border: it.status === 'ready' 
+                                  ? '1px solid rgba(34, 197, 94, 0.3)' 
+                                  : '1px solid rgba(250, 204, 21, 0.3)',
+                                boxShadow: it.status === 'ready'
+                                  ? '0 2px 6px rgba(34, 197, 94, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                                  : '0 2px 6px rgba(250, 204, 21, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+                                transition: 'all 0.3s ease'
                               }}
+                              onClick={() => toggleItemServed(activeOrder.id, it.itemId || it.id, it.status || 'ready')}
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              {it.status === 'ready' ? 'Mark Served' : 'Mark Not Served'}
                             </button>
                           )}
                         </div>
-                        {(it.status === 'ready' || it.status === 'served') && (
-                          <button
-                            className={`px-2 py-1 text-sm rounded status-btn ${
-                              it.status === 'ready' ? '' : 'yellow'
-                            } ${
-                              it.status === 'ready' 
-                                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                                : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                            }`}
-                            style={{
-                              backdropFilter: 'blur(20px) saturate(120%)',
-                              WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                              background: it.status === 'ready' 
-                                ? 'rgba(34, 197, 94, 0.15)' 
-                                : 'rgba(250, 204, 21, 0.15)',
-                              borderRadius: '8px',
-                              border: it.status === 'ready' 
-                                ? '1px solid rgba(34, 197, 94, 0.3)' 
-                                : '1px solid rgba(250, 204, 21, 0.3)',
-                              boxShadow: it.status === 'ready'
-                                ? '0 2px 6px rgba(34, 197, 94, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                                : '0 2px 6px rgba(250, 204, 21, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
-                              transition: 'all 0.3s ease'
-                            }}
-                            onClick={() => toggleItemServed(activeOrder.id, it.itemId || it.id, it.status || 'ready')}
-                          >
-                            {it.status === 'ready' ? 'Mark Served' : 'Mark Not Served'}
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {it.status === 'preparing' ? (
-                          <>
-                            <button 
-                              className="px-2 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 order-item-btn"
-                              onClick={() => changeQty(it.itemId || it.id, -1, it.status)}
-                              disabled={it.qty <= 1}
-                              style={{
-                                backdropFilter: 'blur(20px) saturate(120%)',
-                                WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                background: 'rgba(212, 167, 106, 0.08)',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(212, 167, 106, 0.2)',
-                                boxShadow: '0 2px 6px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
-                                transition: 'all 0.3s ease'
-                              }}
-                            >
-                              -
-                            </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {it.status === 'preparing' ? (
+                            <>
+                              <div 
+                                onClick={() => changeQty(it.itemId || it.id, -1, it.status)}
+                                className={`w-8 h-8 flex items-center justify-center cursor-pointer ${it.qty <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={it.qty <= 1}
+                                style={{
+                                  ...animatedButtonStyles.menuItem,
+                                  ...(it.qty <= 1 ? { pointerEvents: 'none' } : {})
+                                }}
+                              >
+                                <span style={{ fontSize: '16px', fontWeight: 'bold' }}>-</span>
+                              </div>
+                              <div className="w-12 text-center py-1">
+                                ×{it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}
+                              </div>
+                              <div 
+                                onClick={() => changeQty(it.itemId || it.id, 1, it.status)}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                                style={animatedButtonStyles.menuItem}
+                              >
+                                <span style={{ fontSize: '16px', fontWeight: 'bold' }}>+</span>
+                              </div>
+                            </>
+                          ) : (
                             <div className="w-12 text-center py-1">
-                              ×{it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)}
+                              ×{it.qty}
                             </div>
-                            <button 
-                              className="px-2 py-1 border rounded hover:bg-gray-100 order-item-btn"
-                              onClick={() => changeQty(it.itemId || it.id, 1, it.status)}
-                              style={{
-                                backdropFilter: 'blur(20px) saturate(120%)',
-                                WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                background: 'rgba(212, 167, 106, 0.08)',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(212, 167, 106, 0.2)',
-                                boxShadow: '0 2px 6px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
-                                transition: 'all 0.3s ease'
-                              }}
-                            >
-                              +
-                            </button>
-                          </>
-                        ) : (
-                          <div className="w-12 text-center py-1">
-                            ×{it.qty}
-                          </div>
-                        )}
+                          )}
+                        </div>
+                        <div className="w-20 text-right font-semibold">₹{(it.price * it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)).toFixed(2)}</div>
                       </div>
-                      <div className="w-20 text-right font-semibold">₹{(it.price * it.originalItems.reduce((sum, i) => sum + (i.qty || 1), 0)).toFixed(2)}</div>
-                    </li>
+                      {index < Object.entries(
+                        activeOrder.items.reduce((acc, item) => {
+                          const key = `${item.name}_${item.status}_${item.itemId || item.id}`;
+                          if (!acc[key]) {
+                            acc[key] = { ...item, qty: item.qty || 1, originalItems: [item] };
+                          } else {
+                            acc[key].qty += (item.qty || 1);
+                            acc[key].originalItems.push(item);
+                          }
+                          return acc;
+                        }, {})
+                      ).length - 1 && (
+                        <div style={{
+                          height: '1px',
+                          background: 'rgba(212, 167, 106, 0.15)',
+                          margin: '12px 0'
+                        }} />
+                      )}
+                    </div>
                   ))}
-                </ul>
+                </div>
                 <div className="flex justify-between items-start mt-2">
                   <div className="w-40">
                     <button
@@ -1159,7 +1154,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
               </>
             )}
           </div>
-        </section>
+        </Section>
       </div>
       <ReceiptModal 
         open={!!preview}

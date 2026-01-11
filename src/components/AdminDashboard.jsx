@@ -11,7 +11,7 @@ import { FiStar, FiUsers, FiUserPlus } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
-import { MenuItem, colors } from './SharedButtonStyles.jsx'
+import { MenuItem, colors, AnimatedButton, Section } from '../styles/shared';
 
 // Helper to map MongoDB _id to the id your UI expects
 const mapId = (data) => {
@@ -32,15 +32,6 @@ const processMenuData = (items) => {
     return acc;
   }, {});
 };
-
-function Section({ title, children, className = '' }) {
-  return (
-    <section className={`bg-white p-6 rounded-lg shadow-md ${className}`}>
-      <h3 className="text-xl font-semibold mb-4">{title}</h3>
-      {children}
-    </section>
-  )
-}
 
 function FeaturedDishesManager() {
   const [menu, setMenu] = useState({})
@@ -388,9 +379,8 @@ function CouponManager() {
 
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
-      <div className="md:w-1/2">
-        <Section title="Create New Coupon">
+    <>
+      <Section title="Create New Coupon">
           <form onSubmit={create} className="space-y-4">
             <div className="space-y-4">
               <div>
@@ -558,10 +548,8 @@ function CouponManager() {
             </div>
           </form>
         </Section>
-      </div>
 
-      <div className="md:w-1/2">
-        <Section title="Existing Coupons">
+      <Section title="Existing Coupons">
           {isLoading && coupons.length === 0 ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
@@ -653,9 +641,8 @@ function CouponManager() {
               </div>
             </div>
           )}
-        </Section>
-      </div>
-    </div>
+      </Section>
+    </>
   )
 }
 
@@ -2462,7 +2449,7 @@ export default function AdminDashboard({ onExit }) {
           <Section title="Add / Edit Item">
             <form onSubmit={addItem} className="space-y-3">
               <div>
-                <label className="text-sm">Category</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Category</label>
                 <input
                   list="category-options"
                   value={form.category}
@@ -2476,7 +2463,7 @@ export default function AdminDashboard({ onExit }) {
                 </datalist>
               </div>
               <div>
-                <label className="text-sm">Name</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Name</label>
                 <input 
                   value={form.name} 
                   onChange={e => setForm(f => ({...f, name: e.target.value}))} 
@@ -2486,7 +2473,7 @@ export default function AdminDashboard({ onExit }) {
                 />
               </div>
               <div>
-                <label className="text-sm">Description</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Description</label>
                 <input 
                   value={form.description} 
                   onChange={e => setForm(f => ({...f, description: e.target.value}))} 
@@ -2495,7 +2482,7 @@ export default function AdminDashboard({ onExit }) {
                 />
               </div>
               <div>
-                <label className="text-sm">Price</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Price</label>
                 <input 
                   type="number" 
                   step="0.01" 
@@ -2697,205 +2684,208 @@ export default function AdminDashboard({ onExit }) {
       )}
 
       {tab==='receipts' && (
-        <div className="space-y-4 px-4 md:px-0">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <div className="flex items-center gap-4">
-              <h3 className="text-xl font-semibold">Receipts</h3>
-              <div className="relative group">
-                <button 
-                  className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm"
-                  onMouseEnter={(e) => {
-                    clearTimeout(e.currentTarget.closest('.group')._timer);
-                    e.currentTarget.closest('.group').classList.add('is-open');
-                  }}
-                >
-                  Export
-                </button>
-                <div 
-                  className="absolute left-0 mt-1 w-32 bg-white rounded-md shadow-lg py-1 z-10 opacity-0 invisible transition-all duration-200 transform -translate-y-1 group-[.is-open]:opacity-100 group-[.is-open]:visible group-[.is-open]:translate-y-0"
-                  onMouseEnter={(e) => {
-                    clearTimeout(e.currentTarget.closest('.group')._timer);
-                    e.currentTarget.closest('.group').classList.add('is-open');
-                  }}
-                  onMouseLeave={(e) => {
-                    const group = e.currentTarget.closest('.group');
-                    group._timer = setTimeout(() => {
-                      group.classList.remove('is-open');
-                    }, 200);
-                  }}
-                >
+        <div className="px-4 md:px-0">
+          <Section title="Receipts">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+              <div className="flex items-center gap-4">
+                <div className="relative group">
                   <button 
-                    onClick={() => exportToCSV(getFilteredReceipts())}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm"
+                    onMouseEnter={(e) => {
+                      clearTimeout(e.currentTarget.closest('.group')._timer);
+                      e.currentTarget.closest('.group').classList.add('is-open');
+                    }}
                   >
-                    Export as CSV
+                    Export
                   </button>
-                  <button 
-                    onClick={() => exportToPDF(getFilteredReceipts())}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  <div 
+                    className="absolute left-0 mt-1 w-32 bg-white rounded-md shadow-lg py-1 z-10 opacity-0 invisible transition-all duration-200 transform -translate-y-1 group-[.is-open]:opacity-100 group-[.is-open]:visible group-[.is-open]:translate-y-0"
+                    onMouseEnter={(e) => {
+                      clearTimeout(e.currentTarget.closest('.group')._timer);
+                      e.currentTarget.closest('.group').classList.add('is-open');
+                    }}
+                    onMouseLeave={(e) => {
+                      const group = e.currentTarget.closest('.group');
+                      group._timer = setTimeout(() => {
+                        group.classList.remove('is-open');
+                      }, 200);
+                    }}
                   >
-                    Export as PDF
-                  </button>
+                    <button 
+                      onClick={() => exportToCSV(getFilteredReceipts())}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Export as CSV
+                    </button>
+                    <button 
+                      onClick={() => exportToPDF(getFilteredReceipts())}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Export as PDF
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 whitespace-nowrap">From:</label>
-                <input
-                  type="date"
-                  value={dateFilter.startDate}
-                  onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="border rounded p-1 text-sm"
-                />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600 whitespace-nowrap">From:</label>
+                  <input
+                    type="date"
+                    value={dateFilter.startDate}
+                    onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="input"
+                    style={{ padding: '4px 8px', fontSize: '14px' }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600 whitespace-nowrap">To:</label>
+                  <input
+                    type="date"
+                    value={dateFilter.endDate}
+                    onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="input"
+                    style={{ padding: '4px 8px', fontSize: '14px' }}
+                    min={dateFilter.startDate}
+                  />
+                </div>
+                {(dateFilter.startDate || dateFilter.endDate) && (
+                  <button
+                    onClick={() => setDateFilter({ startDate: '', endDate: '' })}
+                    className="text-sm text-red-600 hover:underline whitespace-nowrap"
+                  >
+                    Clear Filter
+                  </button>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 whitespace-nowrap">To:</label>
-                <input
-                  type="date"
-                  value={dateFilter.endDate}
-                  onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="border rounded p-1 text-sm"
-                  min={dateFilter.startDate}
-                />
+              <div className="text-lg font-medium">
+                Total Sales: <span className="text-green-600">₹{salesTotal.toFixed(2)}</span>
               </div>
-              {(dateFilter.startDate || dateFilter.endDate) && (
-                <button
-                  onClick={() => setDateFilter({ startDate: '', endDate: '' })}
-                  className="text-sm text-red-600 hover:underline whitespace-nowrap"
-                >
-                  Clear Filter
-                </button>
-              )}
             </div>
-            <div className="text-lg font-medium">
-              Total Sales: <span className="text-green-600">₹{salesTotal.toFixed(2)}</span>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow overflow-x-auto">
-            <table className="w-full min-w-max">
-              <thead>
-                <tr className="border-b">
-                  <th 
-                    className="text-left p-2 cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort('_id')}
-                  >
-                    <div className="flex items-center">
-                      ID
-                      {sortConfig.key === '_id' && (
-                        <span className="ml-1">
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left p-2 cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort('createdAt')}
-                  >
-                    <div className="flex items-center">
-                      Date
-                      {sortConfig.key === 'createdAt' && (
-                        <span className="ml-1">
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left p-2 cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort('tableId.name')}
-                  >
-                    <div className="flex items-center">
-                      Table
-                      {sortConfig.key === 'tableId.name' && (
-                        <span className="ml-1">
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-right p-2 cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort('total')}
-                  >
-                    <div className="flex items-center justify-end">
-                      Total
-                      {sortConfig.key === 'total' && (
-                        <span className="ml-1">
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th className="text-right p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {getFilteredReceipts()
-                  .sort((a, b) => {
-                    let aValue, bValue;
-                    
-                    // Handle nested properties
-                    if (sortConfig.key === 'tableId.name') {
-                      aValue = a.tableId?.name || 'Z';
-                      bValue = b.tableId?.name || 'Z';
+            <div className="bg-white p-4 rounded-lg shadow overflow-x-auto">
+              <table className="w-full min-w-max">
+                <thead>
+                  <tr className="border-b">
+                    <th 
+                      className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('_id')}
+                    >
+                      <div className="flex items-center">
+                        ID
+                        {sortConfig.key === '_id' && (
+                          <span className="ml-1">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('createdAt')}
+                    >
+                      <div className="flex items-center">
+                        Date
+                        {sortConfig.key === 'createdAt' && (
+                          <span className="ml-1">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('tableId.name')}
+                    >
+                      <div className="flex items-center">
+                        Table
+                        {sortConfig.key === 'tableId.name' && (
+                          <span className="ml-1">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-right p-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('total')}
+                    >
+                      <div className="flex items-center justify-end">
+                        Total
+                        {sortConfig.key === 'total' && (
+                          <span className="ml-1">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="text-right p-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getFilteredReceipts()
+                    .sort((a, b) => {
+                      let aValue, bValue;
                       
-                      // If both are 'Z' (no table), sort by date
-                      if (aValue === 'Z' && bValue === 'Z') {
-                        return new Date(b.createdAt) - new Date(a.createdAt);
+                      // Handle nested properties
+                      if (sortConfig.key === 'tableId.name') {
+                        aValue = a.tableId?.name || 'Z';
+                        bValue = b.tableId?.name || 'Z';
+                        
+                        // If both are 'Z' (no table), sort by date
+                        if (aValue === 'Z' && bValue === 'Z') {
+                          return new Date(b.createdAt) - new Date(a.createdAt);
+                        }
+                        
+                        // If one is 'Z', push it to the end
+                        if (aValue === 'Z') return sortConfig.direction === 'asc' ? 1 : -1;
+                        if (bValue === 'Z') return sortConfig.direction === 'asc' ? -1 : 1;
+                      } else {
+                        aValue = a[sortConfig.key];
+                        bValue = b[sortConfig.key];
                       }
                       
-                      // If one is 'Z', push it to the end
-                      if (aValue === 'Z') return sortConfig.direction === 'asc' ? 1 : -1;
-                      if (bValue === 'Z') return sortConfig.direction === 'asc' ? -1 : 1;
-                    } else {
-                      aValue = a[sortConfig.key];
-                      bValue = b[sortConfig.key];
-                    }
-                    
-                    // Handle different data types
-                    if (typeof aValue === 'string' && typeof bValue === 'string') {
-                      return sortConfig.direction === 'asc' 
-                        ? aValue.localeCompare(bValue)
-                        : bValue.localeCompare(aValue);
-                    } else if (aValue instanceof Date && bValue instanceof Date) {
-                      return sortConfig.direction === 'asc'
-                        ? aValue - bValue
-                        : bValue - aValue;
-                    } else {
-                      return sortConfig.direction === 'asc'
-                        ? (aValue || 0) - (bValue || 0)
-                        : (bValue || 0) - (aValue || 0);
-                    }
-                  })
-                  .map((r) => (
-                  <tr key={r.id} className="border-b hover:bg-gray-50 min-w-max">
-                    <td className="p-2">{r.id.slice(-6)}</td>
-                    <td className="p-2">{new Date(r.createdAt).toLocaleString()}</td>
-                    <td className="p-2">
-                      {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
-                    </td>
-                    <td className="p-2 text-right">₹{r.total?.toFixed(2) || '0.00'}</td>
-                    <td className="p-2 text-right space-x-2">
-                      <button 
-                        onClick={() => setPreview(r)}
-                        className="text-blue-600 hover:underline"
-                      >
-                        View
-                      </button>
-                      <button 
-                        onClick={() => deleteReceipt(r.id)}
-                        className="text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      // Handle different data types
+                      if (typeof aValue === 'string' && typeof bValue === 'string') {
+                        return sortConfig.direction === 'asc' 
+                          ? aValue.localeCompare(bValue)
+                          : bValue.localeCompare(aValue);
+                      } else if (aValue instanceof Date && bValue instanceof Date) {
+                        return sortConfig.direction === 'asc'
+                          ? aValue - bValue
+                          : bValue - aValue;
+                      } else {
+                        return sortConfig.direction === 'asc'
+                          ? (aValue || 0) - (bValue || 0)
+                          : (bValue || 0) - (aValue || 0);
+                      }
+                    })
+                    .map((r) => (
+                    <tr key={r.id} className="border-b hover:bg-gray-50 min-w-max">
+                      <td className="p-2">{r.id.slice(-6)}</td>
+                      <td className="p-2">{new Date(r.createdAt).toLocaleString()}</td>
+                      <td className="p-2">
+                        {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
+                      </td>
+                      <td className="p-2 text-right">₹{r.total?.toFixed(2) || '0.00'}</td>
+                      <td className="p-2 text-right space-x-2">
+                        <button 
+                          onClick={() => setPreview(r)}
+                          className="text-blue-600 hover:underline"
+                        >
+                          View
+                        </button>
+                        <button 
+                          onClick={() => deleteReceipt(r.id)}
+                          className="text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
         </div>
       )}
 
@@ -2965,9 +2955,9 @@ export default function AdminDashboard({ onExit }) {
       )}
 
       {tab==='coupons' && (
-        <Section title="Coupons">
+        <div className="grid md:grid-cols-2 gap-6 px-4 md:px-0">
           <CouponManager />
-        </Section>
+        </div>
       )}
 
       {tab === 'tables' && (

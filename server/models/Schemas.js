@@ -52,6 +52,8 @@ const SettingsSchema = new mongoose.Schema({
     contactNumber: { type: String, default: '' },
     showEmail: { type: Boolean, default: true },
     email: { type: String, default: '' },
+    showRestaurantLogo: { type: Boolean, default: true },
+    restaurantLogo: { type: String, default: '' }, // Base64 encoded image or URL
     
     // Tax & Regulatory Information (with show/hide toggles)
     showGSTNumber: { type: Boolean, default: false },

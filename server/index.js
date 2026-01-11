@@ -475,6 +475,12 @@ app.post('/api/login', async (req, res) => {
                 if (settings.email === undefined) {
                     settings.email = '';
                 }
+                if (settings.showRestaurantLogo === undefined) {
+                    settings.showRestaurantLogo = true;
+                }
+                if (settings.restaurantLogo === undefined) {
+                    settings.restaurantLogo = '';
+                }
                 
                 // Add tax & regulatory information fields
                 if (settings.showGSTNumber === undefined) {
@@ -513,6 +519,8 @@ app.post('/api/login', async (req, res) => {
                     contactNumber: '',
                     showEmail: true,
                     email: '',
+                    showRestaurantLogo: true,
+                    restaurantLogo: '',
                     // Tax & Regulatory Information
                     showGSTNumber: false,
                     gstNumber: '',
@@ -549,6 +557,8 @@ app.post('/api/login', async (req, res) => {
                     contactNumber: '',
                     showEmail: true,
                     email: '',
+                    showRestaurantLogo: true,
+                    restaurantLogo: '',
                     // Tax & Regulatory Information
                     showGSTNumber: false,
                     gstNumber: '',
@@ -622,6 +632,8 @@ app.post('/api/login', async (req, res) => {
                 contactNumber: '',
                 showEmail: true,
                 email: '',
+                showRestaurantLogo: true,
+                restaurantLogo: '',
                 // Tax & Regulatory Information
                 showGSTNumber: false,
                 gstNumber: '',

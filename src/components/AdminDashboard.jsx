@@ -648,13 +648,68 @@ const handleSave = async () => {
     }
     const user = JSON.parse(token);
     
+    // Check if payload might be too large due to logo
+    let settingsToSave = { ...settings };
+    const payloadSize = JSON.stringify(settingsToSave).length;
+    
+    // If payload is larger than 1MB, temporarily exclude logo and save it separately
+    if (payloadSize > 1024 * 1024 && settingsToSave.restaurantLogo) {
+      const logoToSave = settingsToSave.restaurantLogo;
+      delete settingsToSave.restaurantLogo;
+      
+      // Save settings without logo first
+      const response = await fetch(`${API_URL}/api/settings`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.id}`
+        },
+        body: JSON.stringify(settingsToSave)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+
+      const updatedSettings = await response.json();
+      
+      // Then save logo separately
+      setTimeout(async () => {
+        try {
+          const logoResponse = await fetch(`${API_URL}/api/settings`, {
+            method: 'PUT',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${user.id}`
+            },
+            body: JSON.stringify({ restaurantLogo: logoToSave })
+          });
+
+          if (logoResponse.ok) {
+            const logoUpdatedSettings = await logoResponse.json();
+            setSettings({ ...updatedSettings, restaurantLogo: logoUpdatedSettings.restaurantLogo });
+            setSaveStatus('Settings saved successfully!');
+          } else {
+            setSaveStatus('Settings saved, but logo failed to update');
+          }
+        } catch (logoError) {
+          setSaveStatus('Settings saved, but logo failed to update');
+        }
+      }, 1000);
+      
+      setSettings(updatedSettings);
+      setTimeout(() => setSaveStatus(''), 3000);
+      return;
+    }
+    
+    // Normal save for smaller payloads
     const response = await fetch(`${API_URL}/api/settings`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${user.id}`
       },
-      body: JSON.stringify(settings)
+      body: JSON.stringify(settingsToSave)
     });
 
     if (!response.ok) {
@@ -667,9 +722,9 @@ const handleSave = async () => {
     setTimeout(() => setSaveStatus(''), 3000);
   } catch (error) {
     setSaveStatus(error.message || 'Failed to save settings');
-    console.error('Error saving settings:', error);
+    setTimeout(() => setSaveStatus(''), 5000);
   } finally {
-    setIsSaving(false);
+    setIsSaving(false)
   }
 }
 
@@ -691,6 +746,59 @@ const handleSave = async () => {
       taxRate: e.target.checked ? (settings.taxRate || 0) : 0
     }
     setSettings(newSettings)
+  }
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Check file size (limit to 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Logo file size should be less than 2MB')
+      return
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        // Create canvas to compress the image
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        // Calculate new dimensions (max 300px width, maintain aspect ratio)
+        const maxWidth = 300
+        const maxHeight = 150
+        let { width, height } = img
+        
+        if (width > maxWidth) {
+          height = (maxWidth / width) * height
+          width = maxWidth
+        }
+        if (height > maxHeight) {
+          width = (maxHeight / height) * width
+          height = maxHeight
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress the image
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        // Convert to compressed Base64 (JPEG at 0.7 quality)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7)
+        setSettings({ ...settings, restaurantLogo: compressedBase64 })
+      }
+      img.src = event.target.result
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleTaxRateChange = (e) => {
@@ -865,6 +973,45 @@ const handleSave = async () => {
               <p className="text-gray-600 mb-4">
                 Configure restaurant details that appear on invoices.
               </p>
+              
+              {/* Restaurant Logo */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">Restaurant Logo</h5>
+                  <p className="text-xs text-gray-600">
+                    Upload your restaurant logo to display on invoices.
+                  </p>
+                  {settings.restaurantLogo && (
+                    <div className="mt-3">
+                      <img 
+                        src={settings.restaurantLogo} 
+                        alt="Restaurant Logo" 
+                        className="h-16 w-auto max-w-32 object-contain border rounded"
+                      />
+                    </div>
+                  )}
+                  <div className="mt-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                    />
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showRestaurantLogo || false}
+                    onChange={(e) => setSettings({...settings, showRestaurantLogo: e.target.checked})}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showRestaurantLogo ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
               
               {/* Restaurant Name */}
               <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
@@ -2631,7 +2778,7 @@ export default function AdminDashboard({ onExit }) {
         <ReceiptModal
           open={!!preview}
           onClose={() => setPreview(null)}
-          receipt={preview}
+          receipt={{...preview, ...settings}}
           canEdit={true}
           onDelete={deleteReceipt}
           onUpdate={async (items) => {

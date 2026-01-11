@@ -624,6 +624,7 @@ function SettingsPanel({ onBack }) {
   const [settings, setSettings] = useState({ autoSubmitToChef: true })
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
+  const [settingsTab, setSettingsTab] = useState('general')
   const { user } = useAuth()
   const isSuperAdmin = user && user.username.toLowerCase() === 'abg'
 
@@ -704,8 +705,104 @@ const handleSave = async () => {
   // --- YOUR EXACT UI ---
   return (
     <div className="space-y-6">
-      <Section title="Application Settings">
-        <div className="space-y-4">
+      {/* Settings Sub-tabs */}
+      <div className="flex gap-2 mb-6">
+        {[
+          { id: 'general', label: 'General' },
+          { id: 'invoice', label: 'Invoice' }
+        ].map(t => {
+          const isActive = settingsTab === t.id;
+          const buttonColor = '#D4A76A';
+          const hoverColor = '#3E2723';
+          
+          return (
+            <button
+              key={t.id}
+              onClick={() => setSettingsTab(t.id)}
+              className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
+                isActive ? 'active' : ''
+              }`}
+              style={{
+                '--color': buttonColor,
+                '--hover-color': hoverColor,
+                '--box-shadow': `0 0 0 2px ${buttonColor}`,
+                '--active-box-shadow': `0 0 0 4px ${buttonColor}`,
+                padding: '12px 24px',
+                minWidth: '140px',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                border: '2px solid',
+                borderColor: 'transparent',
+                fontSize: '14px',
+                fontWeight: '600',
+                backgroundColor: isActive ? hoverColor : 'transparent',
+                borderRadius: '100px',
+                color: isActive ? 'white' : buttonColor,
+                cursor: 'pointer',
+                overflow: 'hidden',
+                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+                boxShadow: `0 0 0 2px ${buttonColor}`
+              }}
+            >
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '20px', height: '20px', left: '-25%', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+              </svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)', display: 'flex', alignItems: 'center' }}>
+                {t.label}
+              </span>
+              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: buttonColor, borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '20px', height: '20px', right: '16px', fill: isActive ? 'white' : buttonColor, zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+              </svg>
+              <style>{`
+                .animated-button:hover .arr-1,
+                .animated-button:hover .arr-2 {
+                  fill: white !important;
+                }
+                .animated-button:hover { 
+                  box-shadow: 0 0 0 12px transparent !important; 
+                  color: white !important; 
+                  border-radius: 12px !important; 
+                }
+                .animated-button:hover .arr-1 { 
+                  right: -25% !important; 
+                }
+                .animated-button:hover .arr-2 { 
+                  left: 16px !important; 
+                }
+                .animated-button:hover .text { 
+                  transform: translateX(12px) !important; 
+                }
+                .animated-button:active { 
+                  transform: scale(0.95) !important; 
+                  box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                }
+                .animated-button:hover .circle { 
+                  width: 200px !important; 
+                  height: 200px !important; 
+                  opacity: 1 !important; 
+                  background-color: ${hoverColor} !important; 
+                }
+                .animated-button:hover svg { 
+                  fill: white !important; 
+                }
+                .active { 
+                  box-shadow: 0 0 0 4px ${buttonColor} !important; 
+                  background-color: ${hoverColor} !important; 
+                  color: white !important; 
+                }
+              `}</style>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* General Settings */}
+      {settingsTab === 'general' && (
+        <Section title="General Settings">
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
@@ -754,141 +851,400 @@ const handleSave = async () => {
                 </label>
               </div>
             )}
+          </div>
+        </Section>
+      )}
 
+      {/* Invoice Settings */}
+      {settingsTab === 'invoice' && (
+        <Section title="Invoice Settings">
+          <div className="space-y-4">
+            {/* Restaurant Information */}
+            <div className="p-6 bg-gray-50 rounded-lg">
+              <h4 className="font-medium mb-4">Restaurant Information</h4>
+              <p className="text-gray-600 mb-4">
+                Configure restaurant details that appear on invoices.
+              </p>
+              
+              {/* Restaurant Name */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">Restaurant Name</h5>
+                  <p className="text-xs text-gray-600">
+                    {settings.showRestaurantName 
+                      ? 'Restaurant name will be displayed on invoices.'
+                      : 'Restaurant name will not be displayed on invoices.'}
+                  </p>
+                  {settings.showRestaurantName && (
+                    <div className="mt-3">
+                      <input
+                        type="text"
+                        className="input w-full"
+                        placeholder="Your Restaurant Name"
+                        value={settings.restaurantName || ''}
+                        onChange={(e) => setSettings({...settings, restaurantName: e.target.value})}
+                      />
+                    </div>
+                  )}
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showRestaurantName || false}
+                    onChange={(e) => setSettings({...settings, showRestaurantName: e.target.checked})}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showRestaurantName ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Restaurant Address */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">Restaurant Address</h5>
+                  <p className="text-xs text-gray-600">
+                    {settings.showRestaurantAddress 
+                      ? 'Restaurant address will be displayed on invoices.'
+                      : 'Restaurant address will not be displayed on invoices.'}
+                  </p>
+                  {settings.showRestaurantAddress && (
+                    <div className="mt-3">
+                      <textarea
+                        className="input w-full"
+                        rows={3}
+                        placeholder="Your restaurant address"
+                        value={settings.restaurantAddress || ''}
+                        onChange={(e) => setSettings({...settings, restaurantAddress: e.target.value})}
+                      />
+                    </div>
+                  )}
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showRestaurantAddress || false}
+                    onChange={(e) => setSettings({...settings, showRestaurantAddress: e.target.checked})}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showRestaurantAddress ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Contact Number */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">Contact Number</h5>
+                  <p className="text-xs text-gray-600">
+                    {settings.showContactNumber 
+                      ? 'Contact number will be displayed on invoices.'
+                      : 'Contact number will not be displayed on invoices.'}
+                  </p>
+                  {settings.showContactNumber && (
+                    <div className="mt-3">
+                      <input
+                        type="tel"
+                        className="input w-full"
+                        placeholder="Contact Number"
+                        value={settings.contactNumber || ''}
+                        onChange={(e) => setSettings({...settings, contactNumber: e.target.value})}
+                      />
+                    </div>
+                  )}
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showContactNumber || false}
+                    onChange={(e) => setSettings({...settings, showContactNumber: e.target.checked})}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showContactNumber ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Email */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">Email</h5>
+                  <p className="text-xs text-gray-600">
+                    {settings.showEmail 
+                      ? 'Email will be displayed on invoices.'
+                      : 'Email will not be displayed on invoices.'}
+                  </p>
+                  {settings.showEmail && (
+                    <div className="mt-3">
+                      <input
+                        type="email"
+                        className="input w-full"
+                        placeholder="billing@example.com"
+                        value={settings.email || ''}
+                        onChange={(e) => setSettings({...settings, email: e.target.value})}
+                      />
+                    </div>
+                  )}
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showEmail || false}
+                    onChange={(e) => setSettings({...settings, showEmail: e.target.checked})}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showEmail ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Tax and Regulatory Information */}
+            <div className="p-6 bg-gray-50 rounded-lg">
+              <h4 className="font-medium mb-4">Tax & Regulatory Information</h4>
+              <p className="text-gray-600 mb-4">
+                Configure tax and regulatory details for compliance.
+              </p>
+
+              {/* Tax Settings */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">Tax Settings</h5>
+                  <p className="text-xs text-gray-600">
+                    {settings.taxEnabled 
+                      ? `Tax is ENABLED at ${settings.taxRate || 0}%`
+                      : 'Tax is currently DISABLED'}
+                  </p>
+                  {settings.taxEnabled && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tax Rate (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={settings.taxRate || 0}
+                        onChange={handleTaxRateChange}
+                        className="input w-24"
+                      />
+                    </div>
+                  )}
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.taxEnabled || false}
+                    onChange={handleToggleTax}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.taxEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+
+              {/* GST Number */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">GST Number</h5>
+                  <p className="text-xs text-gray-600">
+                    {settings.showGSTNumber 
+                      ? 'GST number will be displayed on invoices.'
+                      : 'GST number will not be displayed on invoices.'}
+                  </p>
+                  {settings.showGSTNumber && (
+                    <div className="mt-3">
+                      <input
+                        type="text"
+                        className="input w-full"
+                        placeholder="GSTIN Number (e.g., 07AAAPL1234C1ZV)"
+                        value={settings.gstNumber || ''}
+                        onChange={(e) => setSettings({...settings, gstNumber: e.target.value.toUpperCase()})}
+                      />
+                    </div>
+                  )}
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showGSTNumber || false}
+                    onChange={(e) => setSettings({...settings, showGSTNumber: e.target.checked})}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showGSTNumber ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+
+              {/* FSSAI Number */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm">FSSAI Number</h5>
+                  <p className="text-xs text-gray-600">
+                    {settings.showFSSAINumber 
+                      ? 'FSSAI license number will be displayed on invoices.'
+                      : 'FSSAI license number will not be displayed on invoices.'}
+                  </p>
+                  {settings.showFSSAINumber && (
+                    <div className="mt-3">
+                      <input
+                        type="text"
+                        className="input w-full"
+                        placeholder="FSSAI License Number (e.g., 12345678901234)"
+                        value={settings.fssaiNumber || ''}
+                        onChange={(e) => setSettings({...settings, fssaiNumber: e.target.value})}
+                      />
+                    </div>
+                  )}
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showFSSAINumber || false}
+                    onChange={(e) => setSettings({...settings, showFSSAINumber: e.target.checked})}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showFSSAINumber ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Additional Options */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <h4 className="font-medium">Tax Settings</h4>
+                <h4 className="font-medium">Include QR Code in Invoice</h4>
                 <p className="text-sm text-gray-600">
-                  {settings.taxEnabled 
-                    ? `Tax is ENABLED at ${settings.taxRate || 0}%`
-                    : 'Tax is currently DISABLED'}
+                  {settings.includeQRInInvoice 
+                    ? 'QR code will be included in printed invoices for easy payment.'
+                    : 'QR code will not be included in printed invoices.'}
                 </p>
-                {settings.taxEnabled && (
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tax Rate (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={settings.taxRate || 0}
-                      onChange={handleTaxRateChange}
-                      className="input w-24"
-                    />
-                  </div>
-                )}
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input 
                   type="checkbox" 
                   className="sr-only peer" 
-                  checked={settings.taxEnabled || false}
-                  onChange={handleToggleTax}
+                  checked={settings.includeQRInInvoice || false}
+                  onChange={(e) => setSettings({...settings, includeQRInInvoice: e.target.checked})}
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 <span className="ml-3 text-sm font-medium text-gray-900">
-                  {settings.taxEnabled ? 'Enabled' : 'Disabled'}
+                  {settings.includeQRInInvoice ? 'Enabled' : 'Disabled'}
                 </span>
               </label>
             </div>
           </div>
+        </Section>
+      )}
 
-          <div className="pt-4 border-t">
-            <div className="flex justify-end gap-3 items-center">
-              {saveStatus && (
-                <span className={`text-sm ${saveStatus.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
-                  {saveStatus}
-                </span>
-              )}
-              <button
-                onClick={onBack}
-                className="animated-button group relative inline-flex items-center justify-center"
-                style={{
-                  '--color': '#9CA3AF',
-                  '--hover-color': '#4B5563',
-                  padding: '8px 24px',
-                  fontSize: '14px',
-                  minWidth: '120px',
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  border: '2px solid',
-                  borderColor: 'transparent',
-                  fontWeight: '600',
-                  backgroundColor: 'transparent',
-                  borderRadius: '100px',
-                  color: '#9CA3AF',
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                  boxShadow: '0 0 0 2px #9CA3AF'
-                }}
-                disabled={isSaving}
-              >
-                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                </svg>
-                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  Cancel
-                </span>
-                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#9CA3AF', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                </svg>
-              </button>
-              <button
-                onClick={handleSave}
-                className="animated-button group relative inline-flex items-center justify-center"
-                style={{
-                  '--color': '#D4A76A',
-                  '--hover-color': '#3E2723',
-                  padding: '8px 24px',
-                  fontSize: '14px',
-                  minWidth: '140px',
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  border: '2px solid',
-                  borderColor: 'transparent',
-                  fontWeight: '600',
-                  backgroundColor: 'transparent',
-                  borderRadius: '100px',
-                  color: '#D4A76A',
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                  boxShadow: '0 0 0 2px #D4A76A'
-                }}
-                disabled={isSaving}
-              >
-                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                </svg>
-                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  {isSaving ? 'Saving...' : 'Save Settings'}
-                </span>
-                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                </svg>
-                <style>{`
-                  .animated-button:hover:not(:disabled) { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
-                  .animated-button:hover:not(:disabled) .arr-1 { right: -25% !important; }
-                  .animated-button:hover:not(:disabled) .arr-2 { left: 16px !important; }
-                  .animated-button:hover:not(:disabled) .text { transform: translateX(12px) !important; }
-                  .animated-button:hover:not(:disabled) svg { fill: white !important; }
-                  .animated-button:active:not(:disabled) { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
-                  .animated-button:hover:not(:disabled) .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
-                `}</style>
-              </button>
-            </div>
-          </div>
+      {/* Save/Cancel buttons */}
+      <div className="pt-4 border-t">
+        <div className="flex justify-end gap-3 items-center">
+          {saveStatus && (
+            <span className={`text-sm ${saveStatus.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+              {saveStatus}
+            </span>
+          )}
+          <button
+            onClick={onBack}
+            className="animated-button group relative inline-flex items-center justify-center"
+            style={{
+              '--color': '#9CA3AF',
+              '--hover-color': '#4B5563',
+              padding: '8px 24px',
+              fontSize: '14px',
+              minWidth: '120px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: '2px solid',
+              borderColor: 'transparent',
+              fontWeight: '600',
+              backgroundColor: 'transparent',
+              borderRadius: '100px',
+              color: '#9CA3AF',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+              boxShadow: '0 0 0 2px #9CA3AF'
+            }}
+            disabled={isSaving}
+          >
+            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+            </svg>
+            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              Cancel
+            </span>
+            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#9CA3AF', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#9CA3AF', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+            </svg>
+          </button>
+          <button
+            onClick={handleSave}
+            className="animated-button group relative inline-flex items-center justify-center"
+            style={{
+              '--color': '#D4A76A',
+              '--hover-color': '#3E2723',
+              padding: '8px 24px',
+              fontSize: '14px',
+              minWidth: '140px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: '2px solid',
+              borderColor: 'transparent',
+              fontWeight: '600',
+              backgroundColor: 'transparent',
+              borderRadius: '100px',
+              color: '#D4A76A',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+              boxShadow: '0 0 0 2px #D4A76A'
+            }}
+            disabled={isSaving}
+          >
+            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+            </svg>
+            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              {isSaving ? 'Saving...' : 'Save Settings'}
+            </span>
+            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+            </svg>
+            <style>{`
+              .animated-button:hover:not(:disabled) { box-shadow: 0 0 0 8px transparent !important; color: white !important; border-radius: 12px !important; }
+              .animated-button:hover:not(:disabled) .arr-1 { right: -25% !important; }
+              .animated-button:hover:not(:disabled) .arr-2 { left: 16px !important; }
+              .animated-button:hover:not(:disabled) .text { transform: translateX(12px) !important; }
+              .animated-button:hover:not(:disabled) svg { fill: white !important; }
+              .animated-button:active:not(:disabled) { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
+              .animated-button:hover:not(:disabled) .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
+            `}</style>
+          </button>
         </div>
-      </Section>
+      </div>
     </div>
   )
 }

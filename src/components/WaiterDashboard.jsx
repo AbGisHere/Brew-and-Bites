@@ -662,9 +662,10 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6" style={{ alignItems: 'start' }}>
         <Section title="Tables">
-          <ul className="space-y-2 max-h-[400px] overflow-y-auto overflow-x-auto pr-1 py-2 -mr-1 w-full">
+          <div className="flex flex-col" style={{ height: '100%' }}>
+            <ul className="space-y-2 overflow-y-auto overflow-x-auto pr-1 py-2 -mr-1 w-full" style={{ minHeight: 'auto', maxHeight: 'none' }}>
             {tables.map(t => (
               <li key={t.id}>
                 <button
@@ -703,65 +704,21 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
               </li>
             ))}
           </ul>
-          <div className="mt-4 border-t pt-3 pb-1">
-            <h4 className="font-semibold mb-3">Receipts (table)</h4>
-            <ul className="space-y-3 max-h-[240px] overflow-y-auto overflow-x-auto w-full pr-1 -mr-1 pl-1 text-sm">
+          <div className="mt-4 border-t pt-3 pb-1 flex flex-col" style={{ minHeight: '0' }}>
+            <h4 className="font-semibold mb-3 flex-shrink-0">Receipts (table)</h4>
+            <ul className="space-y-3 overflow-y-auto overflow-x-auto w-full pr-12 pl-1 text-sm" style={{ overflow: 'visible', overflowY: 'auto', overflowX: 'auto', padding: '8px', maxHeight: '200px' }}>
               {receipts.filter(r=>r.tableId===selectedTable).map(r => (
                 <li key={r.id} className="flex justify-between items-center py-1">
-                  <span>{new Date(r.createdAt).toLocaleTimeString()} • ₹{r.total.toFixed(2)}</span>
+                  <span className="flex-shrink-0">{new Date(r.createdAt).toLocaleTimeString()} • ₹{r.total.toFixed(2)}</span>
                   <button
-                    className="animated-button"
+                    className="view-button flex-shrink-0 mr-[10px]"
                     onClick={()=>setPreview(r)}
-                    style={{
-                      '--color': '#D4A76A',
-                      '--hover-color': '#3E2723',
-                      padding: '6px 16px',
-                      fontSize: '14px',
-                      minWidth: '100px',
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      border: '2px solid',
-                      borderColor: 'transparent',
-                      fontWeight: '600',
-                      backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                      borderRadius: '100px',
-                      color: '#D4A76A',
-                      cursor: 'pointer',
-                      overflow: 'hidden',
-                      transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                      boxShadow: '0 0 0 2px #D4A76A',
-                      height: '36px',
-                      backdropFilter: 'blur(12px)',
-                      WebkitBackdropFilter: 'blur(12px)',
-                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                      border: '1px solid rgba(212, 167, 106, 0.3)',
-                      boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
-                    }}
+                    style={animatedButtonStyles.viewButton}
                   >
                     <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg>
                     <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>View</span>
                     <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
                     <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg>
-                    <style jsx>{`button:hover { 
-                      box-shadow: 0 0 0 8px transparent !important; 
-                      color: white !important; 
-                      border-radius: 12px !important;
-                      backdropFilter: 'blur(16px) !important',
-                      WebkitBackdropFilter: 'blur(16px) !important',
-                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                      border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                      boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                    } 
-                    button:hover .arr-1 { right: -25% !important; } 
-                    button:hover .arr-2 { left: 16px !important; } 
-                    button:hover .text { transform: translateX(12px) !important; color: white !important; } 
-                    button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; } 
-                    button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; } 
-                    button:hover svg { fill: white !important; } 
-                    button:active .circle { opacity: 1; width: 200%; height: 500%; }`}</style>
                   </button>
                 </li>
               ))}
@@ -770,10 +727,13 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
               )}
             </ul>
           </div>
+          </div>
         </Section>
 
         <Section title="Menu" className="md:col-span-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="flex flex-col" style={{ height: '100%' }}>
+            <div className="flex-shrink-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {categories.map(cat => (
               <div key={cat}>
                 <h4 className="capitalize text-sm text-gray-500 mb-1">{cat}</h4>
@@ -789,7 +749,8 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                 </div>
               </div>
             ))}
-          </div>
+              </div>
+            </div>
 
           {/* Pending Items (Manual Mode) */}
           {!autoSubmitToChef && pendingItems.length > 0 && (
@@ -824,8 +785,8 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
             </div>
           )}
 
-          <div className="mt-4 border-t pt-3">
-            <h4 className="font-semibold mb-2">Current Order</h4>
+          <div className="mt-4 border-t pt-3 flex flex-col" style={{ flex: 1, minHeight: 0 }}>
+            <h4 className="font-semibold mb-2 flex-shrink-0">Current Order</h4>
             {!activeOrder && <div className="text-sm text-gray-500">Select a table and add items to start an order.</div>}
             {activeOrder && (!activeOrder.items || activeOrder.items.length === 0) && <div className="text-sm text-gray-500">NO ORDERS</div>}
             {activeOrder && activeOrder.items && activeOrder.items.length > 0 && (
@@ -1153,6 +1114,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                 </div>
               </>
             )}
+          </div>
           </div>
         </Section>
       </div>

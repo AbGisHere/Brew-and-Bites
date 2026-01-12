@@ -35,6 +35,30 @@ export const animatedButtonStyles = {
     color: '#3E2723'
   },
 
+  // View button style - menu item look with liquid glass effect
+  viewButton: {
+    backdropFilter: 'blur(40px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+    background: 'rgba(212, 167, 106, 0.18)',
+    borderRadius: '22px',
+    border: '1px solid rgba(212, 167, 106, 0.22)', // Subtle border matching menu items
+    boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(212, 167, 106, 0.12)', // Removed thick border shadow
+    transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)', // Keep current animation timing
+    cursor: 'pointer',
+    position: 'relative',
+    overflow: 'hidden',
+    color: '#3E2723',
+    padding: '6px 16px',
+    fontSize: '14px',
+    minWidth: '100px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    fontWeight: '600'
+  },
+
   // Hover styles for menu items - softer colors
   hoverStyles: `
     .menu-item:hover {
@@ -65,6 +89,51 @@ export const animatedButtonStyles = {
     
     .menu-item:hover .text-primary {
       color: #D4A76A !important;
+    }
+    
+    .view-button:hover {
+      backdropFilter: 'blur(40px) saturate(150%) !important', // Same as normal state
+      WebkitBackdropFilter: 'blur(40px) saturate(150%) !important', // Same as normal state
+      background: 'rgba(92, 61, 46, 0.18) !important', // Same opacity as normal state but darker color
+      border: '1px solid rgba(212, 167, 106, 0.28) !important', // Subtle hover border matching menu items
+      boxShadow: '0 6px 32px -2px rgba(212, 167, 106, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.08) !important', // Matching menu item hover shadow
+      color: white !important;
+      border-radius: 12px !important;
+      transform: scale(0.98) !important;
+    }
+    
+    .view-button:hover .arr-1 { 
+      right: -25% !important; 
+    }
+    .view-button:hover .arr-2 { 
+      left: 16px !important; 
+    }
+    .view-button:hover .text { 
+      transform: translateX(12px) !important; 
+      color: white !important; 
+    }
+    .view-button:hover svg { 
+      fill: white !important; 
+    }
+    .view-button:hover .circle { 
+      width: 200px !important; 
+      height: 200px !important; 
+      opacity: 1 !important; 
+      background-color: #3E2723 !important; 
+    }
+    
+    .view-button:active {
+      transform: scale(0.96) !important;
+      border: '2px solid rgba(212, 167, 106, 0.4) !important', // Subtle active border matching menu items
+      outline: 'none' !important;
+      box-shadow: '0 4px 20px -2px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(212, 167, 106, 0.12) !important';
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    }
+    
+    .view-button:active .circle { 
+      opacity: 1; 
+      width: 200%; 
+      height: 500%; 
     }
   `
 }
@@ -430,5 +499,10 @@ export default {
   AnimatedButton,
   MenuItem,
   colors,
-  animatedButtonStyles
+  animatedButtonStyles,
+  tableButtonStyles,
+  statusBadgeStyles,
+  orderItemStyles,
+  deleteButtonStyles,
+  quantityButtonStyles
 }

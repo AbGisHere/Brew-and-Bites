@@ -568,7 +568,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
 
   return (
     <>
-      <style>{hoverStyles}</style>
+      <style>{animatedButtonStyles.hoverStyles}</style>
       <div className={`container mx-auto ${embedded ? 'px-0 py-0' : 'px-2 sm:px-4 py-4 sm:py-8'}`}>
       {/* Mobile Only - Welcome and Logout */}
       {!embedded && (
@@ -665,31 +665,21 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6" style={{ alignItems: 'start' }}>
         <Section title="Tables">
           <div className="flex flex-col" style={{ height: '100%' }}>
-            <ul className="space-y-2 overflow-y-auto overflow-x-auto pr-1 py-2 -mr-1 w-full" style={{ minHeight: 'auto', maxHeight: 'none' }}>
+            <ul className="space-y-3 pr-6 py-2 pl-2 w-full" style={{ minHeight: 'auto', maxHeight: 'none' }}>
             {tables.map(t => (
               <li key={t.id}>
                 <button
                   onClick={() => setSelectedTable(t.id)}
-                  className="w-full text-left border rounded p-2 transition-all"
+                  className="w-full text-left border rounded p-2 transition-all table-button"
                   style={{
                     ...tableButtonStyles.base,
                     ...(selectedTable === t.id ? tableButtonStyles.active : {}),
                     ...(selectedTable === t.id && { ...tableButtonStyles.activeHover })
                   }}
-                  onMouseEnter={(e) => {
-                    if (!selectedTable === t.id) {
-                      Object.assign(e.target.style, tableButtonStyles.hover);
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!selectedTable === t.id) {
-                      Object.assign(e.target.style, tableButtonStyles.base);
-                    }
-                  }}
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
-                      <UserGroupIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${selectedTable === t.id ? 'text-white' : 'text-amber-700'}`} />
+                      <UserGroupIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${selectedTable === t.id ? 'text-white' : 'text-amber-900'}`} />
                       <span className="font-medium text-sm sm:text-base">{t.name}</span>
                     </div>
                     <div className={`text-xs px-2 py-0.5 rounded-full ${
@@ -883,46 +873,8 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                             {it.status === 'preparing' && (
                               <div 
                                 onClick={() => removeItem(it.itemId || it.id)}
-                                className="w-8 h-8 flex items-center justify-center cursor-pointer ml-2"
-                                style={{
-                                  ...animatedButtonStyles.menuItem,
-                                  background: 'rgba(239, 68, 68, 0.25)',
-                                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  boxShadow: '0 4px 24px rgba(239, 68, 68, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(239, 68, 68, 0.1)'
-                                }}
-                                onMouseEnter={(e) => {
-                                  Object.assign(e.target.style, {
-                                    background: 'rgba(239, 68, 68, 0.15)',
-                                    transform: 'scale(0.98)',
-                                    boxShadow: '0 6px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(239, 68, 68, 0.08)'
-                                  });
-                                }}
-                                onMouseLeave={(e) => {
-                                  Object.assign(e.target.style, {
-                                    ...animatedButtonStyles.menuItem,
-                                    background: 'rgba(239, 68, 68, 0.25)',
-                                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                                    boxShadow: '0 4px 24px rgba(239, 68, 68, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(239, 68, 68, 0.1)'
-                                  });
-                                }}
-                                onMouseDown={(e) => {
-                                  Object.assign(e.target.style, {
-                                    background: 'rgba(239, 68, 68, 0.2)',
-                                    transform: 'scale(0.96)',
-                                    border: '2px solid rgba(239, 68, 68, 0.5)',
-                                    outline: 'none',
-                                    boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(239, 68, 68, 0.15)',
-                                    transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                                  });
-                                }}
-                                onMouseUp={(e) => {
-                                  Object.assign(e.target.style, {
-                                    ...animatedButtonStyles.menuItem,
-                                    background: 'rgba(239, 68, 68, 0.25)',
-                                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                                    boxShadow: '0 4px 24px rgba(239, 68, 68, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(239, 68, 68, 0.1)'
-                                  });
-                                }}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer ml-2 delete-btn"
+                                style={deleteButtonStyles.base}
                                 title="Remove item"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
@@ -966,10 +918,10 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                             <>
                               <div 
                                 onClick={() => changeQty(it.itemId || it.id, -1, it.status)}
-                                className={`w-8 h-8 flex items-center justify-center cursor-pointer ${it.qty <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer quantity-button"
                                 disabled={it.qty <= 1}
                                 style={{
-                                  ...animatedButtonStyles.menuItem,
+                                  ...quantityButtonStyles.base,
                                   ...(it.qty <= 1 ? { pointerEvents: 'none' } : {})
                                 }}
                               >
@@ -980,8 +932,8 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                               </div>
                               <div 
                                 onClick={() => changeQty(it.itemId || it.id, 1, it.status)}
-                                className="w-8 h-8 flex items-center justify-center cursor-pointer"
-                                style={animatedButtonStyles.menuItem}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer quantity-button"
+                                style={quantityButtonStyles.base}
                               >
                                 <span style={{ fontSize: '16px', fontWeight: 'bold' }}>+</span>
                               </div>
@@ -1019,95 +971,14 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   <div className="w-40">
                     <button
                       onClick={closeOrder}
-                      className="animated-button group relative inline-flex items-center justify-center flex-shrink-0"
-                      style={{
-                        '--color': '#D4A76A',
-                        '--hover-color': '#3E2723',
-                        padding: '10px 18px',
-                        minWidth: '220px',
-                        margin: '2px',
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        border: '2px solid',
-                        borderColor: 'transparent',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                        borderRadius: '100px',
-                        color: '#D4A76A',
-                        cursor: 'pointer',
-                        overflow: 'hidden',
-                        transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)',
-                        boxShadow: '0 0 0 2px #D4A76A',
-                        WebkitTapHighlightColor: 'transparent',
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        touchAction: 'manipulation',
-                        WebkitAppearance: 'none',
-                        marginLeft: 'auto',
-                        backdropFilter: 'blur(12px)',
-                        WebkitBackdropFilter: 'blur(12px)',
-                        background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                        border: '1px solid rgba(212, 167, 106, 0.3)',
-                        boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
-                      }}
+                      className="close-button group relative inline-flex items-center justify-center flex-shrink-0 mt-4"
+                      style={animatedButtonStyles.closeButton}
                     >
-                      <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                        <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                        Close & Generate Receipt
-                      </span>
-                      <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                      <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                        <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <style jsx>{`
-                        button:hover { 
-                          box-shadow: 0 0 0 8px transparent !important; 
-                          color: white !important; 
-                          border-radius: 8px !important;
-                          backdropFilter: 'blur(16px) !important',
-                          WebkitBackdropFilter: 'blur(16px) !important',
-                          background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                          border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                          boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                        }
-                        button:hover .arr-1 { 
-                          right: -25% !important; 
-                        }
-                        button:hover .arr-2 { 
-                          left: 16px !important; 
-                        }
-                        button:hover .text { 
-                          transform: translateX(0) !important; 
-                        }
-                        button:active { 
-                          transform: scale(0.95) !important; 
-                          box-shadow: 0 0 0 4px #8B5A2B !important; 
-                        }
-                        button:hover .circle { 
-                          width: 200px !important; 
-                          height: 200px !important; 
-                          opacity: 1 !important; 
-                          background-color: #5D4037 !important; 
-                        }
-                        button:hover svg { 
-                          fill: white !important; 
-                        }
-                        button:active .circle { 
-                          opacity: 1; 
-                          width: 200%; 
-                          height: 500%; 
-                        }
-                      `}</style>
+                      Close & Generate Receipt
                     </button>
                   </div>
                   <div className="flex-1"></div>
-                  <div className="text-right">
+                  <div className="text-right mt-4">
                     <div className="text-sm">Discount: ₹{Number(activeOrder.discount||0).toFixed(2)}</div>
                     <div className="font-semibold">Total: ₹{(activeOrder.total || 0).toFixed(2)}</div>
                   </div>

@@ -42,8 +42,8 @@ export const animatedButtonStyles = {
     background: 'rgba(212, 167, 106, 0.18)',
     borderRadius: '22px',
     border: '1px solid rgba(212, 167, 106, 0.22)', // Subtle border matching menu items
-    boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(212, 167, 106, 0.12)', // Removed thick border shadow
-    transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)', // Keep current animation timing
+    boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(212, 167, 106, 0.12)', // Softer shadow
+    transition: 'all 0.2s ease',
     cursor: 'pointer',
     position: 'relative',
     overflow: 'hidden',
@@ -59,21 +59,44 @@ export const animatedButtonStyles = {
     fontWeight: '600'
   },
 
+  closeButton: {
+    backdropFilter: 'blur(40px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+    background: 'rgba(121, 85, 72, 0.18)',
+    borderRadius: '22px',
+    border: '1px solid rgba(121, 85, 72, 0.22)',
+    boxShadow: '0 4px 24px -1px rgba(121, 85, 72, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(121, 85, 72, 0.12)',
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    position: 'relative',
+    overflow: 'hidden',
+    color: '#3E2723',
+    padding: '10px 18px',
+    fontSize: '14px',
+    minWidth: '220px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontWeight: '600'
+  },
+
   // Hover styles for menu items - softer colors
   hoverStyles: `
     .menu-item:hover {
-      background: rgba(212, 167, 106, 0.12) !important; // Reduced from 0.15 to 0.12
+      background: rgba(212, 167, 106, 0.35) !important;
       transform: scale(0.98) !important;
-      box-shadow: '0 6px 32px -2px rgba(212, 167, 106, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.08)' !important;
-      border: '1px solid rgba(212, 167, 106, 0.28)' !important;
+      box-shadow: 0 6px 32px -2px rgba(212, 167, 106, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.1) !important;
+      border: 1px solid rgba(212, 167, 106, 0.3) !important;
     }
     
     .menu-item:active {
-      background: rgba(212, 167, 106, 0.15) !important; // Reduced from 0.2 to 0.15
+      background: rgba(212, 167, 106, 0.4) !important;
       transform: scale(0.96) !important;
-      border: '2px solid rgba(212, 167, 106, 0.4)' !important; // Reduced from 0.5 to 0.4
-      outline: 'none' !important;
-      box-shadow: '0 4px 20px -2px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(212, 167, 106, 0.12)' !important;
+      border: 2px solid rgba(212, 167, 106, 0.5) !important;
+      outline: none !important;
+      box-shadow: 0 4px 20px -2px rgba(212, 167, 106, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(212, 167, 106, 0.15) !important;
       transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
     }
     
@@ -84,22 +107,20 @@ export const animatedButtonStyles = {
     
     .menu-item:hover span,
     .menu-item:hover div {
-      color: #3E2723 !important;
+      color: #5D4037 !important; // Darker brown for better readability
     }
     
     .menu-item:hover .text-primary {
-      color: #D4A76A !important;
+      color: #8D6E63 !important; // Darker amber for primary text
     }
     
     .view-button:hover {
-      backdropFilter: 'blur(40px) saturate(150%) !important', // Same as normal state
-      WebkitBackdropFilter: 'blur(40px) saturate(150%) !important', // Same as normal state
-      background: 'rgba(92, 61, 46, 0.18) !important', // Same opacity as normal state but darker color
-      border: '1px solid rgba(212, 167, 106, 0.28) !important', // Subtle hover border matching menu items
-      boxShadow: '0 6px 32px -2px rgba(212, 167, 106, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.08) !important', // Matching menu item hover shadow
-      color: white !important;
-      border-radius: 12px !important;
+      background: rgba(212, 167, 106, 0.25) !important;
       transform: scale(0.98) !important;
+      box-shadow: 0 6px 32px -2px rgba(212, 167, 106, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.1) !important;
+      border: 1px solid rgba(212, 167, 106, 0.3) !important;
+      border-radius: 12px !important;
+      color: #3E2723 !important;
     }
     
     .view-button:hover .arr-1 { 
@@ -110,30 +131,96 @@ export const animatedButtonStyles = {
     }
     .view-button:hover .text { 
       transform: translateX(12px) !important; 
-      color: white !important; 
     }
     .view-button:hover svg { 
-      fill: white !important; 
+      fill: #3E2723 !important; 
     }
     .view-button:hover .circle { 
       width: 200px !important; 
       height: 200px !important; 
       opacity: 1 !important; 
-      background-color: #3E2723 !important; 
+      background-color: rgba(212, 167, 106, 0.3) !important;
     }
     
     .view-button:active {
+      background: linear-gradient(135deg, rgba(212, 167, 106, 0.5) 0%, rgba(212, 167, 106, 0.35) 100%) !important;
       transform: scale(0.96) !important;
-      border: '2px solid rgba(212, 167, 106, 0.4) !important', // Subtle active border matching menu items
-      outline: 'none' !important;
-      box-shadow: '0 4px 20px -2px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(212, 167, 106, 0.12) !important';
-      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+      box-shadow: 0 4px 20px rgba(212, 167, 106, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+      border: 1px solid rgba(212, 167, 106, 0.5) !important;
+      border-radius: 12px !important;
+      color: #3E2723 !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
     
     .view-button:active .circle { 
       opacity: 1; 
       width: 200%; 
       height: 500%; 
+    }
+    
+    .close-button:hover {
+      background: rgba(121, 85, 72, 0.35) !important;
+      transform: scale(0.98) !important;
+      box-shadow: 0 6px 32px -2px rgba(121, 85, 72, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(121, 85, 72, 0.1) !important;
+      border: 1px solid rgba(121, 85, 72, 0.3) !important;
+    }
+    
+    .close-button:active {
+      background: rgba(121, 85, 72, 0.2) !important;
+      transform: scale(0.96) !important;
+      border: 2px solid rgba(121, 85, 72, 0.5) !important;
+      outline: none !important;
+      box-shadow: 0 4px 20px -2px rgba(121, 85, 72, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(121, 85, 72, 0.15) !important;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    }
+    
+    .quantity-button:hover {
+      background: rgba(212, 167, 106, 0.25) !important;
+      border: 1px solid rgba(212, 167, 106, 0.3) !important;
+      box-shadow: 0 4px 12px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.25) !important;
+      transform: scale(0.98) !important;
+    }
+    
+    .quantity-button:active {
+      background: rgba(212, 167, 106, 0.15) !important;
+      border: 2px solid rgba(212, 167, 106, 0.4) !important;
+      outline: none !important;
+      box-shadow: 0 4px 20px rgba(212, 167, 106, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.4) !important;
+      transform: scale(0.96) !important;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    }
+    
+    .delete-btn:hover {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border: 1px solid rgba(239, 68, 68, 0.4) !important;
+      color: #b91c1c !important;
+      transform: scale(0.98) !important;
+    }
+    
+    .delete-btn:active {
+      background: rgba(239, 68, 68, 0.25) !important;
+      border: 2px solid rgba(239, 68, 68, 0.5) !important;
+      outline: none !important;
+      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.4) !important;
+      transform: scale(0.96) !important;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    }
+    
+    .table-button:hover {
+      background: rgba(121, 85, 72, 0.35) !important;
+      transform: scale(0.98) !important;
+      box-shadow: 0 6px 32px -2px rgba(121, 85, 72, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(121, 85, 72, 0.1) !important;
+      border: 1px solid rgba(121, 85, 72, 0.3) !important;
+      color: #5D4037 !important;
+    }
+    
+    .table-button:active {
+      background: rgba(121, 85, 72, 0.2) !important;
+      transform: scale(0.96) !important;
+      border: 2px solid rgba(121, 85, 72, 0.5) !important;
+      outline: none !important;
+      box-shadow: 0 4px 20px -2px rgba(121, 85, 72, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(121, 85, 72, 0.15) !important;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
     }
   `
 }
@@ -146,34 +233,37 @@ export const tableButtonStyles = {
     overflow: 'hidden',
     backdropFilter: 'blur(4px) saturate(120%)',
     WebkitBackdropFilter: 'blur(4px) saturate(120%)',
-    background: 'rgba(212, 167, 106, 0.08)', // Softer amber background
-    border: '1px solid rgba(212, 167, 106, 0.15)',
+    background: 'rgba(121, 85, 72, 0.08)', // Brown background
+    border: '1px solid rgba(121, 85, 72, 0.15)',
     borderRadius: '12px',
     color: '#3E2723',
     transform: 'translateY(0px)'
   },
   
   hover: {
-    background: 'rgba(212, 167, 106, 0.12)',
-    color: '#5D4037',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 4px 12px rgba(212, 167, 106, 0.15)',
-    borderColor: 'rgba(212, 167, 106, 0.25)'
+    background: 'rgba(121, 85, 72, 0.35)',
+    transform: 'scale(0.98)',
+    boxShadow: '0 6px 32px -2px rgba(121, 85, 72, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(121, 85, 72, 0.1)',
+    borderColor: 'rgba(121, 85, 72, 0.3)',
+    color: '#5D4037'
   },
   
   active: {
-    background: 'linear-gradient(135deg, rgba(62, 39, 35, 0.95) 0%, rgba(62, 39, 35, 0.85) 100%)',
-    color: 'white',
-    borderColor: '#3E2723',
-    backdropFilter: 'blur(8px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(8px) saturate(120%)'
+    background: 'rgba(121, 85, 72, 0.4)',
+    transform: 'scale(1)',
+    border: '1px solid rgba(121, 85, 72, 0.4)',
+    outline: 'none',
+    boxShadow: '0 6px 32px -2px rgba(121, 85, 72, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(121, 85, 72, 0.1)',
+    transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    color: '#5D4037'
   },
   
   activeHover: {
-    background: 'linear-gradient(135deg, rgba(62, 39, 35, 0.9) 0%, rgba(62, 39, 35, 0.8) 100%)',
-    boxShadow: '0 4px 12px rgba(62, 39, 35, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    background: 'rgba(121, 85, 72, 0.45)',
+    boxShadow: '0 6px 32px -2px rgba(121, 85, 72, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.35), inset 0 0 25px rgba(121, 85, 72, 0.12)',
     backdropFilter: 'blur(6px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(6px) saturate(120%)'
+    WebkitBackdropFilter: 'blur(6px) saturate(120%)',
+    border: '1px solid rgba(121, 85, 72, 0.45)'
   }
 };
 
@@ -240,7 +330,7 @@ export const deleteButtonStyles = {
     backdropFilter: 'blur(20px) saturate(120%)',
     WebkitBackdropFilter: 'blur(20px) saturate(120%)',
     background: 'rgba(239, 68, 68, 0.15)', // Light glass red background (increased from 0.1)
-    borderRadius: '8px',
+    borderRadius: '50%', // Make it circular
     border: '1px solid rgba(239, 68, 68, 0.3)', // More visible red outline
     color: '#dc2626',
     padding: '4px 8px',
@@ -272,9 +362,9 @@ export const quantityButtonStyles = {
   },
   
   hover: {
-    background: 'rgba(212, 167, 106, 0.12)',
-    border: '1px solid rgba(212, 167, 106, 0.25)',
-    boxShadow: '0 4px 12px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25)',
+    background: 'rgba(212, 167, 106, 0.25)',
+    border: '1px solid rgba(212, 167, 106, 0.3)',
+    boxShadow: '0 4px 12px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.25)',
     transform: 'scale(0.98)'
   },
   

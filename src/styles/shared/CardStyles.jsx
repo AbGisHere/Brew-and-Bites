@@ -12,7 +12,6 @@ export const cardStyles = {
     boxShadow: '0 4px 16px -1px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)', // Reduced from 0.1 to 0.08
     transition: 'all 0.2s ease',
     position: 'relative',
-    overflow: 'hidden',
     padding: '24px'
   },
   

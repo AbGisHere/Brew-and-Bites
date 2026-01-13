@@ -267,47 +267,110 @@ export const tableButtonStyles = {
   }
 };
 
+// Table status styles with enhanced glassmorphism
+export const tableStatusStyles = {
+  base: {
+    padding: '10px 18px',
+    borderRadius: '12px',
+    fontWeight: '700',
+    fontSize: '11px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '90px',
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase',
+    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+  },
+  occupied: {
+    backdropFilter: 'blur(25px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(25px) saturate(150%)',
+    background: 'rgba(239, 68, 68, 0.15)',
+    border: '1px solid rgba(239, 68, 68, 0.4)',
+    color: '#ffffff',
+    boxShadow: '0 4px 16px rgba(239, 68, 68, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 12px rgba(239, 68, 68, 0.08)'
+  },
+  available: {
+    backdropFilter: 'blur(25px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(25px) saturate(150%)',
+    background: 'rgba(34, 197, 94, 0.15)',
+    border: '1px solid rgba(34, 197, 94, 0.4)',
+    color: '#ffffff',
+    boxShadow: '0 4px 16px rgba(34, 197, 94, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 12px rgba(34, 197, 94, 0.08)'
+  }
+};
+
 // Status badge styles with glassmorphism
 export const statusBadgeStyles = {
   preparing: {
-    backdropFilter: 'blur(15px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(15px) saturate(120%)',
-    background: 'rgba(251, 191, 36, 0.15)', // Amber for preparing
-    border: '1px solid rgba(251, 191, 36, 0.3)',
+    backdropFilter: 'blur(20px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+    background: 'rgba(251, 191, 36, 0.12)', // Amber for preparing
+    border: '1px solid rgba(251, 191, 36, 0.35)',
     color: '#92400e',
-    borderRadius: '6px'
+    borderRadius: '8px',
+    boxShadow: '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
+    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fontSize: '10px',
+    fontWeight: '600',
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase'
   },
   ready: {
-    backdropFilter: 'blur(15px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(15px) saturate(120%)',
-    background: 'rgba(59, 130, 246, 0.15)', // Blue for ready
-    border: '1px solid rgba(59, 130, 246, 0.3)',
+    backdropFilter: 'blur(20px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+    background: 'rgba(59, 130, 246, 0.12)', // Blue for ready
+    border: '1px solid rgba(59, 130, 246, 0.35)',
     color: '#1e40af',
-    borderRadius: '6px'
+    borderRadius: '8px',
+    boxShadow: '0 4px 16px rgba(59, 130, 246, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(59, 130, 246, 0.05)',
+    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fontSize: '10px',
+    fontWeight: '600',
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase'
   },
   served: {
-    backdropFilter: 'blur(15px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(15px) saturate(120%)',
-    background: 'rgba(34, 197, 94, 0.15)', // Green for served
-    border: '1px solid rgba(34, 197, 94, 0.3)',
+    backdropFilter: 'blur(20px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+    background: 'rgba(34, 197, 94, 0.12)', // Green for served
+    border: '1px solid rgba(34, 197, 94, 0.35)',
     color: '#166534',
-    borderRadius: '6px'
+    borderRadius: '8px',
+    boxShadow: '0 4px 16px rgba(34, 197, 94, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(34, 197, 94, 0.05)',
+    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fontSize: '10px',
+    fontWeight: '600',
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase'
   },
   'ready-to-serve': {
-    backdropFilter: 'blur(15px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(15px) saturate(120%)',
-    background: 'rgba(59, 130, 246, 0.15)', // Blue for ready-to-serve
-    border: '1px solid rgba(59, 130, 246, 0.3)',
+    backdropFilter: 'blur(20px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+    background: 'rgba(59, 130, 246, 0.12)', // Blue for ready-to-serve
+    border: '1px solid rgba(59, 130, 246, 0.35)',
     color: '#1e40af',
-    borderRadius: '6px'
+    borderRadius: '8px',
+    boxShadow: '0 4px 16px rgba(59, 130, 246, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(59, 130, 246, 0.05)',
+    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fontSize: '10px',
+    fontWeight: '600',
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase'
   },
   'preparing-order': {
-    backdropFilter: 'blur(15px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(15px) saturate(120%)',
-    background: 'rgba(251, 191, 36, 0.15)', // Amber for preparing-order
-    border: '1px solid rgba(251, 191, 36, 0.3)',
+    backdropFilter: 'blur(20px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+    background: 'rgba(251, 191, 36, 0.12)', // Amber for preparing-order
+    border: '1px solid rgba(251, 191, 36, 0.35)',
     color: '#92400e',
-    borderRadius: '6px'
+    borderRadius: '8px',
+    boxShadow: '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
+    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fontSize: '10px',
+    fontWeight: '600',
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase'
   }
 };
 
@@ -537,6 +600,7 @@ export const MenuItem = ({
   showActions = false,
   onEdit,
   onDelete,
+  onToggleAvailability,
   ...props 
 }) => {
   const menuItemStyle = {
@@ -548,7 +612,7 @@ export const MenuItem = ({
     <>
       <style>{animatedButtonStyles.hoverStyles}</style>
       <div 
-        className={`menu-item flex items-start justify-between p-2 text-sm sm:text-base border rounded ${className}`}
+        className={`menu-item flex items-start justify-between p-2 text-sm sm:text-base border rounded ${className} ${item.available === false ? 'opacity-60' : ''}`}
         onClick={onClick}
         style={menuItemStyle}
         {...props}
@@ -556,30 +620,45 @@ export const MenuItem = ({
         <div className="flex-1">
           <div className="font-medium">{item.name} <span className="text-primary font-semibold">₹{item.price.toFixed(2)}</span></div>
           <div className="text-xs text-gray-500">{item.description}</div>
+          {item.available === false && <div className="text-xs text-red-600 font-medium mt-1">Out of Stock</div>}
         </div>
-        {showActions && (
-          <div className="flex gap-2">
-            <button 
-              className="text-blue-600 hover:text-blue-800" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit && onEdit(item);
-              }}
-            >
-              Edit
-            </button>
-            <button 
-              className="text-red-600 hover:text-red-800" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete && onDelete(item);
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        )}
-        {children}
+        <div className="flex items-center gap-2">
+          {onToggleAvailability && (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={item.available !== false}
+                  onChange={() => onToggleAvailability(item)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:border-green-500 border-2 border-gray-300"></div>
+              </label>
+            </div>
+          )}
+          {showActions && (
+            <div className="flex gap-2">
+              <button 
+                className="text-blue-600 hover:text-blue-800" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit && onEdit(item);
+                }}
+              >
+                Edit
+              </button>
+              <button 
+                className="text-red-600 hover:text-red-800" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete && onDelete(item);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </>
   )

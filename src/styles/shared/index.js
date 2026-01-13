@@ -1,5 +1,5 @@
 // Central export point for all shared styles
-export { AnimatedButton, MenuItem, colors, animatedButtonStyles, tableButtonStyles, statusBadgeStyles, orderItemStyles, deleteButtonStyles, quantityButtonStyles } from './SharedButtonStyles.jsx';
+export { AnimatedButton, MenuItem, colors, animatedButtonStyles, tableButtonStyles, statusBadgeStyles, orderItemStyles, deleteButtonStyles, quantityButtonStyles, tableStatusStyles } from './SharedButtonStyles.jsx';
 export { Section, cardStyles } from './CardStyles.jsx';
 
 // Re-export for easier importing

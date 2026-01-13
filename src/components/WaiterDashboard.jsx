@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 import { UserGroupIcon } from '@heroicons/react/24/outline'
-import { MenuItem, AnimatedButton, colors, animatedButtonStyles, Section, tableButtonStyles, statusBadgeStyles, orderItemStyles, deleteButtonStyles, quantityButtonStyles } from '../styles/shared'; // <--- 1. IMPORT THIS
+import { MenuItem, AnimatedButton, colors, animatedButtonStyles, Section, tableButtonStyles, statusBadgeStyles, orderItemStyles, deleteButtonStyles, quantityButtonStyles, tableStatusStyles } from '../styles/shared'; // <--- 1. IMPORT THIS
 
 const statusColors = {
   preparing: 'bg-yellow-100 text-yellow-800',
@@ -682,11 +682,10 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                       <UserGroupIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${selectedTable === t.id ? 'text-white' : 'text-amber-900'}`} />
                       <span className="font-medium text-sm sm:text-base">{t.name}</span>
                     </div>
-                    <div className={`text-xs px-2 py-0.5 rounded-full ${
-                      t.activeOrderId 
-                        ? 'bg-red-100 text-red-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
+                    <div style={{
+                      ...tableStatusStyles.base,
+                      ...(t.activeOrderId ? tableStatusStyles.occupied : tableStatusStyles.available)
+                    }}>
                       {t.activeOrderId ? 'Occupied' : 'Available'}
                     </div>
                   </div>
@@ -806,26 +805,29 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         }
                         
                         return (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusClass}`} style={{
-                          backdropFilter: 'blur(15px) saturate(120%)',
-                          WebkitBackdropFilter: 'blur(15px) saturate(120%)',
+                          <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${statusClass}`} style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
                           background: statusClass.includes('green') 
-                            ? 'rgba(34, 197, 94, 0.08)'
+                            ? 'rgba(34, 197, 94, 0.1)'
                             : statusClass.includes('blue') 
-                            ? 'rgba(59, 130, 246, 0.08)'
-                            : 'rgba(212, 167, 106, 0.08)',
-                          borderRadius: '6px',
+                            ? 'rgba(59, 130, 246, 0.1)'
+                            : 'rgba(251, 191, 36, 0.1)',
+                          borderRadius: '10px',
                           border: statusClass.includes('green')
-                            ? '1px solid rgba(34, 197, 94, 0.15)'
+                            ? '1px solid rgba(34, 197, 94, 0.2)'
                             : statusClass.includes('blue')
-                            ? '1px solid rgba(59, 130, 246, 0.15)'
-                            : '1px solid rgba(212, 167, 106, 0.15)',
+                            ? '1px solid rgba(59, 130, 246, 0.2)'
+                            : '1px solid rgba(251, 191, 36, 0.2)',
                           boxShadow: statusClass.includes('green')
-                            ? '0 1px 3px rgba(34, 197, 94, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
-                            : statusClass.includes('yellow')
-                            ? '0 1px 3px rgba(250, 204, 21, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
-                            : '0 1px 3px rgba(212, 167, 106, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
-                          transition: 'all 0.3s ease'
+                            ? '0 4px 16px rgba(34, 197, 94, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(34, 197, 94, 0.05)'
+                            : statusClass.includes('blue')
+                            ? '0 4px 16px rgba(59, 130, 246, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(59, 130, 246, 0.05)'
+                            : '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
+                          transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                          letterSpacing: '0.025em',
+                          textTransform: 'uppercase',
+                          fontSize: '10px'
                         }}>
                             {statusText}
                           </span>
@@ -893,19 +895,23 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                                   : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                               }`}
                               style={{
-                                backdropFilter: 'blur(20px) saturate(120%)',
-                                WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                backdropFilter: 'blur(25px) saturate(150%)',
+                                WebkitBackdropFilter: 'blur(25px) saturate(150%)',
                                 background: it.status === 'ready' 
-                                  ? 'rgba(34, 197, 94, 0.15)' 
-                                  : 'rgba(250, 204, 21, 0.15)',
-                                borderRadius: '8px',
+                                  ? 'rgba(34, 197, 94, 0.12)' 
+                                  : 'rgba(251, 191, 36, 0.12)',
+                                borderRadius: '12px',
                                 border: it.status === 'ready' 
-                                  ? '1px solid rgba(34, 197, 94, 0.3)' 
-                                  : '1px solid rgba(250, 204, 21, 0.3)',
+                                  ? '1px solid rgba(34, 197, 94, 0.35)' 
+                                  : '1px solid rgba(251, 191, 36, 0.35)',
                                 boxShadow: it.status === 'ready'
-                                  ? '0 2px 6px rgba(34, 197, 94, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                                  : '0 2px 6px rgba(250, 204, 21, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
-                                transition: 'all 0.3s ease'
+                                  ? '0 6px 20px rgba(34, 197, 94, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 16px rgba(34, 197, 94, 0.08)'
+                                  : '0 6px 20px rgba(251, 191, 36, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 16px rgba(251, 191, 36, 0.08)',
+                                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                letterSpacing: '0.025em',
+                                textTransform: 'uppercase'
                               }}
                               onClick={() => toggleItemServed(activeOrder.id, it.itemId || it.id, it.status || 'ready')}
                             >

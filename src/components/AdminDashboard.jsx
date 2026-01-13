@@ -11,7 +11,7 @@ import { FiStar, FiUsers, FiUserPlus } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
-import { MenuItem, colors, AnimatedButton, Section } from '../styles/shared';
+import { MenuItem, colors, AnimatedButton, Section, animatedButtonStyles } from '../styles/shared';
 
 // Helper to map MongoDB _id to the id your UI expects
 const mapId = (data) => {
@@ -26,9 +26,16 @@ const processMenuData = (items) => {
   return items.reduce((acc, item) => {
     // Map MongoDB _id to the 'id' your UI expects
     const uiItem = { ...item, id: item._id };
-    const cat = item.category || 'Uncategorized';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(uiItem);
+    
+    // Add availability field if it doesn't exist (default to true)
+    if (uiItem.available === undefined) {
+      uiItem.available = true;
+    }
+    
+    // Group by category
+    const category = uiItem.category || 'uncategorized';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(uiItem);
     return acc;
   }, {});
 };
@@ -1948,6 +1955,7 @@ export default function AdminDashboard({ onExit }) {
 
   const [form, setForm] = useState({ id: null, category: 'coffee', name: '', description: '', price: '' })
   const [isEditing, setIsEditing] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
   
   // 2. ADD ITEM (API)
   const addItem = async (e) => {
@@ -1959,7 +1967,8 @@ export default function AdminDashboard({ onExit }) {
       category: form.category,
       name: form.name, 
       description: form.description, 
-      price 
+      price: price,
+      available: true // New items are available by default
     }
 
     try {
@@ -1971,15 +1980,62 @@ export default function AdminDashboard({ onExit }) {
            body: JSON.stringify(payload)
          });
        } else {
-         await fetch(`${API_URL}/api/menu`, {
+         const res = await fetch(`${API_URL}/api/menu`, {
            method: 'POST',
-           headers: {'Content-Type': 'application/json'},
+           headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify(payload)
-         });
+         })
+         
+         if (!res.ok) throw new Error('Failed to add item')
+         
+         const newItem = await res.json()
+         setMenu(prev => ({
+           ...prev,
+           [form.category]: [...(prev[form.category] || []), newItem]
+         }))
+         
+         resetForm()
+         toast.success('Item added successfully!')
        }
        loadAllData();
-       resetForm();
     } catch(err) { console.error(err); }
+  }
+  
+  // TOGGLE ITEM AVAILABILITY
+  const toggleItemAvailability = async (item) => {
+    try {
+      const newAvailability = item.available === false ? true : false
+      
+      // Get the current item data and update availability
+      const updatedItem = {
+        ...item,
+        available: newAvailability
+      }
+      
+      const res = await fetch(`${API_URL}/api/menu/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItem)
+      })
+      
+      if (!res.ok) throw new Error('Failed to update availability')
+      
+      // Update local state
+      setMenu(prev => {
+        const updatedMenu = { ...prev }
+        for (const category in updatedMenu) {
+          updatedMenu[category] = updatedMenu[category].map(menuItem => 
+            menuItem.id === item.id ? { ...menuItem, available: newAvailability } : menuItem
+          )
+        }
+        return updatedMenu
+      })
+      
+      toast.success(`Item ${newAvailability ? 'available' : 'unavailable'}!`)
+    } catch (err) {
+      console.error('Toggle availability error:', err)
+      toast.error('Failed to update availability')
+    }
   }
   
   const editItem = (category, item) => {
@@ -2447,188 +2503,253 @@ export default function AdminDashboard({ onExit }) {
       {tab==='menu' && (
         <div className="grid md:grid-cols-3 gap-6 px-4 md:px-0">
           <Section title="Add / Edit Item">
-            <form onSubmit={addItem} className="space-y-3">
+            <form onSubmit={addItem} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Category</label>
-                <input
-                  list="category-options"
-                  value={form.category}
-                  onChange={e => setForm(f => ({...f, category: e.target.value}))}
-                  className="input w-full"
-                  placeholder="Select or type a new category..."
-                  required
-                />
-                <datalist id="category-options">
-                  {categories.map(c => <option key={c} value={c} />)}
-                </datalist>
+                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Category</label>
+                <div className="relative">
+                  <input
+                    value={form.category}
+                    onChange={e => setForm(f => ({...f, category: e.target.value}))}
+                    onFocus={(e) => {
+                      setShowDropdown(true);
+                      e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      setTimeout(() => setShowDropdown(false), 150);
+                      e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                    }}
+                    className="w-full px-3 py-2 cursor-pointer transition-all duration-200"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.7)',
+                      border: '1px solid rgba(212, 167, 106, 0.2)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                      color: '#3E2723',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      outline: 'none'
+                    }}
+                    placeholder="Select or type a new category..."
+                    required
+                  />
+                  <style jsx>{`
+                    input::placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
+                    input::-webkit-input-placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
+                    input::-moz-placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
+                    input:-ms-input-placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
+                  `}</style>
+                  {showDropdown && (
+                    <div className="absolute z-50 w-full rounded-md mt-1" style={{ 
+                      maxHeight: '200px', 
+                      overflowY: 'auto',
+                      backdropFilter: 'blur(40px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.85)',
+                      borderRadius: '15px',
+                      border: '1px solid rgba(212, 167, 106, 0.15)',
+                      boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(212, 167, 106, 0.05)',
+                      padding: '8px 0'
+                    }}>
+                      {categories.filter(cat => cat.toLowerCase().includes(form.category.toLowerCase())).map((c, index) => (
+                        <div
+                          key={c}
+                          className="px-4 py-2 cursor-pointer transition-all duration-200"
+                          onMouseDown={() => {
+                            setForm(f => ({...f, category: c}));
+                            setShowDropdown(false);
+                          }}
+                          style={{ 
+                            color: '#3E2723',
+                            fontSize: '16px', 
+                            fontWeight: '500',
+                            borderBottom: index < categories.filter(cat => cat.toLowerCase().includes(form.category.toLowerCase())).length - 1 ? '1px solid rgba(0, 0, 0, 0.05)' : 'none',
+                            padding: '10px 16px',
+                            backdropFilter: 'blur(10px) saturate(120%)',
+                            WebkitBackdropFilter: 'blur(10px) saturate(120%)',
+                            background: 'rgba(255, 255, 255, 0.05)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.background = 'rgba(212, 167, 106, 0.15)';
+                            e.target.style.backdropFilter = 'blur(15px) saturate(130%)';
+                            e.target.style.WebkitBackdropFilter = 'blur(15px) saturate(130%)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                            e.target.style.backdropFilter = 'blur(10px) saturate(120%)';
+                            e.target.style.WebkitBackdropFilter = 'blur(10px) saturate(120%)';
+                          }}
+                        >
+                          {c}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Name</label>
+                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Name</label>
                 <input 
                   value={form.name} 
                   onChange={e => setForm(f => ({...f, name: e.target.value}))} 
-                  className="input w-full" 
+                  className="w-full px-3 py-2 transition-all duration-200"
+                  style={{
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                    background: 'rgba(253, 249, 243, 0.7)',
+                    border: '1px solid rgba(212, 167, 106, 0.2)',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                    color: '#3E2723',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    outline: 'none'
+                  }}
                   placeholder="Item name"
-                  required 
+                  required
+                  onFocus={(e) => {
+                    e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                    e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                  }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Description</label>
+                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Description</label>
                 <input 
                   value={form.description} 
                   onChange={e => setForm(f => ({...f, description: e.target.value}))} 
-                  className="input w-full" 
+                  className="w-full px-3 py-2 transition-all duration-200"
+                  style={{
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                    background: 'rgba(253, 249, 243, 0.7)',
+                    border: '1px solid rgba(212, 167, 106, 0.2)',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                    color: '#3E2723',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    outline: 'none'
+                  }}
                   placeholder="Item description (optional)"
+                  onFocus={(e) => {
+                    e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                    e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                  }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: '#3E2723' }}>Price</label>
+                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Price</label>
                 <input 
                   type="number" 
                   step="0.01" 
                   min="0"
                   value={form.price} 
                   onChange={e => setForm(f => ({...f, price: e.target.value}))} 
-                  className="input w-full" 
+                  className="w-full px-3 py-2 transition-all duration-200"
+                  style={{
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                    background: 'rgba(253, 249, 243, 0.7)',
+                    border: '1px solid rgba(212, 167, 106, 0.2)',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                    color: '#3E2723',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    outline: 'none'
+                  }}
                   placeholder="0.00"
-                  required 
+                  required
+                  onFocus={(e) => {
+                    e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                    e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                  }}
                 />
               </div>
-              <div className="flex gap-3">
-                <button 
+              <div className="flex gap-3 mt-6">
+                <button
                   type="button"
                   onClick={resetForm}
                   disabled={!isEditing}
-                  className="animated-button group relative inline-flex items-center justify-center flex-1"
+                  className="view-button flex-1 mr-[10px]"
                   style={{
-                    '--color': '#D4A76A',
-                    '--hover-color': '#3E2723',
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    border: '2px solid',
-                    borderColor: 'transparent',
-                    fontWeight: '600',
-                    backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                    borderRadius: '100px',
-                    color: '#D4A76A',
-                    cursor: !isEditing ? 'not-allowed' : 'pointer',
-                    overflow: 'hidden',
-                    transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                    boxShadow: '0 0 0 2px #D4A76A',
+                    ...animatedButtonStyles.viewButton,
                     opacity: isEditing ? 1 : 0.6,
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                    border: '1px solid rgba(212, 167, 106, 0.3)',
-                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
+                    cursor: isEditing ? 'pointer' : 'not-allowed',
+                    background: isEditing ? 'rgba(212, 167, 106, 0.18)' : 'rgba(107, 114, 128, 0.12)',
+                    border: isEditing ? '1px solid rgba(212, 167, 106, 0.3)' : '1px solid rgba(107, 114, 128, 0.22)',
+                    color: isEditing ? '#3E2723' : '#6b7280',
+                    padding: '12px 20px',
+                    fontSize: '15px',
+                    minHeight: '48px'
                   }}
                 >
-                  <span className="text" style={{ position: 'relative', zIndex: 1, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                    Cancel
-                  </span>
-                  <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                  <style>{`
-                    .animated-button:hover:not(:disabled) { 
-                      box-shadow: 0 0 0 8px transparent !important; 
-                      color: white !important; 
-                      border-radius: 12px !important;
-                      backdropFilter: 'blur(16px) !important',
-                      WebkitBackdropFilter: 'blur(16px) !important',
-                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                      border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                      boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                    }
-                    .animated-button:hover:not(:disabled) .circle { 
-                      width: 200px !important; 
-                      height: 200px !important; 
-                      opacity: 1 !important; 
-                      background-color: #3E2723 !important; 
-                    }
-                    .animated-button:active:not(:disabled) { 
-                      transform: scale(0.95) !important; 
-                      box-shadow: 0 0 0 4px #D4A76A !important; 
-                    }
-                  `}</style>
+                  <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: isEditing ? '#D4A76A' : '#6b7280', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                  </svg>
+                  <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Cancel</span>
+                  <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: isEditing ? '#D4A76A' : '#6b7280', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                  <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: isEditing ? '#D4A76A' : '#6b7280', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                  </svg>
                 </button>
-                <button 
+                <button
                   type="submit"
-                  className="animated-button group relative inline-flex items-center justify-center flex-1"
+                  className="view-button flex-1 mr-[10px]"
                   style={{
-                    '--color': '#D4A76A',
-                    '--hover-color': '#3E2723',
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    border: '2px solid',
-                    borderColor: 'transparent',
-                    fontWeight: '600',
-                    backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                    borderRadius: '100px',
-                    color: '#D4A76A',
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                    boxShadow: '0 0 0 2px #D4A76A',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                    border: '1px solid rgba(212, 167, 106, 0.3)',
-                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
+                    ...animatedButtonStyles.viewButton,
+                    background: 'rgba(212, 167, 106, 0.25)',
+                    border: '1px solid rgba(212, 167, 106, 0.4)',
+                    color: '#3E2723',
+                    padding: '12px 20px',
+                    fontSize: '15px',
+                    minHeight: '48px'
                   }}
                 >
-                  <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                     <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                   </svg>
-                  <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                    {isEditing ? 'Update Item' : 'Add Item'}
-                  </span>
-                  <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                  <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                  <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>{isEditing ? 'Update Item' : 'Add Item'}</span>
+                  <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#3E2723', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                  <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                     <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                   </svg>
-                  <style>{`
-                    .animated-button:hover { 
-                      box-shadow: 0 0 0 8px transparent !important; 
-                      color: white !important; 
-                      border-radius: 12px !important;
-                      backdropFilter: 'blur(16px) !important',
-                      WebkitBackdropFilter: 'blur(16px) !important',
-                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                      border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                      boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                    }
-                    .animated-button:hover .arr-1 { 
-                      right: -25% !important; 
-                    }
-                    .animated-button:hover .arr-2 { 
-                      left: 16px !important; 
-                    }
-                    .animated-button:hover .text { 
-                      transform: translateX(12px) !important; 
-                    }
-                    .animated-button:hover svg { 
-                      fill: white !important; 
-                    }
-                    .animated-button:active { 
-                      transform: scale(0.95) !important; 
-                      box-shadow: 0 0 0 4px #D4A76A !important; 
-                    }
-                    .animated-button:hover .circle { 
-                      width: 200px !important; 
-                      height: 200px !important; 
-                      opacity: 1 !important; 
-                      background-color: #3E2723 !important; 
-                    }
-                  `}</style>
                 </button>
               </div>
             </form>
@@ -2663,6 +2784,7 @@ export default function AdminDashboard({ onExit }) {
                           showActions={true}
                           onEdit={() => editItem(cat, item)}
                           onDelete={() => deleteItem(cat, item.id)}
+                          onToggleAvailability={() => toggleItemAvailability(item)}
                           className="flex items-start justify-between"
                         />
                       ))}
@@ -2675,9 +2797,21 @@ export default function AdminDashboard({ onExit }) {
 
           <Section title="Tips">
             <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
-              <li>Use Save Item to add to the selected category.</li>
-              <li>Delete items from the list on the right.</li>
-              <li>Changes are now saved to the secure database!</li>
+              <li>Use the glassy dropdown to select from existing categories or type new ones</li>
+              <li>All input fields feature beautiful glassy styling with theme colors</li>
+              <li>Hover over inputs to see enhanced glass effects and borders</li>
+              <li>Buttons feature liquid animations with arrow effects</li>
+              <li>Cancel button is gray when disabled, amber when enabled</li>
+              <li>Add Item button has consistent amber styling throughout</li>
+              <li>Toggle item availability with the switch next to each menu item</li>
+              <li>Disabled items appear dimmed with "Out of Stock" label</li>
+              <li>Users cannot see items that are marked as unavailable</li>
+              <li>Changes are automatically saved to the secure database!</li>
+              <li>Delete items from the menu list on the right side</li>
+              <li>Edit existing items by clicking on them in the menu list</li>
+              <li>Form validation ensures all required fields are filled</li>
+              <li>Price field accepts decimal values for accurate pricing</li>
+              <li>Category dropdown filters as you type for easy selection</li>
             </ul>
           </Section>
         </div>

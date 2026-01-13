@@ -64,6 +64,9 @@ export default function CustomerOrdering() {
   // Group menu items by category efficiently
   const groupedMenu = useMemo(() => {
     return menu.reduce((acc, item) => {
+      // Skip unavailable items
+      if (item.available === false) return acc;
+      
       const category = item.category || 'Others'; // Fallback if no category
       if (!acc[category]) acc[category] = [];
       acc[category].push(item);

@@ -17,7 +17,8 @@ const MenuItemSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: String,
     price: { type: Number, required: true },
-    featured: { type: Boolean, default: false }
+    featured: { type: Boolean, default: false },
+    available: { type: Boolean, default: true }
 });
 
 // 3. TABLES

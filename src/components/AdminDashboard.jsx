@@ -1350,7 +1350,7 @@ const handleSave = async () => {
 
       {/* Save/Cancel buttons */}
       <div className="pt-4 border-t">
-        <div className="flex justify-end gap-3 items-center">
+        <div className="flex justify-end gap-3 items-center flex-nowrap">
           {saveStatus && (
             <span className={`text-sm ${saveStatus.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
               {saveStatus}
@@ -1362,9 +1362,9 @@ const handleSave = async () => {
             style={{
               '--color': '#9CA3AF',
               '--hover-color': '#4B5563',
-              padding: '8px 24px',
+              padding: '8px 20px',
               fontSize: '14px',
-              minWidth: '120px',
+              minWidth: '100px',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -1376,7 +1376,6 @@ const handleSave = async () => {
               borderRadius: '100px',
               color: '#9CA3AF',
               cursor: isSaving ? 'not-allowed' : 'pointer',
-              overflow: 'hidden',
               transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
               boxShadow: '0 0 0 2px #9CA3AF',
               opacity: isSaving ? 0.7 : 1,
@@ -1424,9 +1423,9 @@ const handleSave = async () => {
             style={{
               '--color': '#D4A76A',
               '--hover-color': '#3E2723',
-              padding: '8px 24px',
+              padding: '8px 20px',
               fontSize: '14px',
-              minWidth: '140px',
+              minWidth: '110px',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -1438,7 +1437,6 @@ const handleSave = async () => {
               borderRadius: '100px',
               color: '#D4A76A',
               cursor: isSaving ? 'not-allowed' : 'pointer',
-              overflow: 'hidden',
               transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
               boxShadow: '0 0 0 2px #D4A76A',
               opacity: isSaving ? 0.7 : 1,
@@ -2006,11 +2004,19 @@ export default function AdminDashboard({ onExit }) {
     try {
       const newAvailability = item.available === false ? true : false
       
+      console.log('Toggling item:', item)
+      console.log('New availability:', newAvailability)
+      
       // Get the current item data and update availability
       const updatedItem = {
-        ...item,
+        category: item.category,
+        name: item.name,
+        description: item.description || '',
+        price: item.price,
         available: newAvailability
       }
+      
+      console.log('Sending to API:', updatedItem)
       
       const res = await fetch(`${API_URL}/api/menu/${item.id}`, {
         method: 'PUT',
@@ -2018,7 +2024,16 @@ export default function AdminDashboard({ onExit }) {
         body: JSON.stringify(updatedItem)
       })
       
-      if (!res.ok) throw new Error('Failed to update availability')
+      console.log('API response status:', res.status)
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('API error response:', errorText)
+        throw new Error(`Failed to update availability: ${res.status} ${errorText}`)
+      }
+      
+      const responseData = await res.json()
+      console.log('API response data:', responseData)
       
       // Update local state
       setMenu(prev => {
@@ -2034,7 +2049,7 @@ export default function AdminDashboard({ onExit }) {
       toast.success(`Item ${newAvailability ? 'available' : 'unavailable'}!`)
     } catch (err) {
       console.error('Toggle availability error:', err)
-      toast.error('Failed to update availability')
+      toast.error(`Failed to update availability: ${err.message}`)
     }
   }
   
@@ -2502,8 +2517,12 @@ export default function AdminDashboard({ onExit }) {
 
       {tab==='menu' && (
         <div className="grid md:grid-cols-3 gap-6 px-4 md:px-0">
-          <Section title="Add / Edit Item">
-            <form onSubmit={addItem} className="space-y-4">
+          <Section title="Add / Edit Item" className="h-[600px]">
+            <div style={{ 
+              maxHeight: 'calc(100% - 40px)', // Account for heading height
+              padding: '0 8px' // Add padding for button shadows
+            }}>
+              <form onSubmit={addItem} className="space-y-4">
               <div>
                 <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Category</label>
                 <div className="relative">
@@ -2753,11 +2772,12 @@ export default function AdminDashboard({ onExit }) {
                 </button>
               </div>
             </form>
+            </div>
           </Section>
 
-          <Section title="Menu Items">
+          <Section title="Menu Items" className="h-[600px] overflow-hidden">
             <div style={{ 
-              maxHeight: '500px', 
+              maxHeight: 'calc(100% - 40px)', // Account for heading height
               overflow: 'auto',
               padding: '0 30px 0 10px',
               margin: '0 -20px 0 -10px'
@@ -2795,13 +2815,13 @@ export default function AdminDashboard({ onExit }) {
             </div>
           </Section>
 
-          <Section title="Tips">
-            <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
+          <Section title="Tips" className="h-[600px] overflow-y-auto">
+            <div className="list-disc pl-5 text-sm text-gray-600 space-y-2" style={{ 
+              maxHeight: 'calc(100% - 40px)', // Account for heading height
+              overflow: 'auto'
+            }}>
               <li>Use the glassy dropdown to select from existing categories or type new ones</li>
               <li>All input fields feature beautiful glassy styling with theme colors</li>
-              <li>Hover over inputs to see enhanced glass effects and borders</li>
-              <li>Buttons feature liquid animations with arrow effects</li>
-              <li>Cancel button is gray when disabled, amber when enabled</li>
               <li>Add Item button has consistent amber styling throughout</li>
               <li>Toggle item availability with the switch next to each menu item</li>
               <li>Disabled items appear dimmed with "Out of Stock" label</li>
@@ -2809,10 +2829,14 @@ export default function AdminDashboard({ onExit }) {
               <li>Changes are automatically saved to the secure database!</li>
               <li>Delete items from the menu list on the right side</li>
               <li>Edit existing items by clicking on them in the menu list</li>
-              <li>Form validation ensures all required fields are filled</li>
-              <li>Price field accepts decimal values for accurate pricing</li>
-              <li>Category dropdown filters as you type for easy selection</li>
-            </ul>
+              <li>Menu items are grouped by category for better organization</li>
+              <li>Featured items appear highlighted in the customer dashboard</li>
+              <li>Price updates are reflected immediately across all dashboards</li>
+              <li>Category management helps organize your menu efficiently</li>
+              <li>Real-time updates ensure data consistency</li>
+              <li>Scroll within each section to access all content</li>
+              <li>Equal card heights provide a balanced layout</li>
+            </div>
           </Section>
         </div>
       )}

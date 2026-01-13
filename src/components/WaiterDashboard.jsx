@@ -174,6 +174,11 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
   }
 
   const handleMenuItemClick = (item) => {
+    // Prevent adding unavailable items
+    if (item.available === false) {
+      return;
+    }
+    
     if (autoSubmitToChef) {
       // Check if item already exists in active order with 'preparing' status
       if (activeOrder?.items) {
@@ -204,6 +209,11 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
   }
 
   const addToOrder = async (item, status = 'preparing') => {
+    // Prevent adding unavailable items
+    if (item.available === false) {
+      return;
+    }
+    
     // 1. Manual Mode (No change)
     if (!autoSubmitToChef) {
       setPendingItems(prev => {
@@ -731,8 +741,9 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                     <MenuItem
                       key={item.id}
                       item={item}
-                      onClick={() => addToOrder(item)}
+                      onClick={() => handleMenuItemClick(item)}
                       className="w-full text-left"
+                      unavailableText="UNAVAILABLE"
                     />
                   ))}
                 </div>

@@ -601,6 +601,7 @@ export const MenuItem = ({
   onEdit,
   onDelete,
   onToggleAvailability,
+  unavailableText = 'Out of Stock',
   ...props 
 }) => {
   const menuItemStyle = {
@@ -620,7 +621,7 @@ export const MenuItem = ({
         <div className="flex-1">
           <div className="font-medium">{item.name} <span className="text-primary font-semibold">₹{item.price.toFixed(2)}</span></div>
           <div className="text-xs text-gray-500">{item.description}</div>
-          {item.available === false && <div className="text-xs text-red-600 font-medium mt-1">Out of Stock</div>}
+          {item.available === false && <div className="text-xs text-red-600 font-medium mt-1">{unavailableText}</div>}
         </div>
         <div className="flex items-center gap-2">
           {onToggleAvailability && (
@@ -632,7 +633,34 @@ export const MenuItem = ({
                   onChange={() => onToggleAvailability(item)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:border-green-500 border-2 border-gray-300"></div>
+                <div 
+                  className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                  style={{
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                    background: item.available !== false 
+                      ? 'rgba(212, 167, 106, 0.25)' 
+                      : 'rgba(139, 90, 43, 0.15)',
+                    border: '1px solid',
+                    borderColor: item.available !== false 
+                      ? 'rgba(212, 167, 106, 0.3)' 
+                      : 'rgba(139, 90, 43, 0.25)',
+                    boxShadow: item.available !== false
+                      ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                      : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                  }}
+                >
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      transform: item.available !== false ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                    }}
+                  />
+                </div>
               </label>
             </div>
           )}

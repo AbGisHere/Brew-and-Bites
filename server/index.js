@@ -425,9 +425,57 @@ app.post('/api/login', async (req, res) => {
 
     app.post('/api/coupons', async (req, res) => {
         try {
-            const newCoupon = await Coupon.create(req.body);
+            const { code, type, value, maxUses, minOrderValue, allowedDays, allowedHours, validFrom, validTo } = req.body;
+            
+            // Validate required fields
+            if (!code || !type || value === undefined) {
+                return res.status(400).json({ error: 'Code, type, and value are required' });
+            }
+            
+            // Validate discount type and value
+            if (type === 'percentage' && (value < 0 || value > 100)) {
+                return res.status(400).json({ error: 'Percentage discount must be between 0 and 100' });
+            }
+            if (type === 'fixed' && value < 0) {
+                return res.status(400).json({ error: 'Fixed discount must be greater than or equal to 0' });
+            }
+            
+            // Validate date fields if provided
+            if (validFrom && validTo && new Date(validFrom) > new Date(validTo)) {
+                return res.status(400).json({ error: 'Valid From date cannot be after Valid To date' });
+            }
+            
+            // Validate time format if provided
+            if (allowedHours) {
+                const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+                if (!timeRegex.test(allowedHours.start) || !timeRegex.test(allowedHours.end)) {
+                    return res.status(400).json({ error: 'Invalid time format. Use HH:MM format' });
+                }
+            }
+            
+            // Check if coupon code already exists
+            const existingCoupon = await Coupon.findOne({ code: code.toUpperCase() });
+            if (existingCoupon) {
+                return res.status(400).json({ error: 'Coupon code already exists' });
+            }
+            
+            const newCoupon = await Coupon.create({
+                code: code.toUpperCase(),
+                type,
+                value,
+                maxUses: maxUses || null,
+                minOrderValue: minOrderValue || null,
+                allowedDays: allowedDays || [],
+                allowedHours: allowedHours || { start: '00:00', end: '23:59' },
+                validFrom: validFrom ? new Date(validFrom) : null,
+                validTo: validTo ? new Date(validTo) : null
+            });
+            
             res.json(newCoupon);
-        } catch (e) { res.status(500).json({ error: e.message }); }
+        } catch (e) { 
+            console.error('Error creating coupon:', e);
+            res.status(500).json({ error: e.message }); 
+        }
     });
 
     app.delete('/api/coupons/:code', async (req, res) => {
@@ -435,6 +483,117 @@ app.post('/api/login', async (req, res) => {
             await Coupon.findOneAndDelete({ code: req.params.code });
             res.json({ message: "Deleted" });
         } catch (e) { res.status(500).json({ error: e.message }); }
+    });
+
+    app.post('/api/coupons/validate', async (req, res) => {
+        try {
+            const { code, orderTotal } = req.body;
+            
+            if (!code) {
+                return res.status(400).json({ error: 'Coupon code is required' });
+            }
+            
+            const coupon = await Coupon.findOne({ code: code.toUpperCase() });
+            if (!coupon) {
+                return res.status(404).json({ error: 'Invalid coupon code' });
+            }
+            
+            // Check if coupon has exceeded max uses
+            if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
+                return res.status(400).json({ error: 'Coupon has reached maximum usage limit' });
+            }
+            
+            // Check minimum order value
+            if (coupon.minOrderValue && orderTotal < coupon.minOrderValue) {
+                return res.status(400).json({ 
+                    error: `Minimum order value of ₹${coupon.minOrderValue} required` 
+                });
+            }
+            
+            // Check if coupon is valid for current day
+            if (coupon.allowedDays && coupon.allowedDays.length > 0) {
+                const currentDay = new Date().getDay(); // 0=Sunday, 1=Monday, etc.
+                const adjustedDay = currentDay === 0 ? 6 : currentDay - 1; // Convert to 0=Monday, 6=Sunday
+                if (!coupon.allowedDays.includes(adjustedDay)) {
+                    return res.status(400).json({ error: 'Coupon not valid for today' });
+                }
+            }
+            
+            // Check if coupon is valid for current time
+            if (coupon.allowedHours) {
+                const currentTime = new Date().toTimeString().slice(0, 5); // HH:MM format
+                if (currentTime < coupon.allowedHours.start || currentTime > coupon.allowedHours.end) {
+                    return res.status(400).json({ 
+                        error: `Coupon only valid between ${coupon.allowedHours.start} and ${coupon.allowedHours.end}` 
+                    });
+                }
+            }
+            
+            // Check if coupon is valid from date
+            if (coupon.validFrom && new Date() < new Date(coupon.validFrom)) {
+                return res.status(400).json({ 
+                    error: `Coupon is not valid until ${new Date(coupon.validFrom).toLocaleDateString()}` 
+                });
+            }
+            
+            // Check if coupon is valid until date
+            if (coupon.validTo && new Date() > new Date(coupon.validTo)) {
+                return res.status(400).json({ 
+                    error: `Coupon expired on ${new Date(coupon.validTo).toLocaleDateString()}` 
+                });
+            }
+            
+            // Calculate discount
+            let discountAmount = 0;
+            if (coupon.type === 'percentage') {
+                discountAmount = (orderTotal * coupon.value) / 100;
+            } else {
+                discountAmount = coupon.value;
+            }
+            
+            // Ensure discount doesn't exceed order total
+            discountAmount = Math.min(discountAmount, orderTotal);
+            
+            res.json({
+                valid: true,
+                coupon: {
+                    code: coupon.code,
+                    type: coupon.type,
+                    value: coupon.value,
+                    discountAmount,
+                    maxUses: coupon.maxUses,
+                    usedCount: coupon.usedCount,
+                    remainingUses: coupon.maxUses ? coupon.maxUses - coupon.usedCount : null,
+                    minOrderValue: coupon.minOrderValue,
+                    allowedDays: coupon.allowedDays,
+                    allowedHours: coupon.allowedHours,
+                    validFrom: coupon.validFrom,
+                    validTo: coupon.validTo
+                },
+                message: 'Coupon applied successfully'
+            });
+            
+        } catch (e) { 
+            console.error('Error validating coupon:', e);
+            res.status(500).json({ error: e.message }); 
+        }
+    });
+
+    app.post('/api/coupons/use/:code', async (req, res) => {
+        try {
+            const coupon = await Coupon.findOne({ code: req.params.code.toUpperCase() });
+            if (!coupon) {
+                return res.status(404).json({ error: 'Coupon not found' });
+            }
+            
+            coupon.usedCount += 1;
+            await coupon.save();
+            
+            res.json({ message: 'Coupon usage recorded', usedCount: coupon.usedCount });
+        } catch (e) { 
+            console.error('Error recording coupon usage:', e);
+            res.status(500).json({ error: e.message }); 
+        }
     });
 
     // 4.1 MIGRATION: Add invoice settings fields to existing settings

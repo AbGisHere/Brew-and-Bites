@@ -305,12 +305,17 @@ function CouponManager() {
   const [coupons, setCoupons] = useState([])
   const [form, setForm] = useState({ 
     code: '', 
-    type: 'percent', 
-    value: 10, 
+    type: 'percentage', 
+    value: '', 
     maxUses: null,
-    active: true 
+    minOrderValue: null,
+    allowedDays: [],
+    allowedHours: { start: '00:00', end: '23:59' },
+    validFrom: '',
+    validTo: ''
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [showDiscountDropdown, setShowDiscountDropdown] = useState(false)
 
   // 1. Fetch Coupons
   const loadCoupons = async () => {
@@ -351,7 +356,7 @@ function CouponManager() {
       }
       
       await loadCoupons();
-      setForm({ code: '', type: 'percent', value: 10, active: true });
+      setForm({ code: '', type: 'percentage', value: 10, maxUses: null, minOrderValue: null, allowedDays: [], allowedHours: { start: '00:00', end: '23:59' }, validFrom: '', validTo: '' });
     } catch (error) {
       console.error('Error:', error);
       alert(error.message || 'Error creating coupon');
@@ -388,172 +393,514 @@ function CouponManager() {
   return (
     <>
       <Section title="Create New Coupon">
-          <form onSubmit={create} className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>
-                <input
-                  className="input"
-                  value={form.code}
-                  onChange={e => setForm(f => ({...f, code: e.target.value.toUpperCase()}))}
-                  placeholder="e.g. WELCOME10"
-                  required
-                  maxLength="20"
-                  disabled={isLoading}
-                />
-              </div>
+          <div className="max-h-[70vh] overflow-y-auto pr-2">
+            <form onSubmit={create} className="space-y-6">
+            {/* Basic Info Section */}
+            <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
+              <h3 className="text-lg font-semibold mb-4 text-amber-900 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+                Basic Information
+              </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-                  <select
-                    className="input w-full"
-                    value={form.type}
-                    onChange={e => setForm(f => ({...f, type: e.target.value}))}
+                  <label className="block text-sm font-medium mb-2 text-amber-800">Coupon Code</label>
+                  <input
+                    className="w-full px-4 py-3 transition-all duration-200"
+                    value={form.code}
+                    onChange={e => setForm(f => ({...f, code: e.target.value.toUpperCase()}))}
+                    placeholder="e.g. WELCOME10"
+                    required
+                    maxLength="20"
                     disabled={isLoading}
-                  >
-                    <option value="percent">Percentage</option>
-                    <option value="flat">Flat Amount (₹)</option>
-                  </select>
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.8)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                      color: '#3E2723',
+                      fontSize: '15px',
+                      fontWeight: '500',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                    }}
+                  />
                 </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-amber-800">Discount Type</label>
+                    <div className="relative">
+                      <input
+                        value={form.type === 'percentage' ? 'Percentage' : 'Fixed Amount'}
+                        readOnly
+                        onClick={() => setShowDiscountDropdown(!showDiscountDropdown)}
+                        className="w-full px-4 py-3 cursor-pointer transition-all duration-200"
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
+                      />
+                      {showDiscountDropdown && (
+                        <div className="absolute z-50 w-full rounded-lg mt-2" style={{ 
+                          maxHeight: '200px', 
+                          overflowY: 'auto',
+                          backdropFilter: 'blur(40px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.95)',
+                          borderRadius: '16px',
+                          border: '1px solid rgba(212, 167, 106, 0.2)',
+                          boxShadow: '0 8px 32px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(212, 167, 106, 0.05)',
+                          padding: '8px'
+                        }}>
+                          <div
+                            className="px-4 py-3 cursor-pointer transition-all duration-200 rounded-lg"
+                            onMouseDown={() => {
+                              setForm(f => ({...f, type: 'percentage'}));
+                              setShowDiscountDropdown(false);
+                            }}
+                            style={{ 
+                              color: '#3E2723',
+                              fontSize: '15px', 
+                              fontWeight: '500',
+                              backdropFilter: 'blur(10px) saturate(120%)',
+                              WebkitBackdropFilter: 'blur(10px) saturate(120%)',
+                              background: 'rgba(255, 255, 255, 0.1)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = 'rgba(212, 167, 106, 0.2)';
+                              e.target.style.backdropFilter = 'blur(15px) saturate(130%)';
+                              e.target.style.WebkitBackdropFilter = 'blur(15px) saturate(130%)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                              e.target.style.backdropFilter = 'blur(10px) saturate(120%)';
+                              e.target.style.WebkitBackdropFilter = 'blur(10px) saturate(120%)';
+                            }}
+                          >
+                            Percentage
+                          </div>
+                          <div
+                            className="px-4 py-3 cursor-pointer transition-all duration-200 rounded-lg"
+                            onMouseDown={() => {
+                              setForm(f => ({...f, type: 'fixed'}));
+                              setShowDiscountDropdown(false);
+                            }}
+                            style={{ 
+                              color: '#3E2723',
+                              fontSize: '15px', 
+                              fontWeight: '500',
+                              backdropFilter: 'blur(10px) saturate(120%)',
+                              WebkitBackdropFilter: 'blur(10px) saturate(120%)',
+                              background: 'rgba(255, 255, 255, 0.1)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = 'rgba(212, 167, 106, 0.2)';
+                              e.target.style.backdropFilter = 'blur(15px) saturate(130%)';
+                              e.target.style.WebkitBackdropFilter = 'blur(15px) saturate(130%)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                              e.target.style.backdropFilter = 'blur(10px) saturate(120%)';
+                              e.target.style.WebkitBackdropFilter = 'blur(10px) saturate(120%)';
+                            }}
+                          >
+                            Fixed Amount
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {form.type === 'percent' 
-                      ? 'Discount %' 
-                      : 'Amount (₹)'}
-                  </label>
-                  <div className="relative rounded-md shadow-sm">
-                    <input
-                      type="number"
-                      step={form.type === 'percent' ? "1" : "0.01"}
-                      min="0"
-                      max={form.type === 'percent' ? "100" : ""}
-                      className="input w-full"
-                      value={form.value}
-                      onChange={e => setForm(f => ({...f, value: parseFloat(e.target.value) || 0}))}
-                      required
-                      disabled={isLoading}
-                    />
+                    <label className="block text-sm font-medium mb-2 text-amber-800">
+                      {form.type === 'percentage' 
+                        ? 'Discount %' 
+                        : 'Amount (₹)'}
+                    </label>
+                    <div className="relative rounded-md shadow-sm">
+                      <input
+                        type="number"
+                        step={form.type === 'percentage' ? "1" : "0.01"}
+                        min="0"
+                        max={form.type === 'percentage' ? "100" : ""}
+                        className="w-full px-4 py-3 transition-all duration-200"
+                        value={form.value}
+                        onChange={e => setForm(f => ({...f, value: parseFloat(e.target.value) || 0}))}
+                        required
+                        disabled={isLoading}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
+              </div>
+            </div>
                 
+                {/* Restrictions Section */}
+            <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
+              <h3 className="text-lg font-semibold mb-4 text-amber-900 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Usage Restrictions
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-2 text-amber-800">
                     Max Uses (Optional)
                   </label>
                   <input
                     type="number"
                     min="1"
-                    className="input w-full"
+                    className="w-full px-4 py-3 transition-all duration-200"
                     value={form.maxUses || ''}
                     onChange={e => setForm(f => ({...f, maxUses: e.target.value ? parseInt(e.target.value) : null}))}
                     placeholder="No limit"
                     disabled={isLoading}
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.8)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                      color: '#3E2723',
+                      fontSize: '15px',
+                      fontWeight: '500',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                    }}
                   />
                 </div>
                 
-                <div className="flex items-end">
-                  <label className="flex items-center space-x-2">
-                    <div className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        checked={form.active}
-                        onChange={e => setForm(f => ({...f, active: e.target.checked}))}
-                        disabled={isLoading}
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      <span className="ml-3 text-sm font-medium text-gray-700">
-                        {form.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-amber-800">
+                    Minimum Order Value (Optional)
                   </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-3 transition-all duration-200"
+                    value={form.minOrderValue || ''}
+                    onChange={e => setForm(f => ({...f, minOrderValue: e.target.value ? parseFloat(e.target.value) : null}))}
+                    placeholder="No minimum"
+                    disabled={isLoading}
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.8)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                      color: '#3E2723',
+                      fontSize: '15px',
+                      fontWeight: '500',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                    }}
+                  />
                 </div>
               </div>
             </div>
-            
-            <div className="pt-2">
+
+                {/* Schedule Section */}
+            <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
+              <h3 className="text-lg font-semibold mb-4 text-amber-900 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Schedule (Optional)
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-amber-800">
+                    Allowed Days
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                      <label key={day} className="flex items-center gap-2 cursor-pointer bg-white/50 px-3 py-2 rounded-lg border border-amber-200/30 hover:bg-white/70 transition-all">
+                        <input
+                          type="checkbox"
+                          checked={form.allowedDays.includes(index)}
+                          onChange={e => {
+                            const newDays = e.target.checked 
+                              ? [...form.allowedDays, index]
+                              : form.allowedDays.filter(d => d !== index);
+                            setForm(f => ({...f, allowedDays: newDays}));
+                          }}
+                          disabled={isLoading}
+                          className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                          style={{
+                            backdropFilter: 'blur(20px) saturate(150%)',
+                            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                            background: 'rgba(253, 249, 243, 0.8)',
+                            border: '1px solid rgba(212, 167, 106, 0.3)',
+                            borderRadius: '6px',
+                            boxShadow: '0 2px 8px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                            color: '#3E2723',
+                            outline: 'none'
+                          }}
+                        />
+                        <span className="text-sm font-medium text-amber-700">{day}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-amber-800">
+                    Allowed Hours
+                  </label>
+                  <div className="flex gap-4 items-center">
+                    <div className="flex-1">
+                      <label className="block text-xs mb-2 text-amber-600">Start Time</label>
+                      <input
+                        type="time"
+                        className="w-full px-4 py-3 transition-all duration-200"
+                        value={form.allowedHours.start}
+                        onChange={e => setForm(f => ({...f, allowedHours: {...f.allowedHours, start: e.target.value}}))}
+                        disabled={isLoading}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs mb-2 text-amber-600">End Time</label>
+                      <input
+                        type="time"
+                        className="w-full px-4 py-3 transition-all duration-200"
+                        value={form.allowedHours.end}
+                        onChange={e => setForm(f => ({...f, allowedHours: {...f.allowedHours, end: e.target.value}}))}
+                        disabled={isLoading}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
+                      />
+                    </div>
+                  </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-amber-800">
+                      Valid From (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full px-4 py-3 transition-all duration-200"
+                      value={form.validFrom}
+                      onChange={e => setForm(f => ({...f, validFrom: e.target.value}))}
+                      disabled={isLoading}
+                      style={{
+                        backdropFilter: 'blur(20px) saturate(150%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                        background: 'rgba(253, 249, 243, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '16px',
+                        boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                        color: '#3E2723',
+                        fontSize: '15px',
+                        fontWeight: '500',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                        e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                        e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-amber-800">
+                      Valid To (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full px-4 py-3 transition-all duration-200"
+                      value={form.validTo}
+                      onChange={e => setForm(f => ({...f, validTo: e.target.value}))}
+                      disabled={isLoading}
+                      style={{
+                        backdropFilter: 'blur(20px) saturate(150%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                        background: 'rgba(253, 249, 243, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '16px',
+                        boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                        color: '#3E2723',
+                        fontSize: '15px',
+                        fontWeight: '500',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                        e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                        e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                      }}
+                    />
+                  </div>
+                </div>
+            </div>
+
+            {/* Submit Section */}
+            <div className="flex justify-end bg-gradient-to-r from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="animated-button group relative inline-flex items-center justify-center"
+                className="view-button"
                 style={{
-                  '--color': '#D4A76A',
-                  '--hover-color': '#3E2723',
-                  padding: '8px 24px',
-                  fontSize: '15px',
-                  minWidth: '150px',
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px',
-                  border: '2px solid',
-                  borderColor: 'transparent',
-                  fontWeight: '600',
-                  backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                  borderRadius: '100px',
-                  color: '#D4A76A',
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                  boxShadow: '0 0 0 2px #D4A76A',
+                  ...animatedButtonStyles.viewButton,
+                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.3) 100%)',
+                  border: '1px solid rgba(212, 167, 106, 0.5)',
+                  color: '#3E2723',
+                  padding: '16px 32px',
+                  fontSize: '16px',
+                  minHeight: '56px',
+                  minWidth: '180px',
                   opacity: isLoading ? 0.7 : 1,
                   pointerEvents: isLoading ? 'none' : 'auto',
-                  height: '40px',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                  border: '1px solid rgba(212, 167, 106, 0.3)',
-                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
+                  borderRadius: '20px',
+                  fontWeight: '600'
                 }}
               >
-                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
-                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   {isLoading ? 'Creating...' : 'Create Coupon'}
                 </span>
-                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '24px', height: '24px', backgroundColor: '#3E2723', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '18px', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
-                <style>{`
-                  .animated-button:hover { 
-                    box-shadow: 0 0 0 8px transparent !important; 
-                    color: white !important; 
-                    border-radius: 12px !important;
-                    backdropFilter: 'blur(16px) !important',
-                    WebkitBackdropFilter: 'blur(16px) !important',
-                    background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                    border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                    boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                  }
-                  .animated-button:hover .arr-1 { right: -25% !important; }
-                  .animated-button:hover .arr-2 { left: 16px !important; }
-                  .animated-button:hover .text { transform: translateX(12px) !important; }
-                  .animated-button:hover svg { fill: white !important; }
-                  .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
-                  .animated-button:hover .circle { 
-                    width: 200px !important; 
-                    height: 200px !important; 
-                    opacity: 1 !important; 
-                    background-color: #3E2723 !important; 
-                  }
-                  .active { 
-                    box-shadow: 0 0 0 4px #D4A76A !important; 
-                    background-color: #3E2723 !important; 
-                    color: white !important;
-                    backdropFilter: 'blur(12px) !important',
-                    WebkitBackdropFilter: 'blur(12px) !important',
-                    border: '1px solid rgba(212, 167, 106, 0.4) !important',
-                    boxShadow: '0 8px 32px rgba(212, 167, 106, 0.2), 0 0 0 4px #D4A76A !important' !important;
-                  }
-                `}</style>
               </button>
             </div>
+            </div>
+            </div>
           </form>
+          </div>
         </Section>
 
       <Section title="Existing Coupons">
@@ -577,10 +924,25 @@ function CouponManager() {
                         Max Uses
                       </th>
                       <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Min Order
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valid Days
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valid Hours
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valid From
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valid To
+                      </th>
+                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                       <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Times Used
+                        Used
                       </th>
                       <th scope="col" className="relative px-4 py-3">
                         <span className="sr-only">Actions</span>
@@ -590,7 +952,7 @@ function CouponManager() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {coupons.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                        <td colSpan="11" className="px-6 py-4 text-center text-sm text-gray-500">
                           No coupons found. Create your first coupon.
                         </td>
                       </tr>
@@ -607,24 +969,45 @@ function CouponManager() {
                             </div>
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
-                            {coupon.type === 'percent' 
+                            {coupon.type === 'percentage' 
                               ? `${coupon.value}% off` 
                               : `₹${parseFloat(coupon.value).toFixed(2)} off`}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
                             {coupon.maxUses || '∞'}
                           </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {coupon.minOrderValue ? `₹${coupon.minOrderValue}` : 'None'}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {coupon.allowedDays && coupon.allowedDays.length > 0 
+                              ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                                  .filter((_, index) => coupon.allowedDays.includes(index))
+                                  .join(', ')
+                              : 'All days'}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {coupon.allowedHours 
+                              ? `${coupon.allowedHours.start} - ${coupon.allowedHours.end}`
+                              : 'All day'}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {coupon.validFrom 
+                              ? new Date(coupon.validFrom).toLocaleDateString()
+                              : 'No limit'}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {coupon.validTo 
+                              ? new Date(coupon.validTo).toLocaleDateString()
+                              : 'No limit'}
+                          </td>
                           <td className="px-3 py-3 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              coupon.active 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {coupon.active ? 'Active' : 'Inactive'}
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                              Active
                             </span>
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.usedCount || 0}
+                            {coupon.usedCount || 0} / {coupon.maxUses || '∞'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end">
@@ -1951,7 +2334,7 @@ export default function AdminDashboard({ onExit }) {
   
   const categories = useMemo(() => Object.keys(menu), [menu])
 
-  const [form, setForm] = useState({ id: null, category: 'coffee', name: '', description: '', price: '' })
+  const [form, setForm] = useState({ id: null, category: '', name: '', description: '', price: '' })
   const [isEditing, setIsEditing] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   
@@ -2574,6 +2957,22 @@ export default function AdminDashboard({ onExit }) {
                       color: #8B5A2B !important;
                       opacity: 1 !important;
                     }
+                    select::placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
+                    select::-webkit-input-placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
+                    select::-moz-placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
+                    select:-ms-input-placeholder {
+                      color: #8B5A2B !important;
+                      opacity: 1 !important;
+                    }
                   `}</style>
                   {showDropdown && (
                     <div className="absolute z-50 w-full rounded-md mt-1" style={{ 
@@ -2721,44 +3120,19 @@ export default function AdminDashboard({ onExit }) {
                   }}
                 />
               </div>
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  disabled={!isEditing}
-                  className="view-button flex-1 mr-[10px]"
-                  style={{
-                    ...animatedButtonStyles.viewButton,
-                    opacity: isEditing ? 1 : 0.6,
-                    cursor: isEditing ? 'pointer' : 'not-allowed',
-                    background: isEditing ? 'rgba(212, 167, 106, 0.18)' : 'rgba(107, 114, 128, 0.12)',
-                    border: isEditing ? '1px solid rgba(212, 167, 106, 0.3)' : '1px solid rgba(107, 114, 128, 0.22)',
-                    color: isEditing ? '#3E2723' : '#6b7280',
-                    padding: '12px 20px',
-                    fontSize: '15px',
-                    minHeight: '48px'
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: isEditing ? '#D4A76A' : '#6b7280', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                  </svg>
-                  <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Cancel</span>
-                  <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: isEditing ? '#D4A76A' : '#6b7280', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                  <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: isEditing ? '#D4A76A' : '#6b7280', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                  </svg>
-                </button>
+              <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  className="view-button flex-1 mr-[10px]"
+                  className="view-button"
                   style={{
                     ...animatedButtonStyles.viewButton,
-                    background: 'rgba(212, 167, 106, 0.25)',
-                    border: '1px solid rgba(212, 167, 106, 0.4)',
+                    background: 'rgba(212, 167, 106, 0.35)',
+                    border: '1px solid rgba(212, 167, 106, 0.5)',
                     color: '#3E2723',
-                    padding: '12px 20px',
+                    padding: '14px 28px',
                     fontSize: '15px',
-                    minHeight: '48px'
+                    minHeight: '50px',
+                    minWidth: '160px'
                   }}
                 >
                   <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>

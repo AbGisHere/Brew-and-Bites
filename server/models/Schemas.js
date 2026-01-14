@@ -32,9 +32,19 @@ const TableSchema = new mongoose.Schema({
 // 4. COUPONS
 const CouponSchema = new mongoose.Schema({
     code: { type: String, required: true, unique: true },
-    type: { type: String, enum: ['percent', 'fixed'], default: 'percent' },
+    type: { type: String, enum: ['percentage', 'fixed'], default: 'percentage' },
     value: { type: Number, required: true },
-    active: { type: Boolean, default: true }
+    maxUses: { type: Number, default: null },
+    minOrderValue: { type: Number, default: null },
+    allowedDays: { type: [Number], default: [] }, // Array of day indices (0-6, 0=Monday)
+    allowedHours: { 
+        start: { type: String, default: '00:00' },
+        end: { type: String, default: '23:59' }
+    },
+    usedCount: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now },
+    validFrom: { type: Date, default: null }, // Optional start date
+    validTo: { type: Date, default: null } // Optional end date
 });
 
 // 5. SETTINGS

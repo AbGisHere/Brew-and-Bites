@@ -147,6 +147,19 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
     
     .title { height: 40px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid #f0f0f0; font-weight: 600; font-size: 13px; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; background: #fafafa; }
     
+    /* Order Info Styles */
+    .order-info { 
+      padding: 12px 20px !important; 
+      background: #f8f9fa !important; 
+      border-bottom: 1px solid #e2e8f0 !important;
+      text-align: center !important;
+    }
+    .order-info .text-center { 
+      font-size: 12px !important; 
+      color: #6b7280 !important; 
+      font-weight: 500 !important;
+    }
+    
     /* PRODUCT LIST (Desktop Grid) */
     .products { display: flex; flex-direction: column; padding: 10px 20px; }
     /* Desktop: Icon(50) Name(1fr) Qty(80) Price(90) */
@@ -259,6 +272,31 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
                         </div>
                     )}
                   </div>
+              </div>
+            </div>
+          )}
+
+          {/* --- ORDER INFO --- */}
+          {((receipt.showOrderTime && receipt.createdAt) || (receipt.showOrderDate && receipt.createdAt)) && (
+            <div className="card order-info">
+              <div className="text-center">
+                {receipt.showOrderDate && receipt.createdAt && (
+                  <div style={{ marginBottom: receipt.showOrderTime ? '4px' : '0' }}>
+                    {new Date(receipt.createdAt).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short', 
+                      year: 'numeric'
+                    })}
+                  </div>
+                )}
+                {receipt.showOrderTime && receipt.createdAt && (
+                  <div>
+                    {new Date(receipt.createdAt).toLocaleTimeString('en-IN', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}

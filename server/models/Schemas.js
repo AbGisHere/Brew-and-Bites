@@ -73,7 +73,11 @@ const SettingsSchema = new mongoose.Schema({
     fssaiNumber: { type: String, default: '' },
     
     // Additional Options
-    includeQRInInvoice: { type: Boolean, default: true }
+    includeQRInInvoice: { type: Boolean, default: true },
+    
+    // Order Information
+    showOrderTime: { type: Boolean, default: true },
+    showOrderDate: { type: Boolean, default: true }
 });
 
 // 6. ORDERS (Complex Structure)

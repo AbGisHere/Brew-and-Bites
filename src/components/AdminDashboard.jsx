@@ -11,7 +11,7 @@ import { FiStar, FiUsers, FiUserPlus } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
-import { MenuItem, colors, AnimatedButton, Section, animatedButtonStyles } from '../styles/shared';
+import { MenuItem, colors, AnimatedButton, Section, animatedButtonStyles, deleteButtonStyles, tableButtonStyles } from '../styles/shared';
 
 // Helper to map MongoDB _id to the id your UI expects
 const mapId = (data) => {
@@ -316,6 +316,8 @@ function CouponManager() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [showDiscountDropdown, setShowDiscountDropdown] = useState(false)
+  const [editingCoupon, setEditingCoupon] = useState(null)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   // 1. Fetch Coupons
   const loadCoupons = async () => {
@@ -389,12 +391,84 @@ function CouponManager() {
     }
   }
 
+  // 4. Edit Coupon Functions
+  const handleEditCoupon = (coupon) => {
+    setEditingCoupon(coupon);
+    setForm({
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value,
+      maxUses: coupon.maxUses,
+      minOrderValue: coupon.minOrderValue,
+      allowedDays: coupon.allowedDays || [],
+      allowedHours: coupon.allowedHours || { start: '00:00', end: '23:59' },
+      validFrom: coupon.validFrom ? new Date(coupon.validFrom).toISOString().split('T')[0] : '',
+      validTo: coupon.validTo ? new Date(coupon.validTo).toISOString().split('T')[0] : ''
+    });
+    setIsEditMode(true);
+  };
+
+  const updateCoupon = async (e) => {
+    e.preventDefault();
+    if (!form.code.trim()) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch(`${API_URL}/api/coupons/${editingCoupon.code}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: form.type,
+          value: parseFloat(form.value),
+          maxUses: form.maxUses,
+          minOrderValue: form.minOrderValue,
+          allowedDays: form.allowedDays,
+          allowedHours: form.allowedHours,
+          validFrom: form.validFrom ? new Date(form.validFrom) : null,
+          validTo: form.validTo ? new Date(form.validTo) : null
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update coupon');
+      }
+      
+      await loadCoupons();
+      resetForm();
+      alert('Coupon updated successfully');
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.message || 'Error updating coupon');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm({ 
+      code: '', 
+      type: 'percentage', 
+      value: '', 
+      maxUses: null,
+      minOrderValue: null,
+      allowedDays: [],
+      allowedHours: { start: '00:00', end: '23:59' },
+      validFrom: '',
+      validTo: ''
+    });
+    setEditingCoupon(null);
+    setIsEditMode(false);
+  };
 
   return (
     <>
-      <Section title="Create New Coupon">
+      <Section title={isEditMode ? "Edit Coupon" : "Create New Coupon"}>
           <div className="max-h-[70vh] overflow-y-auto pr-2">
-            <form onSubmit={create} className="space-y-6">
+            <form onSubmit={isEditMode ? updateCoupon : create} className="space-y-6">
             {/* Basic Info Section */}
             <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
               <h3 className="text-lg font-semibold mb-4 text-amber-900 flex items-center gap-2">
@@ -414,7 +488,7 @@ function CouponManager() {
                     placeholder="e.g. WELCOME10"
                     required
                     maxLength="20"
-                    disabled={isLoading}
+                    disabled={isLoading || isEditMode}
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
@@ -865,7 +939,21 @@ function CouponManager() {
             </div>
 
             {/* Submit Section */}
-            <div className="flex justify-end bg-gradient-to-r from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
+            <div className="flex justify-between items-center bg-gradient-to-r from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  disabled={isLoading}
+                  className="px-6 py-3 border-2 border-gray-200 rounded-xl bg-white hover:bg-gray-50 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
+                  style={{
+                    ...tableButtonStyles.base,
+                    ...tableButtonStyles.hover
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -889,7 +977,7 @@ function CouponManager() {
                   <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                 </svg>
                 <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  {isLoading ? 'Creating...' : 'Create Coupon'}
+                  {isLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Coupon' : 'Create Coupon')}
                 </span>
                 <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '24px', height: '24px', backgroundColor: '#3E2723', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
                 <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '18px', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
@@ -1010,17 +1098,86 @@ function CouponManager() {
                             {coupon.usedCount || 0} / {coupon.maxUses || '∞'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end">
-                              <button
-                                onClick={() => del(coupon.code)}
-                                disabled={isLoading}
-                                className="p-1 text-red-600 hover:bg-red-50 rounded-full"
-                                title="Delete"
+                            <div className="flex items-center justify-end gap-2">
+                              <div 
+                                onClick={() => handleEditCoupon(coupon)}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer edit-btn"
+                                style={{
+                                  backdropFilter: 'blur(20px) saturate(120%)',
+                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                  background: 'rgba(59, 130, 246, 0.15)', // Blue background
+                                  borderRadius: '50%', // Make it circular
+                                  border: '1px solid rgba(59, 130, 246, 0.3)', // Blue outline
+                                  color: '#2563eb',
+                                  padding: '4px 8px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  outline: 'none' // Remove default focus outline
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)';
+                                  e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
+                                  e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                                  e.target.style.boxShadow = 'none';
+                                }}
+                                title="Edit"
+                                onMouseEnter={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+                                  e.target.style.color = '#1d4ed8';
+                                  e.target.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                                  e.target.style.color = '#2563eb';
+                                  e.target.style.transform = 'scale(1)';
+                                }}
                               >
-                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#1e40af">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                              </button>
+                              </div>
+                              <div 
+                                onClick={() => del(coupon.code)}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer delete-btn"
+                                style={{
+                                  ...deleteButtonStyles.base,
+                                  outline: 'none' // Remove default focus outline
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                                  e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
+                                  e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.boxShadow = 'none';
+                                }}
+                                title="Delete"
+                                onMouseEnter={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                                  e.target.style.color = '#b91c1c';
+                                  e.target.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.color = '#dc2626';
+                                  e.target.style.transform = 'scale(1)';
+                                }}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -1037,7 +1194,11 @@ function CouponManager() {
 }
 
 function SettingsPanel({ onBack }) {
-  const [settings, setSettings] = useState({ autoSubmitToChef: true })
+  const [settings, setSettings] = useState({ 
+    autoSubmitToChef: true,
+    showOrderTime: true,
+    showOrderDate: true
+  })
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
   const [settingsTab, setSettingsTab] = useState('general')
@@ -1161,6 +1322,16 @@ const handleSave = async () => {
       // Reset tax rate to 0 if disabling tax
       taxRate: e.target.checked ? (settings.taxRate || 0) : 0
     }
+    setSettings(newSettings)
+  }
+
+  const handleToggleOrderTime = (e) => {
+    const newSettings = { ...settings, showOrderTime: e.target.checked }
+    setSettings(newSettings)
+  }
+
+  const handleToggleOrderDate = (e) => {
+    const newSettings = { ...settings, showOrderDate: e.target.checked }
     setSettings(newSettings)
   }
 
@@ -1360,7 +1531,34 @@ const handleSave = async () => {
                   checked={settings.autoSubmitToChef}
                   onChange={handleToggleAutoSubmit}
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <div 
+                  className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                  style={{
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                    background: settings.autoSubmitToChef 
+                      ? 'rgba(212, 167, 106, 0.25)' 
+                      : 'rgba(139, 90, 43, 0.15)',
+                    border: '1px solid',
+                    borderColor: settings.autoSubmitToChef 
+                      ? 'rgba(212, 167, 106, 0.3)' 
+                      : 'rgba(139, 90, 43, 0.25)',
+                    boxShadow: settings.autoSubmitToChef
+                      ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                      : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                  }}
+                >
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      transform: settings.autoSubmitToChef ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                    }}
+                  />
+                </div>
                 <span className="ml-3 text-sm font-medium text-gray-900">
                   {settings.autoSubmitToChef ? 'Auto-Submit' : 'Manual Submit'}
                 </span>
@@ -1368,10 +1566,16 @@ const handleSave = async () => {
             </div>
 
             {isSuperAdmin && (
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-l-4 border-yellow-400">
+              <div className="flex items-center justify-between p-4 rounded-lg border-l-4" style={{
+                background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                borderLeftColor: '#D4A76A',
+                borderLeftWidth: '4px',
+                boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+              }}>
                 <div>
-                  <h4 className="font-medium">Website Status</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="font-medium" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Website Status</h4>
+                  <p className="text-sm" style={{ color: '#8B5A2B', lineHeight: '1.5' }}>
                     {settings.siteClosed 
                       ? 'Website is currently CLOSED. Only super admin can log in.'
                       : 'Website is OPEN for all users to log in.'}
@@ -1384,7 +1588,34 @@ const handleSave = async () => {
                     checked={settings.siteClosed || false}
                     onChange={handleToggleSiteStatus}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.siteClosed 
+                        ? 'rgba(239, 68, 68, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.siteClosed 
+                        ? 'rgba(239, 68, 68, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.siteClosed
+                        ? '0 2px 12px -1px rgba(239, 68, 68, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.siteClosed ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.siteClosed ? 'Site Closed' : 'Site Open'}
                   </span>
@@ -1400,17 +1631,25 @@ const handleSave = async () => {
         <Section title="Invoice Settings">
           <div className="space-y-4">
             {/* Restaurant Information */}
-            <div className="p-6 bg-gray-50 rounded-lg">
-              <h4 className="font-medium mb-4">Restaurant Information</h4>
-              <p className="text-gray-600 mb-4">
+            <div className="p-6 rounded-lg" style={{
+              background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
+              border: '1px solid rgba(212, 167, 106, 0.2)',
+              boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+            }}>
+              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Restaurant Information</h4>
+              <p className="mb-4" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
                 Configure restaurant details that appear on invoices.
               </p>
               
               {/* Restaurant Logo */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">Restaurant Logo</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Logo</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     Upload your restaurant logo to display on invoices.
                   </p>
                   {settings.restaurantLogo && (
@@ -1438,7 +1677,34 @@ const handleSave = async () => {
                     checked={settings.showRestaurantLogo || false}
                     onChange={(e) => setSettings({...settings, showRestaurantLogo: e.target.checked})}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showRestaurantLogo 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showRestaurantLogo 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showRestaurantLogo
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showRestaurantLogo ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showRestaurantLogo ? 'Show' : 'Hide'}
                   </span>
@@ -1446,10 +1712,14 @@ const handleSave = async () => {
               </div>
               
               {/* Restaurant Name */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">Restaurant Name</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Name</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     {settings.showRestaurantName 
                       ? 'Restaurant name will be displayed on invoices.'
                       : 'Restaurant name will not be displayed on invoices.'}
@@ -1458,10 +1728,32 @@ const handleSave = async () => {
                     <div className="mt-3">
                       <input
                         type="text"
-                        className="input w-full"
+                        className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="Your Restaurant Name"
                         value={settings.restaurantName || ''}
                         onChange={(e) => setSettings({...settings, restaurantName: e.target.value})}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
                       />
                     </div>
                   )}
@@ -1473,7 +1765,34 @@ const handleSave = async () => {
                     checked={settings.showRestaurantName || false}
                     onChange={(e) => setSettings({...settings, showRestaurantName: e.target.checked})}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showRestaurantName 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showRestaurantName 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showRestaurantName
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showRestaurantName ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showRestaurantName ? 'Show' : 'Hide'}
                   </span>
@@ -1481,10 +1800,14 @@ const handleSave = async () => {
               </div>
 
               {/* Restaurant Address */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">Restaurant Address</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Address</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     {settings.showRestaurantAddress 
                       ? 'Restaurant address will be displayed on invoices.'
                       : 'Restaurant address will not be displayed on invoices.'}
@@ -1492,11 +1815,33 @@ const handleSave = async () => {
                   {settings.showRestaurantAddress && (
                     <div className="mt-3">
                       <textarea
-                        className="input w-full"
+                        className="w-full px-4 py-3 transition-all duration-200 resize-none"
                         rows={3}
                         placeholder="Your restaurant address"
                         value={settings.restaurantAddress || ''}
                         onChange={(e) => setSettings({...settings, restaurantAddress: e.target.value})}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
                       />
                     </div>
                   )}
@@ -1508,7 +1853,34 @@ const handleSave = async () => {
                     checked={settings.showRestaurantAddress || false}
                     onChange={(e) => setSettings({...settings, showRestaurantAddress: e.target.checked})}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showRestaurantAddress
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showRestaurantAddress ? 'Show' : 'Hide'}
                   </span>
@@ -1516,22 +1888,48 @@ const handleSave = async () => {
               </div>
 
               {/* Contact Number */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">Contact Number</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Contact Number</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     {settings.showContactNumber 
-                      ? 'Contact number will be displayed on invoices.'
-                      : 'Contact number will not be displayed on invoices.'}
+                      ? 'Phone number will be displayed on invoices.'
+                      : 'Phone number will not be displayed on invoices.'}
                   </p>
                   {settings.showContactNumber && (
                     <div className="mt-3">
                       <input
-                        type="tel"
-                        className="input w-full"
-                        placeholder="Contact Number"
-                        value={settings.contactNumber || ''}
+                        type="text"
+                        value={settings.contactNumber}
                         onChange={(e) => setSettings({...settings, contactNumber: e.target.value})}
+                        className="w-full px-4 py-3 transition-all duration-200"
+                        placeholder="+91 98765 43210"
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
                       />
                     </div>
                   )}
@@ -1543,7 +1941,34 @@ const handleSave = async () => {
                     checked={settings.showContactNumber || false}
                     onChange={(e) => setSettings({...settings, showContactNumber: e.target.checked})}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showContactNumber 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showContactNumber 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showContactNumber
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showContactNumber ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showContactNumber ? 'Show' : 'Hide'}
                   </span>
@@ -1551,10 +1976,14 @@ const handleSave = async () => {
               </div>
 
               {/* Email */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">Email</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Email</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     {settings.showEmail 
                       ? 'Email will be displayed on invoices.'
                       : 'Email will not be displayed on invoices.'}
@@ -1563,10 +1992,32 @@ const handleSave = async () => {
                     <div className="mt-3">
                       <input
                         type="email"
-                        className="input w-full"
+                        className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="billing@example.com"
                         value={settings.email || ''}
                         onChange={(e) => setSettings({...settings, email: e.target.value})}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
                       />
                     </div>
                   )}
@@ -1578,7 +2029,34 @@ const handleSave = async () => {
                     checked={settings.showEmail || false}
                     onChange={(e) => setSettings({...settings, showEmail: e.target.checked})}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showEmail 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showEmail 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showEmail
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showEmail ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showEmail ? 'Show' : 'Hide'}
                   </span>
@@ -1586,18 +2064,148 @@ const handleSave = async () => {
               </div>
             </div>
 
+            {/* Order Information */}
+            <div className="p-6 rounded-lg" style={{
+              background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
+              border: '1px solid rgba(212, 167, 106, 0.2)',
+              boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+            }}>
+              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Order Information</h4>
+              <p className="mb-4" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
+                Configure what order details to display on receipts.
+              </p>
+
+              {/* Order Time */}
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order Time</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
+                    {settings.showOrderTime 
+                      ? 'Order time will be displayed on receipts.'
+                      : 'Order time will not be displayed on receipts.'}
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showOrderTime || false}
+                    onChange={(e) => setSettings({...settings, showOrderTime: e.target.checked})}
+                  />
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showOrderTime 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showOrderTime 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showOrderTime
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showOrderTime ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showOrderTime ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Order Date */}
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order Date</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
+                    {settings.showOrderDate 
+                      ? 'Order date will be displayed on receipts.'
+                      : 'Order date will not be displayed on receipts.'}
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showOrderDate || false}
+                    onChange={(e) => setSettings({...settings, showOrderDate: e.target.checked})}
+                  />
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showOrderDate 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showOrderDate 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showOrderDate
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showOrderDate ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showOrderDate ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+            </div>
+
             {/* Tax and Regulatory Information */}
-            <div className="p-6 bg-gray-50 rounded-lg">
-              <h4 className="font-medium mb-4">Tax & Regulatory Information</h4>
-              <p className="text-gray-600 mb-4">
+            <div className="p-6 rounded-lg" style={{
+              background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
+              border: '1px solid rgba(212, 167, 106, 0.2)',
+              boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+            }}>
+              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Tax & Regulatory Information</h4>
+              <p className="mb-4" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
                 Configure tax and regulatory details for compliance.
               </p>
 
               {/* Tax Settings */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">Tax Settings</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Tax Settings</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     {settings.taxEnabled 
                       ? `Tax is ENABLED at ${settings.taxRate || 0}%`
                       : 'Tax is currently DISABLED'}
@@ -1614,7 +2222,29 @@ const handleSave = async () => {
                         step="0.01"
                         value={settings.taxRate || 0}
                         onChange={handleTaxRateChange}
-                        className="input w-24"
+                        className="w-24 px-3 py-2 transition-all duration-200"
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
                       />
                     </div>
                   )}
@@ -1626,7 +2256,34 @@ const handleSave = async () => {
                     checked={settings.taxEnabled || false}
                     onChange={handleToggleTax}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showRestaurantAddress
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.taxEnabled ? 'Enabled' : 'Disabled'}
                   </span>
@@ -1634,10 +2291,14 @@ const handleSave = async () => {
               </div>
 
               {/* GST Number */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">GST Number</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>GST Number</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     {settings.showGSTNumber 
                       ? 'GST number will be displayed on invoices.'
                       : 'GST number will not be displayed on invoices.'}
@@ -1646,10 +2307,32 @@ const handleSave = async () => {
                     <div className="mt-3">
                       <input
                         type="text"
-                        className="input w-full"
+                        className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="GSTIN Number (e.g., 07AAAPL1234C1ZV)"
                         value={settings.gstNumber || ''}
                         onChange={(e) => setSettings({...settings, gstNumber: e.target.value.toUpperCase()})}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
                       />
                     </div>
                   )}
@@ -1661,7 +2344,34 @@ const handleSave = async () => {
                     checked={settings.showGSTNumber || false}
                     onChange={(e) => setSettings({...settings, showGSTNumber: e.target.checked})}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showRestaurantAddress
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showGSTNumber ? 'Show' : 'Hide'}
                   </span>
@@ -1669,10 +2379,14 @@ const handleSave = async () => {
               </div>
 
               {/* FSSAI Number */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
                 <div className="flex-1">
-                  <h5 className="font-medium text-sm">FSSAI Number</h5>
-                  <p className="text-xs text-gray-600">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>FSSAI Number</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
                     {settings.showFSSAINumber 
                       ? 'FSSAI license number will be displayed on invoices.'
                       : 'FSSAI license number will not be displayed on invoices.'}
@@ -1681,10 +2395,32 @@ const handleSave = async () => {
                     <div className="mt-3">
                       <input
                         type="text"
-                        className="input w-full"
+                        className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="FSSAI License Number (e.g., 12345678901234)"
                         value={settings.fssaiNumber || ''}
                         onChange={(e) => setSettings({...settings, fssaiNumber: e.target.value})}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
                       />
                     </div>
                   )}
@@ -1696,7 +2432,34 @@ const handleSave = async () => {
                     checked={settings.showFSSAINumber || false}
                     onChange={(e) => setSettings({...settings, showFSSAINumber: e.target.checked})}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showRestaurantAddress
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showFSSAINumber ? 'Show' : 'Hide'}
                   </span>
@@ -1704,11 +2467,16 @@ const handleSave = async () => {
               </div>
             </div>
 
+            
             {/* Additional Options */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 rounded-lg" style={{
+              background: 'rgba(255, 255, 255, 0.8)',
+              border: '1px solid rgba(212, 167, 106, 0.15)',
+              boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+            }}>
               <div>
-                <h4 className="font-medium">Include QR Code in Invoice</h4>
-                <p className="text-sm text-gray-600">
+                <h4 className="font-medium" style={{ color: '#3E2723', fontWeight: '600' }}>Include QR Code in Invoice</h4>
+                <p className="text-sm" style={{ color: '#8B5A2B' }}>
                   {settings.includeQRInInvoice 
                     ? 'QR code will be included in printed invoices for easy payment.'
                     : 'QR code will not be included in printed invoices.'}
@@ -1721,7 +2489,34 @@ const handleSave = async () => {
                   checked={settings.includeQRInInvoice || false}
                   onChange={(e) => setSettings({...settings, includeQRInInvoice: e.target.checked})}
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showRestaurantAddress 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showRestaurantAddress
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
                 <span className="ml-3 text-sm font-medium text-gray-900">
                   {settings.includeQRInInvoice ? 'Enabled' : 'Disabled'}
                 </span>
@@ -2671,6 +3466,128 @@ export default function AdminDashboard({ onExit }) {
     }
   }
 
+  // 10. COUPON HANDLING FOR RECEIPTS
+  const handleCouponApply = async (couponCode) => {
+    if (!preview) return;
+    
+    try {
+      // Calculate current subtotal
+      const subtotal = preview.items.reduce((s, it) => s + it.price * it.qty, 0);
+      
+      // Validate coupon with backend
+      const response = await fetch(`${API_URL}/api/coupons/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: couponCode,
+          orderTotal: subtotal
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.valid) {
+        alert(result.error || 'Invalid coupon code');
+        return;
+      }
+      
+      // Apply coupon to receipt
+      const updatedReceipt = {
+        ...preview,
+        couponCode: result.coupon.code,
+        discount: result.coupon.discountAmount,
+        total: subtotal - result.coupon.discountAmount + (preview.tax || 0)
+      };
+      
+      // Update receipt in backend
+      const updateResponse = await fetch(`${API_URL}/api/orders/${preview.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          couponCode: result.coupon.code,
+          discount: result.coupon.discountAmount,
+          total: updatedReceipt.total
+        })
+      });
+      
+      if (!updateResponse.ok) {
+        throw new Error('Failed to apply coupon');
+      }
+      
+      // Record coupon usage
+      await fetch(`${API_URL}/api/coupons/use/${couponCode}`, {
+        method: 'POST'
+      });
+      
+      // Update local state
+      setPreview(updatedReceipt);
+      setReceipts(prevReceipts => 
+        prevReceipts.map(r => 
+          r.id === updatedReceipt.id ? { ...r, ...updatedReceipt } : r
+        )
+      );
+      
+      alert(`Coupon applied! You saved ₹${result.coupon.discountAmount.toFixed(2)}`);
+      
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      alert('Failed to apply coupon. Please try again.');
+    }
+  };
+  
+  const handleCouponRemove = async () => {
+    if (!preview || !preview.couponCode) return;
+    
+    try {
+      // Calculate new total without discount
+      const subtotal = preview.items.reduce((s, it) => s + it.price * it.qty, 0);
+      const newTotal = subtotal + (preview.tax || 0);
+      
+      // Update receipt to remove coupon
+      const updatedReceipt = {
+        ...preview,
+        couponCode: null,
+        discount: 0,
+        total: newTotal
+      };
+      
+      // Update receipt in backend
+      const response = await fetch(`${API_URL}/api/orders/${preview.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          couponCode: null,
+          discount: 0,
+          total: newTotal
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to remove coupon');
+      }
+      
+      // Update local state
+      setPreview(updatedReceipt);
+      setReceipts(prevReceipts => 
+        prevReceipts.map(r => 
+          r.id === updatedReceipt.id ? { ...r, ...updatedReceipt } : r
+        )
+      );
+      
+      alert('Coupon removed successfully');
+      
+    } catch (error) {
+      console.error('Error removing coupon:', error);
+      alert('Failed to remove coupon. Please try again.');
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Mobile Only - Welcome and Logout */}
@@ -3483,6 +4400,8 @@ export default function AdminDashboard({ onExit }) {
             }
             return success;
           }}
+          onCouponApply={handleCouponApply}
+          onCouponRemove={handleCouponRemove}
         />
       )}
 

@@ -666,24 +666,100 @@ export const MenuItem = ({
           )}
           {showActions && (
             <div className="flex gap-2">
-              <button 
-                className="text-blue-600 hover:text-blue-800" 
+              <div 
+                className="w-8 h-8 flex items-center justify-center cursor-pointer edit-btn"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(120%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                  background: 'rgba(59, 130, 246, 0.15)', // Blue background
+                  borderRadius: '50%', // Make it circular
+                  border: '1px solid rgba(59, 130, 246, 0.3)', // Blue outline
+                  color: '#2563eb',
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  outline: 'none' // Remove default focus outline
+                }}
+                onFocus={(e) => {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.25)';
+                  e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
+                  e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                  e.target.style.boxShadow = 'none';
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit && onEdit(item);
                 }}
+                title="Edit"
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+                  e.target.style.color = '#1d4ed8';
+                  e.target.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                  e.target.style.color = '#2563eb';
+                  e.target.style.transform = 'scale(1)';
+                }}
               >
-                Edit
-              </button>
-              <button 
-                className="text-red-600 hover:text-red-800" 
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#1e40af">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <div 
+                className="w-8 h-8 flex items-center justify-center cursor-pointer delete-btn"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(120%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                  background: 'rgba(239, 68, 68, 0.15)', // Light glass red background
+                  borderRadius: '50%', // Make it circular
+                  border: '1px solid rgba(239, 68, 68, 0.3)', // More visible red outline
+                  color: '#dc2626',
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  outline: 'none' // Remove default focus outline
+                }}
+                onFocus={(e) => {
+                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                  e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
+                  e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                  e.target.style.boxShadow = 'none';
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete && onDelete(item);
                 }}
+                title="Delete"
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                  e.target.style.color = '#b91c1c';
+                  e.target.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                  e.target.style.color = '#dc2626';
+                  e.target.style.transform = 'scale(1)';
+                }}
               >
-                Delete
-              </button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
             </div>
           )}
         </div>

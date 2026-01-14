@@ -106,7 +106,12 @@ await Coupon.create([
 ]);
 
 // 6. Insert Default Settings
-await Settings.create({ autoSubmitToChef: true, siteClosed: false });
+await Settings.create({ 
+    autoSubmitToChef: true, 
+    siteClosed: false,
+    showOrderTime: true,
+    showOrderDate: true
+});
 
 res.json({ message: "✅ Database populated with store.js data!" });
 } catch (error) {
@@ -478,6 +483,62 @@ app.post('/api/login', async (req, res) => {
         }
     });
 
+    app.put('/api/coupons/:code', async (req, res) => {
+        try {
+            const { type, value, maxUses, minOrderValue, allowedDays, allowedHours, validFrom, validTo } = req.body;
+            
+            // Validate required fields
+            if (!type || value === undefined) {
+                return res.status(400).json({ error: 'Type and value are required' });
+            }
+            
+            // Validate discount type and value
+            if (type === 'percentage' && (value < 0 || value > 100)) {
+                return res.status(400).json({ error: 'Percentage discount must be between 0 and 100' });
+            }
+            if (type === 'fixed' && value < 0) {
+                return res.status(400).json({ error: 'Fixed discount must be greater than or equal to 0' });
+            }
+            
+            // Validate date fields if provided
+            if (validFrom && validTo && new Date(validFrom) > new Date(validTo)) {
+                return res.status(400).json({ error: 'Valid From date cannot be after Valid To date' });
+            }
+            
+            // Validate time format if provided
+            if (allowedHours) {
+                const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+                if (!timeRegex.test(allowedHours.start) || !timeRegex.test(allowedHours.end)) {
+                    return res.status(400).json({ error: 'Invalid time format. Use HH:MM format' });
+                }
+            }
+            
+            const updatedCoupon = await Coupon.findOneAndUpdate(
+                { code: req.params.code },
+                {
+                    type,
+                    value,
+                    maxUses: maxUses || null,
+                    minOrderValue: minOrderValue || null,
+                    allowedDays: allowedDays || [],
+                    allowedHours: allowedHours || { start: '00:00', end: '23:59' },
+                    validFrom: validFrom ? new Date(validFrom) : null,
+                    validTo: validTo ? new Date(validTo) : null
+                },
+                { new: true, runValidators: true }
+            );
+            
+            if (!updatedCoupon) {
+                return res.status(404).json({ error: 'Coupon not found' });
+            }
+            
+            res.json(updatedCoupon);
+        } catch (e) { 
+            console.error('Error updating coupon:', e);
+            res.status(500).json({ error: e.message }); 
+        }
+    });
+
     app.delete('/api/coupons/:code', async (req, res) => {
         try {
             await Coupon.findOneAndDelete({ code: req.params.code });
@@ -660,6 +721,14 @@ app.post('/api/login', async (req, res) => {
                     settings.includeQRInInvoice = true;
                 }
                 
+                // Add order information fields
+                if (settings.showOrderTime === undefined) {
+                    settings.showOrderTime = true;
+                }
+                if (settings.showOrderDate === undefined) {
+                    settings.showOrderDate = true;
+                }
+                
                 await settings.save();
                 res.json({ message: 'Settings migrated successfully', settings });
             } else {
@@ -686,7 +755,10 @@ app.post('/api/login', async (req, res) => {
                     showFSSAINumber: false,
                     fssaiNumber: '',
                     // Additional Options
-                    includeQRInInvoice: true
+                    includeQRInInvoice: true,
+                    // Order Information
+                    showOrderTime: true,
+                    showOrderDate: true
                 });
                 res.json({ message: 'Default settings created', settings: newSettings });
             }
@@ -724,7 +796,10 @@ app.post('/api/login', async (req, res) => {
                     showFSSAINumber: false,
                     fssaiNumber: '',
                     // Additional Options
-                    includeQRInInvoice: true
+                    includeQRInInvoice: true,
+                    // Order Information
+                    showOrderTime: true,
+                    showOrderDate: true
                 });
             }
             
@@ -744,9 +819,11 @@ app.post('/api/login', async (req, res) => {
                 return res.json(publicSettings);
             }
             
-            // For authenticated users, return all settings
-            // The UI will handle hiding the siteClosed toggle for non-super admins
-            res.json(settings);
+            // For authenticated users, return settings without logo to prevent response corruption
+            // Logo will be fetched separately when needed
+            const settingsObj = settings.toObject();
+            const { restaurantLogo, ...settingsWithoutLogo } = settingsObj;
+            res.json(settingsWithoutLogo);
         } catch (e) {
             console.error('Error getting settings:', e);
             res.status(500).json({ error: 'Failed to fetch settings' });
@@ -799,7 +876,10 @@ app.post('/api/login', async (req, res) => {
                 showFSSAINumber: false,
                 fssaiNumber: '',
                 // Additional Options
-                includeQRInInvoice: true
+                includeQRInInvoice: true,
+                // Order Information
+                showOrderTime: true,
+                showOrderDate: true
             });
             
             // Prepare update object

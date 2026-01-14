@@ -6,6 +6,13 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
   useEffect(()=>{ setItems(receipt.items || []) }, [receipt])
   const [couponInput, setCouponInput] = useState('')
   
+  // Function to calculate sequential Order ID (this should match the logic in AdminDashboard)
+  const getOrderNumber = (currentReceipt) => {
+    // This is a simplified version - in a real app, you'd fetch all receipts and calculate
+    // For now, we'll use the receipt ID as a fallback or you can pass the order number as a prop
+    return currentReceipt.orderNumber || currentReceipt.id?.slice(-6) || 'N/A'
+  }
+  
   // --- CALCULATIONS ---
   const subtotal = items.reduce((s, it) => s + it.price * it.qty, 0)
   const discount = receipt.discount || 0
@@ -252,7 +259,7 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
           {/* --- HEADER --- */}
           {showHeader && (
             <div className="card header-card">
-              {receipt.restaurantLogo && (
+              {receipt.restaurantLogo && receipt.showRestaurantLogo && (
                 <img src={receipt.restaurantLogo} alt="Logo" className="logo-img" />
               )}
               
@@ -277,9 +284,21 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
           )}
 
           {/* --- ORDER INFO --- */}
-          {((receipt.showOrderTime && receipt.createdAt) || (receipt.showOrderDate && receipt.createdAt)) && (
+          {((receipt.showOrderTime && receipt.createdAt) || (receipt.showOrderDate && receipt.createdAt) || receipt.showOrderID) && (
             <div className="card order-info">
               <div className="text-center">
+                {receipt.showOrderID && (
+                  <div style={{ marginBottom: (receipt.showOrderDate || receipt.showOrderTime) ? '8px' : '0' }}>
+                    <span style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '700', 
+                      color: '#2d3748',
+                      fontFamily: 'monospace'
+                    }}>
+                      Order #{getOrderNumber(receipt)}
+                    </span>
+                  </div>
+                )}
                 {receipt.showOrderDate && receipt.createdAt && (
                   <div style={{ marginBottom: receipt.showOrderTime ? '4px' : '0' }}>
                     {new Date(receipt.createdAt).toLocaleDateString('en-IN', {

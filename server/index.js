@@ -110,7 +110,8 @@ await Settings.create({
     autoSubmitToChef: true, 
     siteClosed: false,
     showOrderTime: true,
-    showOrderDate: true
+    showOrderDate: true,
+    showOrderID: false
 });
 
 res.json({ message: "✅ Database populated with store.js data!" });
@@ -728,6 +729,9 @@ app.post('/api/login', async (req, res) => {
                 if (settings.showOrderDate === undefined) {
                     settings.showOrderDate = true;
                 }
+                if (settings.showOrderID === undefined) {
+                    settings.showOrderID = false;
+                }
                 
                 await settings.save();
                 res.json({ message: 'Settings migrated successfully', settings });
@@ -758,7 +762,8 @@ app.post('/api/login', async (req, res) => {
                     includeQRInInvoice: true,
                     // Order Information
                     showOrderTime: true,
-                    showOrderDate: true
+                    showOrderDate: true,
+                    showOrderID: false
                 });
                 res.json({ message: 'Default settings created', settings: newSettings });
             }
@@ -799,7 +804,8 @@ app.post('/api/login', async (req, res) => {
                     includeQRInInvoice: true,
                     // Order Information
                     showOrderTime: true,
-                    showOrderDate: true
+                    showOrderDate: true,
+                    showOrderID: false
                 });
             }
             

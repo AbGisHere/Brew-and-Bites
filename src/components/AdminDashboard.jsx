@@ -1197,7 +1197,8 @@ function SettingsPanel({ onBack }) {
   const [settings, setSettings] = useState({ 
     autoSubmitToChef: true,
     showOrderTime: true,
-    showOrderDate: true
+    showOrderDate: true,
+    showOrderID: false
   })
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
@@ -1332,6 +1333,11 @@ const handleSave = async () => {
 
   const handleToggleOrderDate = (e) => {
     const newSettings = { ...settings, showOrderDate: e.target.checked }
+    setSettings(newSettings)
+  }
+
+  const handleToggleOrderID = (e) => {
+    const newSettings = { ...settings, showOrderID: e.target.checked }
     setSettings(newSettings)
   }
 
@@ -2181,6 +2187,61 @@ const handleSave = async () => {
                   </div>
                   <span className="ml-3 text-sm font-medium text-gray-900">
                     {settings.showOrderDate ? 'Show' : 'Hide'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Order ID */}
+              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(212, 167, 106, 0.15)',
+                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+              }}>
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order ID</h5>
+                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
+                    {settings.showOrderID 
+                      ? 'Sequential Order ID will be displayed on receipts.'
+                      : 'Order ID will not be displayed on receipts.'}
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.showOrderID || false}
+                    onChange={handleToggleOrderID}
+                  />
+                  <div 
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: settings.showOrderID 
+                        ? 'rgba(212, 167, 106, 0.25)' 
+                        : 'rgba(139, 90, 43, 0.15)',
+                      border: '1px solid',
+                      borderColor: settings.showOrderID 
+                        ? 'rgba(212, 167, 106, 0.3)' 
+                        : 'rgba(139, 90, 43, 0.25)',
+                      boxShadow: settings.showOrderID
+                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        transform: settings.showOrderID ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                      }}
+                    />
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {settings.showOrderID ? 'Show' : 'Hide'}
                   </span>
                 </label>
               </div>
@@ -4210,16 +4271,27 @@ export default function AdminDashboard({ onExit }) {
                 Total Sales: <span className="text-green-600">₹{salesTotal.toFixed(2)}</span>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow overflow-x-auto">
+            <div 
+              className="overflow-x-auto"
+              style={{
+                backdropFilter: 'blur(20px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                borderRadius: '20px',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                padding: '20px'
+              }}
+            >
               <table className="w-full min-w-max">
                 <thead>
-                  <tr className="border-b">
+                  <tr className="border-b" style={{ borderBottomColor: 'rgba(212, 167, 106, 0.2)' }}>
                     <th 
-                      className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                      className="text-left p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('_id')}
                     >
                       <div className="flex items-center">
-                        ID
+                        Order #
                         {sortConfig.key === '_id' && (
                           <span className="ml-1">
                             {sortConfig.direction === 'asc' ? '↑' : '↓'}
@@ -4228,7 +4300,7 @@ export default function AdminDashboard({ onExit }) {
                       </div>
                     </th>
                     <th 
-                      className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                      className="text-left p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('createdAt')}
                     >
                       <div className="flex items-center">
@@ -4241,7 +4313,7 @@ export default function AdminDashboard({ onExit }) {
                       </div>
                     </th>
                     <th 
-                      className="text-left p-2 cursor-pointer hover:bg-gray-50"
+                      className="text-left p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('tableId.name')}
                     >
                       <div className="flex items-center">
@@ -4254,7 +4326,7 @@ export default function AdminDashboard({ onExit }) {
                       </div>
                     </th>
                     <th 
-                      className="text-right p-2 cursor-pointer hover:bg-gray-50"
+                      className="text-right p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('total')}
                     >
                       <div className="flex items-center justify-end">
@@ -4266,71 +4338,170 @@ export default function AdminDashboard({ onExit }) {
                         )}
                       </div>
                     </th>
-                    <th className="text-right p-2">Actions</th>
+                    <th className="text-right p-2 font-semibold text-amber-900 px-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {getFilteredReceipts()
-                    .sort((a, b) => {
-                      let aValue, bValue;
-                      
-                      // Handle nested properties
-                      if (sortConfig.key === 'tableId.name') {
-                        aValue = a.tableId?.name || 'Z';
-                        bValue = b.tableId?.name || 'Z';
+                  {(() => {
+                    // First, create a chronological copy for sequential numbering
+                    const chronologicalReceipts = [...getFilteredReceipts()].sort((a, b) => 
+                      new Date(a.createdAt) - new Date(b.createdAt)
+                    );
+                    
+                    // Create a map of receipt ID to sequential order number
+                    const orderNumberMap = {};
+                    chronologicalReceipts.forEach((receipt, index) => {
+                      orderNumberMap[receipt.id] = index + 1;
+                    });
+                    
+                    // Now apply user's selected sorting
+                    return chronologicalReceipts
+                      .sort((a, b) => {
+                        let aValue, bValue;
                         
-                        // If both are 'Z' (no table), sort by date
-                        if (aValue === 'Z' && bValue === 'Z') {
-                          return new Date(b.createdAt) - new Date(a.createdAt);
+                        // Handle nested properties
+                        if (sortConfig.key === 'tableId.name') {
+                          aValue = a.tableId?.name || 'Z';
+                          bValue = b.tableId?.name || 'Z';
+                          
+                          // If both are 'Z' (no table), sort by date
+                          if (aValue === 'Z' && bValue === 'Z') {
+                            return new Date(b.createdAt) - new Date(a.createdAt);
+                          }
+                          
+                          // If one is 'Z', push it to the end
+                          if (aValue === 'Z') return sortConfig.direction === 'asc' ? 1 : -1;
+                          if (bValue === 'Z') return sortConfig.direction === 'asc' ? -1 : 1;
+                        } else {
+                          aValue = a[sortConfig.key];
+                          bValue = b[sortConfig.key];
                         }
                         
-                        // If one is 'Z', push it to the end
-                        if (aValue === 'Z') return sortConfig.direction === 'asc' ? 1 : -1;
-                        if (bValue === 'Z') return sortConfig.direction === 'asc' ? -1 : 1;
-                      } else {
-                        aValue = a[sortConfig.key];
-                        bValue = b[sortConfig.key];
-                      }
-                      
-                      // Handle different data types
-                      if (typeof aValue === 'string' && typeof bValue === 'string') {
-                        return sortConfig.direction === 'asc' 
-                          ? aValue.localeCompare(bValue)
-                          : bValue.localeCompare(aValue);
-                      } else if (aValue instanceof Date && bValue instanceof Date) {
-                        return sortConfig.direction === 'asc'
-                          ? aValue - bValue
-                          : bValue - aValue;
-                      } else {
-                        return sortConfig.direction === 'asc'
-                          ? (aValue || 0) - (bValue || 0)
-                          : (bValue || 0) - (aValue || 0);
-                      }
-                    })
-                    .map((r) => (
-                    <tr key={r.id} className="border-b hover:bg-gray-50 min-w-max">
-                      <td className="p-2">{r.id.slice(-6)}</td>
-                      <td className="p-2">{new Date(r.createdAt).toLocaleString()}</td>
-                      <td className="p-2">
-                        {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
+                        // Handle different data types
+                        if (typeof aValue === 'string' && typeof bValue === 'string') {
+                          return sortConfig.direction === 'asc' 
+                            ? aValue.localeCompare(bValue)
+                            : bValue.localeCompare(aValue);
+                        } else if (aValue instanceof Date && bValue instanceof Date) {
+                          return sortConfig.direction === 'asc'
+                            ? aValue - bValue
+                            : bValue - aValue;
+                        } else {
+                          return sortConfig.direction === 'asc'
+                            ? (aValue || 0) - (bValue || 0)
+                            : (bValue || 0) - (aValue || 0);
+                        }
+                      })
+                      .map((r) => (
+                        <tr key={r.id} className="border-b hover:bg-amber-50/30 min-w-max transition-all duration-200" style={{ borderBottomColor: 'rgba(212, 167, 106, 0.1)' }}>
+                          <td className="p-3 font-medium text-amber-900">
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold">
+                              {orderNumberMap[r.id]}
+                            </span>
+                          </td>
+                      <td className="p-3 text-gray-700">{new Date(r.createdAt).toLocaleString()}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-1 rounded-lg text-sm font-medium bg-amber-100/50 text-amber-800">
+                          {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
+                        </span>
                       </td>
-                      <td className="p-2 text-right">₹{r.total?.toFixed(2) || '0.00'}</td>
-                      <td className="p-2 text-right space-x-2">
-                        <button 
-                          onClick={() => setPreview(r)}
-                          className="text-blue-600 hover:underline"
-                        >
-                          View
-                        </button>
-                        <button 
-                          onClick={() => deleteReceipt(r.id)}
-                          className="text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
+                      <td className="p-3 text-right font-semibold text-green-700">₹{r.total?.toFixed(2) || '0.00'}</td>
+                      <td className="p-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <div 
+                            onClick={() => setPreview(r)}
+                            className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                            style={{
+                              backdropFilter: 'blur(20px) saturate(120%)',
+                              WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                              background: 'rgba(59, 130, 246, 0.15)',
+                              borderRadius: '50%',
+                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              color: '#2563eb',
+                              padding: '4px 8px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.background = 'rgba(59, 130, 246, 0.25)';
+                              e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
+                              e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                              e.target.style.boxShadow = 'none';
+                            }}
+                            title="View Receipt"
+                            onMouseEnter={(e) => {
+                              e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+                              e.target.style.color = '#1d4ed8';
+                              e.target.style.transform = 'scale(1.02)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                              e.target.style.color = '#2563eb';
+                              e.target.style.transform = 'scale(1)';
+                            }}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#1e40af">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </div>
+                          <div 
+                            onClick={() => deleteReceipt(r.id)}
+                            className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                            style={{
+                              backdropFilter: 'blur(20px) saturate(120%)',
+                              WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              borderRadius: '50%',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              color: '#dc2626',
+                              padding: '4px 8px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                              e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
+                              e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                              e.target.style.boxShadow = 'none';
+                            }}
+                            title="Delete Receipt"
+                            onMouseEnter={(e) => {
+                              e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                              e.target.style.color = '#b91c1c';
+                              e.target.style.transform = 'scale(1.02)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                              e.target.style.color = '#dc2626';
+                              e.target.style.transform = 'scale(1)';
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   ))}
+                    )()}
                 </tbody>
               </table>
             </div>
@@ -4389,7 +4560,21 @@ export default function AdminDashboard({ onExit }) {
         <ReceiptModal
           open={!!preview}
           onClose={() => setPreview(null)}
-          receipt={{...preview, ...settings}}
+          receipt={{
+            ...preview, 
+            ...settings,
+            orderNumber: (() => {
+              // Calculate the order number using the same logic as the receipts table
+              const chronologicalReceipts = [...getFilteredReceipts()].sort((a, b) => 
+                new Date(a.createdAt) - new Date(b.createdAt)
+              );
+              const orderNumberMap = {};
+              chronologicalReceipts.forEach((receipt, index) => {
+                orderNumberMap[receipt.id] = index + 1;
+              });
+              return orderNumberMap[preview.id] || preview.id?.slice(-6);
+            })()
+          }}
           canEdit={true}
           onDelete={deleteReceipt}
           onUpdate={async (items) => {

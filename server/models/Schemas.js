@@ -77,7 +77,8 @@ const SettingsSchema = new mongoose.Schema({
     
     // Order Information
     showOrderTime: { type: Boolean, default: true },
-    showOrderDate: { type: Boolean, default: true }
+    showOrderDate: { type: Boolean, default: true },
+    showOrderID: { type: Boolean, default: false }
 });
 
 // 6. ORDERS (Complex Structure)

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
 import API_URL from '../config'; // <--- 1. IMPORT THIS
-import { UserGroupIcon } from '@heroicons/react/24/outline'
+import { UserGroupIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { MenuItem, AnimatedButton, colors, animatedButtonStyles, Section, tableButtonStyles, statusBadgeStyles, orderItemStyles, deleteButtonStyles, quantityButtonStyles, tableStatusStyles } from '../styles/shared'; // <--- 1. IMPORT THIS
 
 const statusColors = {
@@ -650,7 +650,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                 padding="12px 24px"
                 minWidth="140px"
                 margin="4px"
-                className={`${isActive ? 'active' : ''}`}
+                className={`${isActive ? 'active' : ''} flex-shrink-0 flex-grow md:flex-grow-0`}
                 style={{
                   backgroundColor: isActive ? hoverColor : 'rgba(212, 167, 106, 0.15)',
                   color: isActive ? 'white' : buttonColor,
@@ -662,7 +662,9 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   border: `1px solid rgba(212, 167, 106, 0.3)`,
                   boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`,
                   fontSize: '14px',
-                  fontWeight: '600'
+                  fontWeight: '600',
+                  width: '100%',
+                  maxWidth: '200px'
                 }}
               >
                 {t.label}
@@ -675,7 +677,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6" style={{ alignItems: 'start' }}>
         <Section title="Tables">
           <div className="flex flex-col" style={{ height: '100%' }}>
-            <ul className="space-y-3 pr-6 py-2 pl-2 w-full" style={{ minHeight: 'auto', maxHeight: 'none' }}>
+            <ul className="space-y-3 py-2 pl-2 w-full" style={{ minHeight: 'auto', maxHeight: 'none', paddingRight: '2px' }}>
             {tables.map(t => (
               <li key={t.id}>
                 <button
@@ -684,7 +686,9 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                   style={{
                     ...tableButtonStyles.base,
                     ...(selectedTable === t.id ? tableButtonStyles.active : {}),
-                    ...(selectedTable === t.id && { ...tableButtonStyles.activeHover })
+                    ...(selectedTable === t.id && { ...tableButtonStyles.activeHover }),
+                    width: 'calc(100% - 8px)',
+                    margin: '0 4px'
                   }}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -693,10 +697,28 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                       <span className="font-medium text-sm sm:text-base">{t.name}</span>
                     </div>
                     <div style={{
-                      ...tableStatusStyles.base,
-                      ...(t.activeOrderId ? tableStatusStyles.occupied : tableStatusStyles.available)
+                      backdropFilter: 'blur(20px) saturate(120%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                      background: t.activeOrderId 
+                        ? 'rgba(239, 68, 68, 0.4)'  // Red for occupied
+                        : 'rgba(34, 197, 94, 0.4)', // Green for available
+                      borderRadius: '50%',
+                      border: t.activeOrderId 
+                        ? '1px solid rgba(239, 68, 68, 0.6)'  // Red border for occupied
+                        : '1px solid rgba(34, 197, 94, 0.6)', // Green border for available
+                      color: '#ffffff', // White color for both icons
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'default',
+                      transition: 'all 0.2s ease'
                     }}>
-                      {t.activeOrderId ? 'Occupied' : 'Available'}
+                      {t.activeOrderId ? (
+                        <XCircleIcon className="h-4 w-4" />
+                      ) : (
+                        <CheckCircleIcon className="h-4 w-4" />
+                      )}
                     </div>
                   </div>
                 </button>
@@ -708,9 +730,9 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
             <ul className="space-y-3 overflow-y-auto overflow-x-auto w-full pr-12 pl-1 text-sm" style={{ overflow: 'visible', overflowY: 'auto', overflowX: 'auto', padding: '8px', maxHeight: '200px' }}>
               {receipts.filter(r=>r.tableId===selectedTable).map(r => (
                 <li key={r.id} className="flex justify-between items-center py-1">
-                  <span className="flex-shrink-0">{new Date(r.createdAt).toLocaleTimeString()} • ₹{r.total.toFixed(2)}</span>
+                  <span className="flex-shrink-0" style={{ marginRight: '12px' }}>{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • ₹{r.total.toFixed(2)}</span>
                   <button
-                    className="view-button flex-shrink-0 mr-[10px]"
+                    className="view-button flex-shrink-0"
                     onClick={()=>setPreview(r)}
                     style={animatedButtonStyles.viewButton}
                   >

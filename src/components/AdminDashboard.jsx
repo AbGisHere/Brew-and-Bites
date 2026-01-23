@@ -4200,36 +4200,89 @@ export default function AdminDashboard({ onExit }) {
               <div className="flex items-center gap-4">
                 <div className="relative group">
                   <button 
-                    className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm"
+                    className="px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '12px',
+                      color: '#3E2723',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      fontWeight: '600'
+                    }}
                     onMouseEnter={(e) => {
-                      clearTimeout(e.currentTarget.closest('.group')._timer);
-                      e.currentTarget.closest('.group').classList.add('is-open');
+                      e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212, 167, 106, 0.35) 0%, rgba(212, 167, 106, 0.2) 100%)';
+                      e.currentTarget.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)';
+                      e.currentTarget.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                    onMouseDown={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0) scale(0.95)';
+                    }}
+                    onMouseUp={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
                     }}
                   >
                     Export
                   </button>
                   <div 
-                    className="absolute left-0 mt-1 w-32 bg-white rounded-md shadow-lg py-1 z-10 opacity-0 invisible transition-all duration-200 transform -translate-y-1 group-[.is-open]:opacity-100 group-[.is-open]:visible group-[.is-open]:translate-y-0"
-                    onMouseEnter={(e) => {
-                      clearTimeout(e.currentTarget.closest('.group')._timer);
-                      e.currentTarget.closest('.group').classList.add('is-open');
-                    }}
-                    onMouseLeave={(e) => {
-                      const group = e.currentTarget.closest('.group');
-                      group._timer = setTimeout(() => {
-                        group.classList.remove('is-open');
-                      }, 200);
+                    className="absolute left-0 mt-1 w-32 rounded-lg shadow-xl py-2 z-50 opacity-0 invisible transition-all duration-300 transform -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0"
+                    style={{ 
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.85)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)'
                     }}
                   >
                     <button 
                       onClick={() => exportToCSV(getFilteredReceipts())}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200"
+                      style={{
+                        background: 'transparent',
+                        color: '#3E2723',
+                        borderRadius: '8px',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(212, 167, 106, 0.15)';
+                        e.target.style.borderRadius = '6px';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'transparent';
+                        e.target.style.borderRadius = '8px';
+                      }}
                     >
                       Export as CSV
                     </button>
                     <button 
                       onClick={() => exportToPDF(getFilteredReceipts())}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200"
+                      style={{
+                        background: 'transparent',
+                        color: '#3E2723',
+                        borderRadius: '8px',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(212, 167, 106, 0.15)';
+                        e.target.style.borderRadius = '6px';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'transparent';
+                        e.target.style.borderRadius = '8px';
+                      }}
                     >
                       Export as PDF
                     </button>
@@ -4287,10 +4340,10 @@ export default function AdminDashboard({ onExit }) {
                 <thead>
                   <tr className="border-b" style={{ borderBottomColor: 'rgba(212, 167, 106, 0.2)' }}>
                     <th 
-                      className="text-left p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
+                      className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('_id')}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center">
                         Order #
                         {sortConfig.key === '_id' && (
                           <span className="ml-1">
@@ -4300,10 +4353,10 @@ export default function AdminDashboard({ onExit }) {
                       </div>
                     </th>
                     <th 
-                      className="text-left p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
+                      className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('createdAt')}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center">
                         Date
                         {sortConfig.key === 'createdAt' && (
                           <span className="ml-1">
@@ -4313,10 +4366,10 @@ export default function AdminDashboard({ onExit }) {
                       </div>
                     </th>
                     <th 
-                      className="text-left p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
+                      className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('tableId.name')}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center">
                         Table
                         {sortConfig.key === 'tableId.name' && (
                           <span className="ml-1">
@@ -4326,10 +4379,10 @@ export default function AdminDashboard({ onExit }) {
                       </div>
                     </th>
                     <th 
-                      className="text-right p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
+                      className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('total')}
                     >
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-center">
                         Total
                         {sortConfig.key === 'total' && (
                           <span className="ml-1">
@@ -4338,7 +4391,7 @@ export default function AdminDashboard({ onExit }) {
                         )}
                       </div>
                     </th>
-                    <th className="text-right p-2 font-semibold text-amber-900 px-3">Actions</th>
+                    <th className="text-center p-2 font-semibold text-amber-900 px-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4394,20 +4447,51 @@ export default function AdminDashboard({ onExit }) {
                       })
                       .map((r) => (
                         <tr key={r.id} className="border-b hover:bg-amber-50/30 min-w-max transition-all duration-200" style={{ borderBottomColor: 'rgba(212, 167, 106, 0.1)' }}>
-                          <td className="p-3 font-medium text-amber-900">
-                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold">
-                              {orderNumberMap[r.id]}
+                          <td className="p-3 text-center font-medium text-amber-900">
+                            <span style={{
+                              backdropFilter: 'blur(20px) saturate(150%)',
+                              WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                              background: 'rgba(212, 167, 106, 0.12)',
+                              border: '1px solid rgba(212, 167, 106, 0.35)',
+                              color: '#92400e',
+                              borderRadius: '50%',
+                              boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                              transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              letterSpacing: '0.025em',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '32px',
+                              height: '32px'
+                            }}>
+                              #{orderNumberMap[r.id]}
                             </span>
                           </td>
-                      <td className="p-3 text-gray-700">{new Date(r.createdAt).toLocaleString()}</td>
-                      <td className="p-3">
-                        <span className="px-2 py-1 rounded-lg text-sm font-medium bg-amber-100/50 text-amber-800">
+                      <td className="p-3 text-center text-gray-700">{new Date(r.createdAt).toLocaleString()}</td>
+                      <td className="p-3 text-center">
+                        <span style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(254, 243, 199, 0.5)', // Original amber background
+                          border: '1px solid rgba(251, 191, 36, 0.3)', // Amber border
+                          color: '#92400e', // Amber text
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
+                          transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          letterSpacing: '0.025em',
+                          padding: '6px 12px',
+                          display: 'inline-block'
+                        }}>
                           {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
                         </span>
                       </td>
-                      <td className="p-3 text-right font-semibold text-green-700">₹{r.total?.toFixed(2) || '0.00'}</td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="p-3 text-center font-semibold text-green-700">₹{r.total?.toFixed(2) || '0.00'}</td>
+                      <td className="p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
                           <div 
                             onClick={() => setPreview(r)}
                             className="w-8 h-8 flex items-center justify-center cursor-pointer"

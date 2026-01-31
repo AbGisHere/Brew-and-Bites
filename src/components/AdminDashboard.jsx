@@ -4,6 +4,12 @@ import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
 import QRCodeDisplay from './QRCodeDisplay'
 import WaiterDashboard from './WaiterDashboard'
+import EyeIcon from './icons/EyeIcon'
+import PenIcon from './icons/PenIcon'
+import TrashIcon from './icons/TrashIcon'
+import CopyIcon from './icons/CopyIcon'
+import UserPlusIcon from './icons/UserPlusIcon'
+import QrcodeIcon from './icons/QrcodeIcon'
 // Import jsPDF with CommonJS require since the module import is causing issues
 const { jsPDF } = window.jspdf || {};
 import('jspdf-autotable');
@@ -12,6 +18,60 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 import { MenuItem, colors, AnimatedButton, Section, animatedButtonStyles, deleteButtonStyles, tableButtonStyles } from '../styles/shared';
+
+// Inject CSS for view button animations
+const injectViewButtonStyles = () => {
+  if (typeof document !== 'undefined' && !document.getElementById('view-button-styles')) {
+    const style = document.createElement('style');
+    style.id = 'view-button-styles';
+    style.textContent = `
+      .view-button:hover {
+        background: rgba(212, 167, 106, 0.25) !important;
+        transform: scale(0.98) !important;
+        box-shadow: 0 6px 32px -2px rgba(212, 167, 106, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.1) !important;
+        border: 1px solid rgba(212, 167, 106, 0.3) !important;
+        border-radius: 12px !important;
+        color: #3E2723 !important;
+      }
+      
+      .view-button:hover .arr-1 { 
+        right: -25% !important; 
+      }
+      .view-button:hover .arr-2 { 
+        left: 16px !important; 
+      }
+      .view-button:hover .text { 
+        transform: translateX(12px) !important; 
+      }
+      .view-button:hover svg { 
+        fill: #3E2723 !important; 
+      }
+      .view-button:hover .circle { 
+        width: 200px !important; 
+        height: 200px !important; 
+        opacity: 1 !important; 
+        background-color: rgba(212, 167, 106, 0.3) !important;
+      }
+      
+      .view-button:active {
+        background: linear-gradient(135deg, rgba(212, 167, 106, 0.5) 0%, rgba(212, 167, 106, 0.35) 100%) !important;
+        transform: scale(0.96) !important;
+        box-shadow: 0 4px 20px rgba(212, 167, 106, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid rgba(212, 167, 106, 0.5) !important;
+        border-radius: 12px !important;
+        color: #3E2723 !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+      
+      .view-button:active .circle { 
+        opacity: 1; 
+        width: 200%; 
+        height: 500%; 
+      }
+    `;
+    document.head.appendChild(style);
+  }
+};
 
 // Helper to map MongoDB _id to the id your UI expects
 const mapId = (data) => {
@@ -1139,9 +1199,11 @@ function CouponManager() {
                                   e.target.style.transform = 'scale(1)';
                                 }}
                               >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#1e40af">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
+                                <PenIcon 
+                                  size={16}
+                                  color="#1e40af"
+                                  strokeWidth={2}
+                                />
                               </div>
                               <div 
                                 onClick={() => del(coupon.code)}
@@ -1174,9 +1236,13 @@ function CouponManager() {
                                   e.target.style.transform = 'scale(1)';
                                 }}
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <TrashIcon 
+                                  size={16}
+                                  color="#dc2626"
+                                  strokeWidth={2}
+                                  dangerHover={true}
+                                  shakeOnClick={true}
+                                />
                               </div>
                             </div>
                           </td>
@@ -2733,6 +2799,11 @@ export default function AdminDashboard({ onExit }) {
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'admin' })
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
   
+  // Inject CSS styles for view button animations
+  useEffect(() => {
+    injectViewButtonStyles();
+  }, []);
+  
   // Fetch all users (only for superadmin)
   const fetchUsers = useCallback(async () => {
     if (user?.username?.toLowerCase() !== 'abg') return;
@@ -2804,6 +2875,8 @@ export default function AdminDashboard({ onExit }) {
   const [qrModal, setQrModal] = useState({ open: false, table: null })
   const [recentlyGeneratedCodes, setRecentlyGeneratedCodes] = useState(new Set())
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
+  const [hoveredReceiptId, setHoveredReceiptId] = useState(null) // Track which receipt is being hovered
+  const [hoveredEditId, setHoveredEditId] = useState(null) // Track which edit button is being hovered
   const [settings, setSettings] = useState({ autoSubmitToChef: true })
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
@@ -3918,7 +3991,7 @@ export default function AdminDashboard({ onExit }) {
                     placeholder="Select or type a new category..."
                     required
                   />
-                  <style jsx>{`
+                  <style>{`
                     input::placeholder {
                       color: #8B5A2B !important;
                       opacity: 1 !important;
@@ -4150,13 +4223,15 @@ export default function AdminDashboard({ onExit }) {
                     </div>
                     <div className="space-y-2" style={{ padding: '0 10px' }}>
                       {menu[cat].map(item => (
-                        <MenuItem
+                        <MenuItem 
                           key={item.id}
                           item={item}
                           showActions={true}
                           onEdit={() => editItem(cat, item)}
                           onDelete={() => deleteItem(cat, item.id)}
                           onToggleAvailability={() => toggleItemAvailability(item)}
+                          hoveredEditId={hoveredEditId}
+                          setHoveredEditId={setHoveredEditId}
                           className="flex items-start justify-between"
                         />
                       ))}
@@ -4524,18 +4599,22 @@ export default function AdminDashboard({ onExit }) {
                               e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
                               e.target.style.color = '#1d4ed8';
                               e.target.style.transform = 'scale(1.02)';
+                              setHoveredReceiptId(r.id); // Set hover state for this receipt
                             }}
                             onMouseLeave={(e) => {
                               e.target.style.background = 'rgba(59, 130, 246, 0.15)';
                               e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
                               e.target.style.color = '#2563eb';
                               e.target.style.transform = 'scale(1)';
+                              setHoveredReceiptId(null); // Clear hover state
                             }}
                           >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#1e40af">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
+                            <EyeIcon 
+                              size={16}
+                              color="#1e40af"
+                              strokeWidth={2}
+                              isHovered={hoveredReceiptId === r.id}
+                            />
                           </div>
                           <div 
                             onClick={() => deleteReceipt(r.id)}
@@ -4577,9 +4656,13 @@ export default function AdminDashboard({ onExit }) {
                               e.target.style.transform = 'scale(1)';
                             }}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <TrashIcon 
+                              size={16}
+                              color="#dc2626"
+                              strokeWidth={2}
+                              dangerHover={true}
+                              shakeOnClick={true}
+                            />
                           </div>
                         </div>
                       </td>
@@ -4685,256 +4768,409 @@ export default function AdminDashboard({ onExit }) {
           <div className="mb-6 flex items-center gap-3">
             <button 
               onClick={addTable}
-              className="animated-button group relative inline-flex items-center justify-center"
+              className="view-button flex-shrink-0"
               style={{
-                '--color': '#D4A76A',
-                '--hover-color': '#3E2723',
-                padding: '8px 24px',
+                ...animatedButtonStyles.viewButton,
+                minWidth: '120px',
+                padding: '12px 20px',
                 fontSize: '14px',
-                minWidth: '140px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                border: '2px solid',
-                borderColor: 'transparent',
-                fontWeight: '600',
-                backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                borderRadius: '100px',
-                color: '#D4A76A',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                border: '1px solid rgba(212, 167, 106, 0.3)',
-                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
+                height: '44px'
               }}
             >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                Add Table
-              </span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <style>{`
-                .animated-button:hover { 
-                  box-shadow: 0 0 0 8px transparent !important; 
-                  color: white !important; 
-                  border-radius: 12px !important;
-                  backdropFilter: 'blur(16px) !important',
-                  WebkitBackdropFilter: 'blur(16px) !important',
-                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                }
-                .animated-button:hover .arr-1 { right: -25% !important; }
-                .animated-button:hover .arr-2 { left: 16px !important; }
-                .animated-button:hover .text { transform: translateX(12px) !important; }
-                .animated-button:hover svg { fill: white !important; }
-                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
-                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
-              `}</style>
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>Add Table</span>
+              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
             </button>
             
             <button 
               onClick={generateTableCodes}
-              className="animated-button group relative inline-flex items-center justify-center"
+              className="view-button flex-shrink-0"
               style={{
-                '--color': '#D4A76A',
-                '--hover-color': '#3E2723',
-                padding: '8px 24px',
+                ...animatedButtonStyles.viewButton,
+                minWidth: '200px',
+                padding: '12px 24px',
                 fontSize: '14px',
-                minWidth: '160px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                border: '2px solid',
-                borderColor: 'transparent',
-                fontWeight: '600',
-                backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                borderRadius: '100px',
-                color: '#D4A76A',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                border: '1px solid rgba(212, 167, 106, 0.3)',
-                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
+                height: '44px'
               }}
             >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                Generate QR Codes
-              </span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <style>{`
-                .animated-button:hover { 
-                  box-shadow: 0 0 0 8px transparent !important; 
-                  color: white !important; 
-                  border-radius: 12px !important;
-                  backdropFilter: 'blur(16px) !important',
-                  WebkitBackdropFilter: 'blur(16px) !important',
-                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                }
-                .animated-button:hover .arr-1 { right: -25% !important; }
-                .animated-button:hover .arr-2 { left: 16px !important; }
-                .animated-button:hover .text { transform: translateX(12px) !important; }
-                .animated-button:hover svg { fill: white !important; }
-                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
-                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
-              `}</style>
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)', color: '#3E2723' }}>Generate QR Codes</span>
+              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
             </button>
           </div>
 
           {/* Tables List */}
-          <div className="bg-white rounded-lg shadow p-4 md:p-6 overflow-hidden">
+          <div className="overflow-hidden">
             {tables.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No tables found. Add your first table to get started.
+              <div 
+                className="p-12 text-center"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(212, 167, 106, 0.2)',
+                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                }}
+              >
+                <div className="text-gray-500 text-lg">No tables found. Add your first table to get started.</div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Table Name
+              <div 
+                className="overflow-x-auto"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(212, 167, 106, 0.2)',
+                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                  padding: '20px'
+                }}
+              >
+                <table className="w-full min-w-max">
+                  <thead>
+                    <tr className="border-b" style={{ borderBottomColor: 'rgba(212, 167, 106, 0.2)' }}>
+                      <th className="text-center p-3 font-semibold text-amber-900 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 8v8a2 2 0 002 2h10a2 2 0 002-2V8m-7 4h4" />
+                          </svg>
+                          Table Name
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Table Code
+                      <th className="text-center p-3 font-semibold text-amber-900 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                          Table Code
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        QR Code
+                      <th className="text-center p-3 font-semibold text-amber-900 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                          </svg>
+                          QR Code
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                      <th className="text-center p-3 font-semibold text-amber-900 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Status
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                      <th className="text-center p-3 font-semibold text-amber-900 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                          </svg>
+                          Actions
+                        </div>
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody>
                     {tables.map(t => {
                       const hasActiveOrder = t.activeOrderId;
                       return (
-                        <tr key={t.id || t._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 8v8a2 2 0 002 2h10a2 2 0 002-2V8m-7 4h4" />
-                                </svg>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">{t.name}</div>
+                        <tr 
+                          key={t.id || t._id} 
+                          className="border-b transition-all duration-200 hover:bg-amber-50/30"
+                          style={{ borderBottomColor: 'rgba(212, 167, 106, 0.1)' }}
+                        >
+                          <td className="p-4">
+                            <div className="flex items-center justify-center">
+                              <div 
+                                className="px-4 py-2 rounded-xl transition-all duration-200"
+                                style={{
+                                  backdropFilter: 'blur(12px) saturate(120%)',
+                                  WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.08) 0%, rgba(212, 167, 106, 0.04) 100%)',
+                                  border: '1px solid rgba(212, 167, 106, 0.15)',
+                                  boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
+                                }}
+                              >
+                                <div className="font-medium text-gray-900 text-sm text-center">{t.name}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <code className={`px-2 py-1 text-sm font-mono rounded transition-all duration-500 ${
-                                recentlyGeneratedCodes.has(t.tableCode) 
-                                  ? 'bg-green-100 text-green-800 ring-2 ring-green-300 ring-opacity-50 animate-pulse' 
-                                  : 'bg-blue-100 text-blue-800'
-                              }`}>
+                          <td className="p-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <span 
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                                  recentlyGeneratedCodes.has(t.tableCode) 
+                                    ? 'text-amber-800' 
+                                    : 'text-amber-700'
+                                }`}
+                                style={{
+                                  backdropFilter: 'blur(20px) saturate(120%)',
+                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                  background: recentlyGeneratedCodes.has(t.tableCode)
+                                    ? 'rgba(212, 167, 106, 0.25)'
+                                    : 'rgba(212, 167, 106, 0.15)',
+                                  border: recentlyGeneratedCodes.has(t.tableCode)
+                                    ? '1px solid rgba(212, 167, 106, 0.4)'
+                                    : '1px solid rgba(212, 167, 106, 0.3)',
+                                  boxShadow: recentlyGeneratedCodes.has(t.tableCode)
+                                    ? '0 2px 8px rgba(212, 167, 106, 0.2)'
+                                    : '0 2px 8px rgba(212, 167, 106, 0.1)',
+                                  fontFamily: 'monospace',
+                                  height: '32px'
+                                }}
+                              >
                                 {t.tableCode || 'Not generated'}
-                              </code>
+                              </span>
                               {t.tableCode && (
-                                <button
+                                <div 
+                                  className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all duration-200"
+                                  style={{
+                                    backdropFilter: 'blur(20px) saturate(120%)',
+                                    WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                    background: 'rgba(212, 167, 106, 0.15)',
+                                    borderRadius: '50%',
+                                    border: '1px solid rgba(212, 167, 106, 0.3)',
+                                    color: '#92400e',
+                                    transition: 'all 0.2s ease',
+                                    outline: 'none'
+                                  }}
                                   onClick={() => {
                                     navigator.clipboard.writeText(t.tableCode);
                                     alert('Table code copied to clipboard!');
                                   }}
-                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600"
                                   title="Copy code"
+                                  onMouseEnter={(e) => {
+                                    e.target.style.background = 'rgba(212, 167, 106, 0.25)';
+                                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                                    e.target.style.color = '#78350f';
+                                    e.target.style.transform = 'scale(1.02)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.background = 'rgba(212, 167, 106, 0.15)';
+                                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                                    e.target.style.color = '#92400e';
+                                    e.target.style.transform = 'scale(1)';
+                                  }}
                                 >
-                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              {t.qrCode ? (
-                                <>
-                                  <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(t.qrCode)}`}
-                                    alt={`QR Code for ${t.name}`}
-                                    className="w-12 h-12 border border-gray-200 rounded"
+                                  <CopyIcon 
+                                    size={16}
+                                    color="#92400e"
+                                    strokeWidth={2}
                                   />
-                                  <button
-                                    onClick={() => setQrModal({ open: true, table: t })}
-                                    className="ml-3 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors border border-blue-200"
-                                  >
-                                    VIEW
-                                  </button>
-                                </>
-                              ) : (
-                                <span className="text-sm text-gray-500">Not generated</span>
+                                </div>
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              hasActiveOrder 
-                                ? 'bg-red-100 text-red-800' 
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              {hasActiveOrder ? 'Occupied' : 'Available'}
-                            </span>
+                          <td className="p-4">
+                            <div className="flex items-center justify-center">
+                              {t.qrCode ? (
+                                (() => {
+                                  let qrIconRef = null;
+                                  return (
+                                    <div
+                                      className="w-8 h-8 rounded-lg border-2 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                                      style={{
+                                        borderColor: 'rgba(212, 167, 106, 0.3)',
+                                        background: 'rgba(255, 255, 255, 0.8)',
+                                        backdropFilter: 'blur(8px) saturate(120%)',
+                                        WebkitBackdropFilter: 'blur(8px) saturate(120%)'
+                                      }}
+                                      onClick={() => setQrModal({ open: true, table: t })}
+                                      onMouseEnter={(e) => {
+                                        e.target.style.borderColor = 'rgba(212, 167, 106, 0.5)';
+                                        e.target.style.transform = 'translateY(-1px)';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(212, 167, 106, 0.2)';
+                                        // Start icon animation
+                                        if (qrIconRef && qrIconRef.startAnimation) {
+                                          qrIconRef.startAnimation();
+                                        }
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.style.borderColor = 'rgba(212, 167, 106, 0.3)';
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.boxShadow = 'none';
+                                        // Stop icon animation
+                                        if (qrIconRef && qrIconRef.stopAnimation) {
+                                          qrIconRef.stopAnimation();
+                                        }
+                                      }}
+                                      title="Click to view QR Code"
+                                    >
+                                      <QrcodeIcon 
+                                        ref={(el) => { qrIconRef = el; }}
+                                        size={20}
+                                        color="#D4A76A"
+                                        strokeWidth={2}
+                                      />
+                                    </div>
+                                  );
+                                })()
+                              ) : (
+                                <div 
+                                  className="px-4 py-2 text-sm text-gray-500 rounded-lg"
+                                  style={{
+                                    background: 'rgba(156, 163, 175, 0.1)',
+                                    border: '1px solid rgba(156, 163, 175, 0.2)',
+                                    backdropFilter: 'blur(8px) saturate(120%)',
+                                    WebkitBackdropFilter: 'blur(8px) saturate(120%)'
+                                  }}
+                                >
+                                  Not generated
+                                </div>
+                              )}
+                            </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="p-4">
+                            <div className="flex items-center justify-center">
+                              <span 
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                                  hasActiveOrder 
+                                    ? 'bg-yellow-100 text-yellow-800' 
+                                    : 'bg-green-100 text-green-800'
+                                }`}
+                                style={{
+                                  backdropFilter: 'blur(8px) saturate(120%)',
+                                  WebkitBackdropFilter: 'blur(8px) saturate(120%)',
+                                  border: hasActiveOrder 
+                                    ? '1px solid rgba(250, 204, 21, 0.3)'
+                                    : '1px solid rgba(34, 197, 94, 0.3)',
+                                  boxShadow: hasActiveOrder
+                                    ? '0 2px 8px rgba(250, 204, 21, 0.1)'
+                                    : '0 2px 8px rgba(34, 197, 94, 0.1)'
+                                }}
+                              >
+                                {hasActiveOrder ? 'Occupied' : 'Available'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center justify-center gap-2">
                               {hasActiveOrder ? (
                                 <button
                                   onClick={() => setOrderingTableId(t.id || t._id)}
-                                  className="px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 rounded-md transition-colors border border-amber-200"
+                                  className="p-2 transition-all duration-200 border"
+                                  style={{
+                                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%)',
+                                    color: '#92400e',
+                                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                                    backdropFilter: 'blur(8px) saturate(120%)',
+                                    WebkitBackdropFilter: 'blur(8px) saturate(120%)',
+                                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.1)',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.15) 100%)';
+                                    e.target.style.transform = 'translateY(-1px)';
+                                    e.target.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.2)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%)';
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = '0 2px 8px rgba(245, 158, 11, 0.1)';
+                                  }}
+                                  title="View / Edit Order"
                                 >
-                                  View / Edit Order
+                                  <PenIcon size={16} color="#92400e" />
                                 </button>
                               ) : (
                                 <button
                                   onClick={() => setOrderingTableId(t.id || t._id)}
-                                  className="px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 rounded-md transition-colors border border-green-200"
+                                  className="p-2 transition-all duration-200 border"
+                                  style={{
+                                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%)',
+                                    color: '#14532d',
+                                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                                    backdropFilter: 'blur(8px) saturate(120%)',
+                                    WebkitBackdropFilter: 'blur(8px) saturate(120%)',
+                                    boxShadow: '0 2px 8px rgba(34, 197, 94, 0.1)',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.style.background = 'linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)';
+                                    e.target.style.transform = 'translateY(-1px)';
+                                    e.target.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.2)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.background = 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%)';
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.1)';
+                                  }}
+                                  title="Take Order"
                                 >
-                                  Take Order
+                                  <UserPlusIcon 
+                                    size={16}
+                                    color="#14532d"
+                                    strokeWidth={2}
+                                  />
                                 </button>
                               )}
 
-                              <button
+                              <div 
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete Table ${t.name}? This action cannot be undone.`)) {
                                     deleteTable(t.id || t._id);
                                   }
                                 }}
-                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all duration-200"
+                                style={{
+                                  backdropFilter: 'blur(20px) saturate(120%)',
+                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  borderRadius: '50%',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  color: '#dc2626',
+                                  transition: 'all 0.2s ease',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                                  e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
+                                  e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.boxShadow = 'none';
+                                }}
                                 title="Delete Table"
+                                onMouseEnter={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                                  e.target.style.color = '#b91c1c';
+                                  e.target.style.transform = 'scale(1.02)';
+                                  e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.2)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.color = '#dc2626';
+                                  e.target.style.transform = 'scale(1)';
+                                  e.target.style.boxShadow = 'none';
+                                }}
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
+                                <TrashIcon 
+                                  size={16}
+                                  color="#dc2626"
+                                  strokeWidth={2}
+                                  dangerHover={true}
+                                  shakeOnClick={true}
+                                />
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -5221,17 +5457,58 @@ export default function AdminDashboard({ onExit }) {
                               >
                                 Reset Password
                               </button>
-                              <button
+                              <div 
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete ${u.username}? This action cannot be undone.`)) {
                                     deleteUser(u.id || u._id);
                                   }
                                 }}
-                                className="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                                style={{
+                                  backdropFilter: 'blur(20px) saturate(120%)',
+                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  borderRadius: '50%',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  color: '#dc2626',
+                                  padding: '4px 8px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                                  e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
+                                  e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.boxShadow = 'none';
+                                }}
                                 title="Delete User"
+                                onMouseEnter={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                                  e.target.style.color = '#b91c1c';
+                                  e.target.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.color = '#dc2626';
+                                  e.target.style.transform = 'scale(1)';
+                                }}
                               >
-                                Delete
-                              </button>
+                                <TrashIcon 
+                                  size={16}
+                                  color="#dc2626"
+                                  strokeWidth={2}
+                                  dangerHover={true}
+                                  shakeOnClick={true}
+                                />
+                              </div>
                             </div>
                           )}
                         </div>

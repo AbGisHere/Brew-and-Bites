@@ -1,4 +1,6 @@
 import React from 'react'
+import PenIcon from "../../components/icons/PenIcon"
+import TrashIcon from "../../components/icons/TrashIcon"
 
 // Exact button styles from WaiterDashboard
 export const animatedButtonStyles = {
@@ -158,6 +160,51 @@ export const animatedButtonStyles = {
       height: 500%; 
     }
     
+    // Admin button hover animations
+    .admin-button:hover {
+      background: rgba(212, 167, 106, 0.25) !important;
+      transform: scale(0.98) !important;
+      box-shadow: 0 6px 32px -2px rgba(212, 167, 106, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 25px rgba(212, 167, 106, 0.1) !important;
+      border: 1px solid rgba(212, 167, 106, 0.3) !important;
+      border-radius: 12px !important;
+      color: #3E2723 !important;
+    }
+    
+    .admin-button:hover .arr-1 { 
+      right: -25% !important; 
+    }
+    .admin-button:hover .arr-2 { 
+      left: 16px !important; 
+    }
+    .admin-button:hover .text { 
+      transform: translateX(12px) !important; 
+    }
+    .admin-button:hover svg { 
+      fill: #3E2723 !important; 
+    }
+    .admin-button:hover .circle { 
+      width: 200px !important; 
+      height: 200px !important; 
+      opacity: 1 !important; 
+      background-color: rgba(212, 167, 106, 0.3) !important;
+    }
+    
+    .admin-button:active {
+      background: linear-gradient(135deg, rgba(212, 167, 106, 0.5) 0%, rgba(212, 167, 106, 0.35) 100%) !important;
+      transform: scale(0.96) !important;
+      box-shadow: 0 4px 20px rgba(212, 167, 106, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+      border: 1px solid rgba(212, 167, 106, 0.5) !important;
+      border-radius: 12px !important;
+      color: #3E2723 !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    
+    .admin-button:active .circle { 
+      opacity: 1; 
+      width: 200%; 
+      height: 500%; 
+    }
+    
     .close-button:hover {
       background: rgba(121, 85, 72, 0.35) !important;
       transform: scale(0.98) !important;
@@ -264,6 +311,53 @@ export const tableButtonStyles = {
     backdropFilter: 'blur(6px) saturate(120%)',
     WebkitBackdropFilter: 'blur(6px) saturate(120%)',
     border: '1px solid rgba(121, 85, 72, 0.45)'
+  },
+
+  // Admin Dashboard button styles with View button animations
+  adminButton: {
+    backdropFilter: 'blur(40px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+    background: 'rgba(212, 167, 106, 0.18)',
+    borderRadius: '22px',
+    border: '1px solid rgba(212, 167, 106, 0.22)',
+    boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(212, 167, 106, 0.12)',
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    position: 'relative',
+    overflow: 'hidden',
+    color: '#3E2723',
+    padding: '8px 20px',
+    fontSize: '14px',
+    minWidth: '140px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    fontWeight: '600'
+  },
+
+  adminButtonWide: {
+    backdropFilter: 'blur(40px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+    background: 'rgba(212, 167, 106, 0.18)',
+    borderRadius: '22px',
+    border: '1px solid rgba(212, 167, 106, 0.22)',
+    boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(212, 167, 106, 0.12)',
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    position: 'relative',
+    overflow: 'hidden',
+    color: '#3E2723',
+    padding: '8px 20px',
+    fontSize: '14px',
+    minWidth: '160px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    fontWeight: '600'
   }
 };
 
@@ -596,12 +690,14 @@ export const MenuItem = ({
   item, 
   onClick, 
   children, 
+  onEdit, 
+  onDelete, 
+  onToggleAvailability, 
+  showActions = false, 
+  unavailableText = 'Currently unavailable',
   className = '',
-  showActions = false,
-  onEdit,
-  onDelete,
-  onToggleAvailability,
-  unavailableText = 'Out of Stock',
+  hoveredEditId,
+  setHoveredEditId,
   ...props 
 }) => {
   const menuItemStyle = {
@@ -671,7 +767,7 @@ export const MenuItem = ({
                 style={{
                   backdropFilter: 'blur(20px) saturate(120%)',
                   WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                  background: 'rgba(59, 130, 246, 0.15)', // Blue background
+                  background: 'rgba(59, 130, 246, 0.15)', // Light glass blue background
                   borderRadius: '50%', // Make it circular
                   border: '1px solid rgba(59, 130, 246, 0.3)', // Blue outline
                   color: '#2563eb',
@@ -709,9 +805,11 @@ export const MenuItem = ({
                   e.target.style.transform = 'scale(1)';
                 }}
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#1e40af">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+                <PenIcon 
+                  size={16}
+                  color="#1e40af"
+                  strokeWidth={2}
+                />
               </div>
               <div 
                 className="w-8 h-8 flex items-center justify-center cursor-pointer delete-btn"
@@ -756,9 +854,12 @@ export const MenuItem = ({
                   e.target.style.transform = 'scale(1)';
                 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <TrashIcon 
+                  size={16}
+                  color="#dc2626"
+                  strokeWidth={2}
+                  dangerHover={true}
+                />
               </div>
             </div>
           )}

@@ -1,5 +1,5 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.7.1-green.svg)
+![Version](https://img.shields.io/badge/version-1.8.0-green.svg) ![License](https://img.shields.io/badge/license-Proprietary-red)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now featuring a complete customer self-service ordering experience with QR codes and real-time order tracking.
 
@@ -8,17 +8,53 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
-## 🚀 What's New in v1.7.1 (UI Enhancement & Visual Polish)
+## 🚀 What's New in v1.8.0 (Invoice Settings & Receipt Enhancement)
 
-### 🎨 Visual Design Improvements
-* **Stunning Background Pattern**: Implemented beautiful conic gradient background with chocolate-themed color palette across the entire website
-* **Enhanced Flip Menu Cards**: Redesigned menu cards with horizontal flip animation, decorative SVG icons, and animated floating circles
-* **Footer Color Harmony**: Updated footer colors to perfectly match the chocolate background pattern using gradient design
-* **Clean Layout**: Removed unwanted white space below footer for seamless page finish
+### 🧾 Advanced Invoice Settings Management
+* **Complete Invoice Configuration**: New comprehensive invoice settings panel with full control over receipt appearance
+* **Restaurant Information Fields**: 
+  * Restaurant Name, Address, Contact, Email (each with individual show/hide toggles)
+  * Restaurant Logo upload with automatic compression and Base64 storage
+  * Smart logo sizing (max 300×150px) for optimal printing
+* **Tax & Regulatory Information**:
+  * GST Number and FSSAI Number with display toggles
+  * Organized in dedicated "Tax & Regulatory Information" section
+* **QR Code Integration**: Toggle QR code display on receipts for digital payment options
 
-### 🎯 Menu Experience Enhancements
-* **Horizontal Flip Animation**: Menu cards now flip left-to-right on hover with smooth 3D transitions
-* **Decorative Elements**: Added animated floating circles and gradient effects to menu cards
+### 🖨️ Enhanced Receipt Printing System
+* **Thermal Printer Optimization**: Redesigned print styles specifically for 80mm thermal printers
+* **Responsive Receipt Layout**: Mobile-optimized receipt modal with proper scaling on all devices
+* **Professional Receipt Design**:
+  * Side-by-side logo and restaurant information layout
+  * Clean product listing with quantity breakdowns
+  * Prominent total amount display with dashed borders
+  * Grayscale logo conversion for thermal printing
+* **Smart Print Functionality**: Direct iframe printing for better browser compatibility
+
+### 📱 Mobile Responsiveness Improvements
+* **Receipt Modal Optimization**: 
+  * Adaptive padding and margins for mobile screens
+  * Responsive grid layouts (hides icons on small screens)
+  * Touch-friendly button sizing and spacing
+* **Enhanced Mobile Experience**:
+  * Improved product grid layout (1fr 80px 85px on mobile)
+  * Better text wrapping and overflow handling
+  * Optimized font sizes for mobile readability
+
+### 🔧 Technical Enhancements
+* **Image Compression Pipeline**: Automatic logo compression with size validation (2MB limit)
+* **Payload Size Management**: Smart handling of large Base64 images to prevent 413 errors
+* **Settings Schema Expansion**: Extended backend schema with comprehensive invoice field support
+* **Migration Support**: Automatic database migration for existing installations
+* **Consistent UI Components**: Unified toggle button styling across all settings
+
+### 🎨 Visual Consistency Updates
+* **Settings Panel Redesign**: Matching toggle button styles across General and Invoice settings
+* **Improved Layout Structure**: Consistent spacing and visual hierarchy
+* **Enhanced Button Styling**: Theme-consistent colors and hover effects
+
+---
+
 * **Visual Icons**: Integrated custom SVG icons for enhanced visual appeal
 * **Responsive Design**: Optimized menu card layout for all screen sizes
 
@@ -111,121 +147,16 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ## 📜 Version History
 
-### **v1.7.1 (UI Enhancement & Visual Polish)**
-* **Stunning Background Pattern**: Implemented beautiful conic gradient background with chocolate-themed color palette across the entire website
-* **Enhanced Flip Menu Cards**: Redesigned menu cards with horizontal flip animation, decorative SVG icons, and animated floating circles
-* **Footer Color Harmony**: Updated footer colors to perfectly match the chocolate background pattern using gradient design
-* **Receipt Generation Fix**: Fixed automatic receipt generation issue - receipts now only appear when "Close & Generate Receipt" is clicked
-* **Console Error Fixes**: Resolved all SVG attribute warnings and version fetching errors
-* **Clean Layout**: Removed unwanted white space below footer for seamless page finish
+For detailed version history and changelog, please see [CHANGELOG.md](./CHANGELOG.md)
 
-### **v1.7.0 (Production Stability & Configuration Management)**
-* **Dynamic API Configuration:** Enhanced environment detection for seamless local and production deployments.
-* **Table Code Seeding:** Implemented predictable test codes (910474, 139631) for consistent testing.
-* **CORS Optimization:** Improved cross-origin resource sharing configuration for production stability.
-* **Mixed Content Resolution:** Eliminated mixed content errors on Vercel deployment.
-* **Enhanced Debugging:** Added comprehensive logging for API URL verification.
-* **Environment Detection:** Smart switching between localhost and production API endpoints.
-
-### **v1.6.0 (Code Quality & User Experience Enhancement)**
-* **Enhanced Code Documentation:** Added comprehensive comments and improved code readability across all components.
-* **Customer Ordering UX Improvements:** 
-  * **Collapsible Menu Categories:** New feature to collapse/expand menu categories for better navigation.
-  * **Improved Polling Logic:** Enhanced real-time order status tracking with better error handling.
-  * **Streamlined Navigation:** Better redirect logic for missing table information.
-* **QR Code Display Refactoring:** 
-  * **Improved Error Handling:** Better validation and fallback mechanisms for QR code generation.
-  * **Enhanced Loading States:** More reliable loading indicators and error messages.
-  * **Code Cleanup:** Removed redundant dependencies and improved component structure.
-* **Table Code Entry Improvements:**
-  * **Better User Feedback:** Enhanced validation messages and error handling.
-  * **Streamlined Logic:** Simplified table validation flow for improved reliability.
-* **Performance Optimizations:** Reduced bundle size and improved component rendering efficiency.
-
-### **v1.5.10 (Table Code & API Configuration Fix)**
-* **Fixed Table Code Seeding:** Predictable test codes for consistent development.
-* **Enhanced Debugging:** Improved logging for API URL verification.
-* **CORS Configuration:** Better setup for production deployment.
-
-### **v1.5.9 (Hardcoded Localhost Fix)**
-* **Dynamic API URL:** Replaced hardcoded localhost with dynamic configuration.
-* **Environment Detection:** Improved switching between local and production URLs.
-* **CORS Error Resolution:** Fixed persistent cross-origin issues.
-
-### **v1.5.8 (Configuration Restoration)**
-* **Smart Environment Detection:** Restored dynamic API configuration.
-* **Mixed Content Fix:** Eliminated errors on Vercel deployment.
-
-### **v1.5.7 (Production API Enforcement)**
-* **Critical Fix:** Removed localhost logic for production stability.
-* **Hardcoded Production URL:** Ensured reliable cloud deployment.
-
-### **v1.5.0 (Customer Ordering Revolution)**
-* **Customer Self-Service Portal:** Complete customer-facing ordering system with QR code access.
-* **Table Code Authentication:** Secure 6-digit unique codes for each table.
-* **Real-Time Order Tracking:** Live status updates (Preparing → Prepared → Served).
-* **Smart Order Merging:** Seamlessly add items to existing orders without creating duplicates.
-* **Unified Cart Display:** Single view showing both cart items and existing ordered items with status tags.
-* **Mobile-Optimized Interface:** Responsive design perfect for smartphones and tablets.
-
-### **v1.4.3 (Auto-Seeding)**
-* **Automatic Database Seeding:** Default accounts (admin, waiter1, chef1, AbG) are now automatically created when the server starts with an empty database.
-* **Smart Initialization:** The system checks for existing data and only seeds missing collections to prevent duplicates.
-* **Zero Configuration:** No manual database setup required - just start the server and everything is ready!
-* **Bug Fixes:** Resolved a server.js error which stopped the chef order dashboard from rendering.
-
-### **v1.4.2 (Current)**
-* **Bug Fixes:** Resolved backend issues for chef dashboard.
-
-### **v1.4.1 (UI Consistency & Performance Patch)**
-* **Parity Update:** Synchronized Waiter mobile UI with Admin/Chef dashboards.
-* **Bug Patch:** Fixed Navbar scrolling and Admin tab color glitches.
-* **Architecture:** Added Tab support for future Takeaway/Delivery modes.
-
-### **v1.4.0 (Mobile Optimization, Responsive UI & Waiter UX)**
-#### 📱 UI/UX & Mobile
-* **Mobile Overhaul:** Full CSS refactor for phone/tablet compatibility.
-* **Fixed Modal Positioning:** Centered receipts within the active viewport.
-* **Waiter Logic:** Tables now display "Occupancy Status" for better usability.
-* **UI Polish:** Redesigned footer and cleaned up redundant labels.
-
-### **v1.3.0 (Admin Modal, Chef Batch Orders & Minor Bugs)**
-#### 👑 Admin Dashboard (Major UX Upgrade)
-* **User Management Overhaul:** Completely redesigned the Users tab. Now features a card-based layout with role-specific icons (Shield for Admin, Hat for Chef, Tray for Waiter) and quick action buttons.
-* **Visual Table Grid:** Tables are now displayed in a responsive grid with clear "Occupied/Available" status pills and active order tracking.
-* **Live Admin "Take Order" Modal:** Admins can now view or edit active orders in a popup overlay in the Tables tab without leaving the dashboard. No more losing context by switching tabs!
-* **Real-Time Monitoring:** The dashboard now auto-refreshes every 2 seconds. Watch table statuses turn from `Green` (Free) to `Red` (Occupied) instantly.
-* **Embedded Waiter Mode:** The Waiter interface now runs seamlessly inside the Admin panel for quick order taking.
-#### 👨‍🍳 Chef Dashboard (New Feature)
-* **Batch Mode:** This is a high-performance mode designed for efficiency in busy kitchens. Instead of fulfilling orders ticket-by-ticket (e.g., "Table 1 needs a Burger", "Table 2 needs a Burger"), it aggregates identical items so chefs can cook in bulk.
-
-### **v1.2.1 (Zero Latency UI Update)**
-* **Zero-Latency Batch View:** The "Items to Prepare" list updates instantly when items are marked as "Done".
-* **Smart Item Splitting:** Marking 1 item as "Ready" from a batch of 4 (e.g., "4x Coffees") now correctly splits them into (3 Preparing, 1 Ready).
-* **ID Generation:** Implemented valid 24-char Hex ID generation for split items to fix server errors.
-* **Honest Timestamps:** Removed artificial delays; items now display their exact order creation time.
-
-### **v1.2.0 (Major Feature Release)**
-#### 👨‍🍳 Chef Dashboard (Major Performance Update)
-* **Tabbed Interface:** New organized view separating **Active Orders** from **Order History**.
-* **Granular Workflow:** Track items through specific stages: `Preparing` ➝ `Ready` ➝ `Served`.
-* **Performance Optimized:** Refactored rendering logic using memoization to ensure zero lag, even with 50+ active orders.
-* **Crash Protection:** Enhanced stability to handle missing data or incomplete orders without freezing the display.
-#### 🤵 Waiter Dashboard
-* **Dual Submission Modes:**
-    * **Auto-Submit:** Orders are sent to the kitchen immediately upon adding items.
-    * **Manual Mode:** Waiters can build a "Pending List" and review it before sending to the chef.
-* **Live Order Tracking:** visual indicators for when items are "Ready to Serve" vs "Preparing".
-* **Receipt Generation:** Close orders, apply coupons, and calculate totals automatically.
-#### 👑 Admin Dashboard
-* **Financial Suite:**
-    * **Export Data:** Download receipts as **PDF** invoices or **CSV** spreadsheets.
-    * **Receipt Editor:** Fix mistakes by modifying items or quantities on past orders.
-    * **Sales Analytics:** Filter sales by Date Range to track daily or weekly performance.
-* **Menu & Staff:** Full CRUD operations for Menu Items, Tables, and Staff (Chefs/Waiters).
-* **Smart Settings:**
-    * **Site Control:** Toggle "Site Closed" to prevent non-admin logins.
-    * **Tax Management:** Enable/Disable global tax rates.
+### **v1.8.0 (Invoice Settings & Receipt Enhancement)**
+* **Advanced Invoice Settings**: Complete invoice configuration panel with restaurant info, tax details, and logo upload
+* **Restaurant Logo Management**: Image upload with automatic compression and Base64 storage
+* **Tax & Regulatory Fields**: GST and FSSAI number management with display toggles
+* **Enhanced Receipt Printing**: Thermal printer optimization with professional layout design
+* **Mobile Responsiveness**: Improved receipt modal scaling and touch-friendly interface
+* **Technical Improvements**: Image compression pipeline, payload size management, and database migration support
+* **UI Consistency**: Unified toggle button styling across all settings panels
 
 ---
 
@@ -250,10 +181,20 @@ The Admin dashboard is the brain of the operation, allowing full control over th
 * **Financial Suite:**
     * **Receipt Management:** View a full history of all orders. Sort by Date, Table, or Amount.
     * **Advanced Exports:** Download sales data as **PDF** or **CSV**.
+* **Invoice Settings & Branding:**
+    * **Restaurant Information:** Configure name, address, contact, and email with individual display toggles
+    * **Logo Management:** Upload and compress restaurant logo with automatic Base64 storage
+    * **Tax & Regulatory:** GST and FSSAI number management with receipt display options
+    * **QR Code Integration:** Toggle QR code display on receipts for digital payments
+    * **Professional Receipts:** Thermal printer-optimized receipt layouts with custom branding
 * **Staff & Floor Management:**
     * **User Accounts:** Create and delete secure login credentials for Chefs and Waiters.
     * **Table Layout:** Add or remove tables and see which ones currently have active orders.
     * **Instant Order Taking:** Click any table to open the **Service Modal** and take orders immediately.
+* **System Configuration:**
+    * **Order Flow Control:** Toggle auto-submit vs manual order submission for waiters
+    * **Site Management:** Control website availability and maintenance mode
+    * **Tax Configuration:** Enable/disable and configure tax rates
 
 ### 🤵 Waiter Module (Service)
 Designed for tablets and mobile devices to be used tableside.
@@ -382,7 +323,12 @@ Environment Variables: Sensitive keys are kept out of the codebase using .env.
 
 CORS Policy: configured to allow secure communication between Vercel and Render.
 
-🤝 Contributing
-Feel free to fork this repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
+## 📢 Feedback & Bug Reports
+This is a proprietary project. While we do not accept code contributions or forks, we welcome bug reports and feature suggestions via the Issues tab.
 
-Developed by AbG
+## 🛡️ License & Legal
+**Copyright (c) 2026 Abhinav Gupta (AbGisHere). All Rights Reserved.**
+
+**NOTICE:** The software and related assets contained in this repository are the exclusive property of the author. Unauthorized copying, modification, distribution, or commercial use of this software, via any medium, is strictly prohibited.
+
+Developed by AbGisHere

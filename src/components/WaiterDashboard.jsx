@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
-// REMOVED: import { store } from '../store'
+// REMOVED: import { store } from '../store' 
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 import { UserGroupIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { MenuItem, AnimatedButton, colors, animatedButtonStyles, Section, tableButtonStyles, statusBadgeStyles, orderItemStyles, deleteButtonStyles, quantityButtonStyles, tableStatusStyles } from '../styles/shared'; // <--- 1. IMPORT THIS
+import TrashIcon from './icons/TrashIcon'
+import { BeakerIcon, ArrowPathIcon, ArrowUturnDownIcon } from '@heroicons/react/24/solid'
 
 const statusColors = {
   preparing: 'bg-yellow-100 text-yellow-800',
@@ -912,9 +914,13 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                                 style={deleteButtonStyles.base}
                                 title="Remove item"
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="white" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <TrashIcon 
+                                  size={16}
+                                  color="#dc2626"
+                                  strokeWidth={2}
+                                  dangerHover={true}
+                                  shakeOnClick={true}
+                                />
                               </div>
                             )}
                           </div>

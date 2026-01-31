@@ -5195,122 +5195,36 @@ export default function AdminDashboard({ onExit }) {
           <div className="mb-6 flex items-center gap-3">
             <button 
               onClick={addWaiter}
-              className="animated-button group relative inline-flex items-center justify-center"
+              className="view-button flex-shrink-0"
               style={{
-                '--color': '#D4A76A',
-                '--hover-color': '#3E2723',
-                padding: '8px 24px',
+                ...animatedButtonStyles.viewButton,
+                minWidth: '130px',
+                padding: '12px 16px',
                 fontSize: '14px',
-                minWidth: '140px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                border: '2px solid',
-                borderColor: 'transparent',
-                fontWeight: '600',
-                backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                borderRadius: '100px',
-                color: '#D4A76A',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                border: '1px solid rgba(212, 167, 106, 0.3)',
-                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
+                height: '44px'
               }}
             >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                Add Waiter
-              </span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <style>{`
-                .animated-button:hover { 
-                  box-shadow: 0 0 0 8px transparent !important; 
-                  color: white !important; 
-                  border-radius: 12px !important;
-                  backdropFilter: 'blur(16px) !important',
-                  WebkitBackdropFilter: 'blur(16px) !important',
-                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                }
-                .animated-button:hover .arr-1 { right: -25% !important; }
-                .animated-button:hover .arr-2 { left: 16px !important; }
-                .animated-button:hover .text { transform: translateX(12px) !important; }
-                .animated-button:hover svg { fill: white !important; }
-                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
-                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
-              `}</style>
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)', color: '#3E2723' }}>Add Waiter</span>
+              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
             </button>
             
             <button 
               onClick={addChef}
-              className="animated-button group relative inline-flex items-center justify-center"
+              className="view-button flex-shrink-0"
               style={{
-                '--color': '#D4A76A',
-                '--hover-color': '#3E2723',
-                padding: '8px 24px',
-                fontSize: '14px',
+                ...animatedButtonStyles.viewButton,
                 minWidth: '120px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                border: '2px solid',
-                borderColor: 'transparent',
-                fontWeight: '600',
-                backgroundColor: 'rgba(212, 167, 106, 0.15)',
-                borderRadius: '100px',
-                color: '#D4A76A',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                boxShadow: '0 0 0 2px #D4A76A',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
-                border: '1px solid rgba(212, 167, 106, 0.3)',
-                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px #D4A76A'
+                padding: '12px 16px',
+                fontSize: '14px',
+                height: '44px'
               }}
             >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                Add Chef
-              </span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-              </svg>
-              <style>{`
-                .animated-button:hover { 
-                  box-shadow: 0 0 0 8px transparent !important; 
-                  color: white !important; 
-                  border-radius: 12px !important;
-                  backdropFilter: 'blur(16px) !important',
-                  WebkitBackdropFilter: 'blur(16px) !important',
-                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.2) 100%) !important',
-                  border: '1px solid rgba(212, 167, 106, 0.5) !important',
-                  boxShadow: '0 12px 40px rgba(212, 167, 106, 0.25), 0 0 0 8px transparent !important' !important;
-                }
-                .animated-button:hover .arr-1 { right: -25% !important; }
-                .animated-button:hover .arr-2 { left: 16px !important; }
-                .animated-button:hover .text { transform: translateX(12px) !important; }
-                .animated-button:hover svg { fill: white !important; }
-                .animated-button:active { transform: scale(0.95) !important; box-shadow: 0 0 0 4px #D4A76A !important; }
-                .animated-button:hover .circle { width: 200px !important; height: 200px !important; opacity: 1 !important; background-color: #3E2723 !important; }
-              `}</style>
+              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
+              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)', color: '#3E2723' }}>Add Chef</span>
+              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.32, 1, 0.32, 1)' }}></span>
+              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
             </button>
 
             {user?.username?.toLowerCase() === 'abg' && (
@@ -5383,25 +5297,57 @@ export default function AdminDashboard({ onExit }) {
           </div>
 
           {/* Users List */}
-          <div className="bg-white rounded-lg shadow p-4 md:p-6 overflow-hidden">
+          <div className="overflow-hidden">
             {isLoadingUsers ? (
-              <div className="p-8 text-center">
+              <div 
+                className="p-12 text-center"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(212, 167, 106, 0.2)',
+                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                }}
+              >
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
                 <p className="mt-2 text-gray-600">Loading users...</p>
               </div>
             ) : users.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No users found. Add your first user to get started.
+              <div 
+                className="p-12 text-center"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(212, 167, 106, 0.2)',
+                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                }}
+              >
+                <div className="text-gray-500 text-lg">No users found. Add your first user to get started.</div>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 w-full">
+              <div 
+                className="divide-y w-full"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(212, 167, 106, 0.2)',
+                  boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                  padding: '20px',
+                  divideColor: 'rgba(212, 167, 106, 0.2)'
+                }}
+              >
                 {users
                   .filter(u => !(u.hidden && user?.username !== 'AbG'))
                   .map((u, index) => {
                     const canDelete = (user?.username === 'AbG' && u.id !== 'root') || 
                                     (user?.role === 'admin' && (u.role === 'waiter' || u.role === 'chef'));
                     
-                    // Role-based styling
+                    // Role-based styling with original colors but pill-shaped tags
                     const roleStyles = {
                       admin: 'bg-purple-100 text-purple-800',
                       chef: 'bg-blue-100 text-blue-800',
@@ -5414,7 +5360,17 @@ export default function AdminDashboard({ onExit }) {
                     return (
                       <div 
                         key={u.id || u._id} 
-                        className="p-4 hover:bg-gray-50 transition-colors duration-150 group"
+                        className="p-4 transition-colors duration-150 group"
+                        style={{
+                          borderBottomColor: 'rgba(212, 167, 106, 0.2)',
+                          backgroundColor: 'transparent'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = 'rgba(212, 167, 106, 0.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'transparent';
+                        }}
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
                           <div className="flex items-center space-x-3">
@@ -5440,7 +5396,23 @@ export default function AdminDashboard({ onExit }) {
                             <div>
                               <h3 className="font-medium text-gray-900">{u.username}</h3>
                               <div className="flex items-center space-x-2 mt-1">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleStyle}`}>
+                                <span 
+                                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${roleStyle}`}
+                                  style={{
+                                    backdropFilter: 'blur(20px) saturate(120%)',
+                                    WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                    border: u.role === 'admin' 
+                                      ? '1px solid rgba(147, 51, 234, 0.3)'
+                                      : u.role === 'chef'
+                                      ? '1px solid rgba(59, 130, 246, 0.3)'
+                                      : '1px solid rgba(34, 197, 94, 0.3)',
+                                    boxShadow: u.role === 'admin'
+                                      ? '0 2px 8px rgba(147, 51, 234, 0.1)'
+                                      : u.role === 'chef'
+                                      ? '0 2px 8px rgba(59, 130, 246, 0.1)'
+                                      : '0 2px 8px rgba(34, 197, 94, 0.1)'
+                                  }}
+                                >
                                   {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
                                 </span>
                                 <span className="text-xs text-gray-500">ID: {u.id || u._id}</span>

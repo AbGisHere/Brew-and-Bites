@@ -904,7 +904,7 @@ export default function WaiterDashboard({ onExit, embedded = false, initialTable
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <div className="flex items-center">
-                            <span className="text-xs px-2 py-1 rounded" style={statusBadgeStyles[it.status || 'preparing']}>
+                            <span className="text-xs px-3 py-1.5" style={statusBadgeStyles[it.status || 'preparing']}>
                             {statusLabels[it.status || 'preparing']}
                             </span>
                             {it.status === 'preparing' && (

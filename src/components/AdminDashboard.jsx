@@ -13,11 +13,11 @@ import QrcodeIcon from './icons/QrcodeIcon'
 // Import jsPDF with CommonJS require since the module import is causing issues
 const { jsPDF } = window.jspdf || {};
 import('jspdf-autotable');
-import { FiStar, FiUsers, FiUserPlus } from 'react-icons/fi'
+import { FiStar, FiUsers, FiUserPlus, FiKey } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
-import { MenuItem, colors, AnimatedButton, Section, animatedButtonStyles, deleteButtonStyles, tableButtonStyles } from '../styles/shared';
+import { MenuItem, colors, AnimatedButton, Section, animatedButtonStyles, deleteButtonStyles, tableButtonStyles, statusBadgeStyles } from '../styles/shared';
 
 // Inject CSS for view button animations
 const injectViewButtonStyles = () => {
@@ -1110,9 +1110,19 @@ function CouponManager() {
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0">
-                                <code className="px-2 py-1 text-xs font-mono rounded bg-amber-100 text-amber-800">
+                                <span 
+                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200"
+                                  style={{
+                                    ...statusBadgeStyles.default,
+                                    borderRadius: '9999px', // Make it pill-shaped like Table Code
+                                    fontFamily: 'monospace',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    letterSpacing: '0.05em'
+                                  }}
+                                >
                                   {coupon.code}
-                                </code>
+                                </span>
                               </div>
                             </div>
                           </td>
@@ -1150,7 +1160,16 @@ function CouponManager() {
                               : 'No limit'}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <span 
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200"
+                              style={{
+                                ...statusBadgeStyles.available,
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                letterSpacing: '0.025em',
+                                textTransform: 'uppercase'
+                              }}
+                            >
                               Active
                             </span>
                           </td>
@@ -1163,12 +1182,13 @@ function CouponManager() {
                                 onClick={() => handleEditCoupon(coupon)}
                                 className="w-8 h-8 flex items-center justify-center cursor-pointer edit-btn"
                                 style={{
-                                  backdropFilter: 'blur(20px) saturate(120%)',
-                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                  background: 'rgba(59, 130, 246, 0.15)', // Blue background
-                                  borderRadius: '50%', // Make it circular
-                                  border: '1px solid rgba(59, 130, 246, 0.3)', // Blue outline
+                                  backdropFilter: 'blur(20px) saturate(150%)',
+                                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                  background: 'rgba(59, 130, 246, 0.25)', // More visible for glassmorphism
+                                  borderRadius: '50%',
+                                  border: '1px solid rgba(59, 130, 246, 0.4)',
                                   color: '#2563eb',
+                                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
                                   padding: '4px 8px',
                                   fontSize: '12px',
                                   cursor: 'pointer',
@@ -1187,14 +1207,14 @@ function CouponManager() {
                                 }}
                                 title="Edit"
                                 onMouseEnter={(e) => {
-                                  e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
                                   e.target.style.color = '#1d4ed8';
                                   e.target.style.transform = 'scale(1.02)';
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
-                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match new base color
                                   e.target.style.color = '#2563eb';
                                   e.target.style.transform = 'scale(1)';
                                 }}
@@ -1213,27 +1233,28 @@ function CouponManager() {
                                   outline: 'none' // Remove default focus outline
                                 }}
                                 onFocus={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
                                   e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
                                   e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
                                 }}
                                 onBlur={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                                  e.target.style.boxShadow = 'none';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                                 }}
                                 title="Delete"
                                 onMouseEnter={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
                                   e.target.style.color = '#b91c1c';
                                   e.target.style.transform = 'scale(1.02)';
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
                                   e.target.style.color = '#dc2626';
                                   e.target.style.transform = 'scale(1)';
+                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                                 }}
                               >
                                 <TrashIcon 
@@ -4571,12 +4592,13 @@ export default function AdminDashboard({ onExit }) {
                             onClick={() => setPreview(r)}
                             className="w-8 h-8 flex items-center justify-center cursor-pointer"
                             style={{
-                              backdropFilter: 'blur(20px) saturate(120%)',
-                              WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                              background: 'rgba(59, 130, 246, 0.15)',
+                              backdropFilter: 'blur(20px) saturate(150%)',
+                              WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                              background: 'rgba(59, 130, 246, 0.25)', // More visible for glassmorphism
                               borderRadius: '50%',
-                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              border: '1px solid rgba(59, 130, 246, 0.4)',
                               color: '#2563eb',
+                              boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
                               padding: '4px 8px',
                               fontSize: '12px',
                               cursor: 'pointer',
@@ -4595,15 +4617,15 @@ export default function AdminDashboard({ onExit }) {
                             }}
                             title="View Receipt"
                             onMouseEnter={(e) => {
-                              e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+                              e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
                               e.target.style.color = '#1d4ed8';
                               e.target.style.transform = 'scale(1.02)';
                               setHoveredReceiptId(r.id); // Set hover state for this receipt
                             }}
                             onMouseLeave={(e) => {
-                              e.target.style.background = 'rgba(59, 130, 246, 0.15)';
-                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                              e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match new base color
+                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match new base color
                               e.target.style.color = '#2563eb';
                               e.target.style.transform = 'scale(1)';
                               setHoveredReceiptId(null); // Clear hover state
@@ -4620,40 +4642,32 @@ export default function AdminDashboard({ onExit }) {
                             onClick={() => deleteReceipt(r.id)}
                             className="w-8 h-8 flex items-center justify-center cursor-pointer"
                             style={{
-                              backdropFilter: 'blur(20px) saturate(120%)',
-                              WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                              background: 'rgba(239, 68, 68, 0.15)',
-                              borderRadius: '50%',
-                              border: '1px solid rgba(239, 68, 68, 0.3)',
-                              color: '#dc2626',
-                              padding: '4px 8px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
+                              ...deleteButtonStyles.base,
+                              outline: 'none' // Remove default focus outline
                             }}
                             onFocus={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                              e.target.style.background = 'rgba(239, 68, 68, 0.35)';
                               e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
                               e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
                             }}
                             onBlur={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                              e.target.style.boxShadow = 'none';
+                              e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                              e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                             }}
                             title="Delete Receipt"
                             onMouseEnter={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                              e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
                               e.target.style.color = '#b91c1c';
                               e.target.style.transform = 'scale(1.02)';
                             }}
                             onMouseLeave={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                              e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
                               e.target.style.color = '#dc2626';
                               e.target.style.transform = 'scale(1)';
+                              e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                             }}
                           >
                             <TrashIcon 
@@ -4903,25 +4917,27 @@ export default function AdminDashboard({ onExit }) {
                           <td className="p-4">
                             <div className="flex items-center justify-center gap-2">
                               <span 
-                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                                className={`inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
                                   recentlyGeneratedCodes.has(t.tableCode) 
                                     ? 'text-amber-800' 
                                     : 'text-amber-700'
                                 }`}
                                 style={{
-                                  backdropFilter: 'blur(20px) saturate(120%)',
-                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+                                  ...statusBadgeStyles.default,
+                                  borderRadius: '9999px', // Make it pill-shaped
                                   background: recentlyGeneratedCodes.has(t.tableCode)
-                                    ? 'rgba(212, 167, 106, 0.25)'
-                                    : 'rgba(212, 167, 106, 0.15)',
+                                    ? 'rgba(251, 191, 36, 0.25)'
+                                    : 'rgba(212, 167, 106, 0.25)',
                                   border: recentlyGeneratedCodes.has(t.tableCode)
-                                    ? '1px solid rgba(212, 167, 106, 0.4)'
-                                    : '1px solid rgba(212, 167, 106, 0.3)',
-                                  boxShadow: recentlyGeneratedCodes.has(t.tableCode)
-                                    ? '0 2px 8px rgba(212, 167, 106, 0.2)'
-                                    : '0 2px 8px rgba(212, 167, 106, 0.1)',
+                                    ? '1px solid rgba(251, 191, 36, 0.4)'
+                                    : '1px solid rgba(212, 167, 106, 0.4)',
+                                  color: recentlyGeneratedCodes.has(t.tableCode)
+                                    ? '#92400e'
+                                    : '#92400e',
                                   fontFamily: 'monospace',
-                                  height: '32px'
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  letterSpacing: '0.05em'
                                 }}
                               >
                                 {t.tableCode || 'Not generated'}
@@ -4930,12 +4946,13 @@ export default function AdminDashboard({ onExit }) {
                                 <div 
                                   className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all duration-200"
                                   style={{
-                                    backdropFilter: 'blur(20px) saturate(120%)',
-                                    WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                    background: 'rgba(212, 167, 106, 0.15)',
+                                    backdropFilter: 'blur(20px) saturate(150%)',
+                                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                    background: 'rgba(212, 167, 106, 0.25)', // Glassmorphism background
                                     borderRadius: '50%',
-                                    border: '1px solid rgba(212, 167, 106, 0.3)',
+                                    border: '1px solid rgba(212, 167, 106, 0.4)',
                                     color: '#92400e',
+                                    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
                                     transition: 'all 0.2s ease',
                                     outline: 'none'
                                   }}
@@ -4945,14 +4962,14 @@ export default function AdminDashboard({ onExit }) {
                                   }}
                                   title="Copy code"
                                   onMouseEnter={(e) => {
-                                    e.target.style.background = 'rgba(212, 167, 106, 0.25)';
-                                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                                    e.target.style.background = 'rgba(212, 167, 106, 0.35)';
+                                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.5)';
                                     e.target.style.color = '#78350f';
                                     e.target.style.transform = 'scale(1.02)';
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.target.style.background = 'rgba(212, 167, 106, 0.15)';
-                                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                                    e.target.style.background = 'rgba(212, 167, 106, 0.25)'; // Match new base color
+                                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)'; // Match new base color
                                     e.target.style.color = '#92400e';
                                     e.target.style.transform = 'scale(1)';
                                   }}
@@ -4975,15 +4992,17 @@ export default function AdminDashboard({ onExit }) {
                                     <div
                                       className="w-8 h-8 rounded-lg border-2 cursor-pointer transition-all duration-200 flex items-center justify-center"
                                       style={{
-                                        borderColor: 'rgba(212, 167, 106, 0.3)',
-                                        background: 'rgba(255, 255, 255, 0.8)',
-                                        backdropFilter: 'blur(8px) saturate(120%)',
-                                        WebkitBackdropFilter: 'blur(8px) saturate(120%)'
+                                        backdropFilter: 'blur(20px) saturate(150%)',
+                                        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                        background: 'rgba(212, 167, 106, 0.25)', // Glassmorphism background
+                                        borderColor: 'rgba(212, 167, 106, 0.4)',
+                                        boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)'
                                       }}
                                       onClick={() => setQrModal({ open: true, table: t })}
                                       onMouseEnter={(e) => {
+                                        e.target.style.background = 'rgba(212, 167, 106, 0.35)';
                                         e.target.style.borderColor = 'rgba(212, 167, 106, 0.5)';
-                                        e.target.style.transform = 'translateY(-1px)';
+                                        e.target.style.transform = 'scale(1.02)';
                                         e.target.style.boxShadow = '0 4px 12px rgba(212, 167, 106, 0.2)';
                                         // Start icon animation
                                         if (qrIconRef && qrIconRef.startAnimation) {
@@ -4991,9 +5010,10 @@ export default function AdminDashboard({ onExit }) {
                                         }
                                       }}
                                       onMouseLeave={(e) => {
-                                        e.target.style.borderColor = 'rgba(212, 167, 106, 0.3)';
-                                        e.target.style.transform = 'translateY(0)';
-                                        e.target.style.boxShadow = 'none';
+                                        e.target.style.background = 'rgba(212, 167, 106, 0.25)'; // Match new base color
+                                        e.target.style.borderColor = 'rgba(212, 167, 106, 0.4)'; // Match new base color
+                                        e.target.style.transform = 'scale(1)';
+                                        e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                                         // Stop icon animation
                                         if (qrIconRef && qrIconRef.stopAnimation) {
                                           qrIconRef.stopAnimation();
@@ -5028,20 +5048,9 @@ export default function AdminDashboard({ onExit }) {
                           <td className="p-4">
                             <div className="flex items-center justify-center">
                               <span 
-                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-                                  hasActiveOrder 
-                                    ? 'bg-yellow-100 text-yellow-800' 
-                                    : 'bg-green-100 text-green-800'
-                                }`}
+                                className="text-xs px-3 py-1.5"
                                 style={{
-                                  backdropFilter: 'blur(8px) saturate(120%)',
-                                  WebkitBackdropFilter: 'blur(8px) saturate(120%)',
-                                  border: hasActiveOrder 
-                                    ? '1px solid rgba(250, 204, 21, 0.3)'
-                                    : '1px solid rgba(34, 197, 94, 0.3)',
-                                  boxShadow: hasActiveOrder
-                                    ? '0 2px 8px rgba(250, 204, 21, 0.1)'
-                                    : '0 2px 8px rgba(34, 197, 94, 0.1)'
+                                  ...(hasActiveOrder ? statusBadgeStyles.preparing : statusBadgeStyles.served)
                                 }}
                               >
                                 {hasActiveOrder ? 'Occupied' : 'Available'}
@@ -5055,12 +5064,12 @@ export default function AdminDashboard({ onExit }) {
                                   onClick={() => setOrderingTableId(t.id || t._id)}
                                   className="p-2 transition-all duration-200 border"
                                   style={{
-                                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%)',
+                                    backdropFilter: 'blur(20px) saturate(150%)',
+                                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                    background: 'rgba(245, 158, 11, 0.25)', // Glassmorphism background
                                     color: '#92400e',
-                                    border: '1px solid rgba(245, 158, 11, 0.3)',
-                                    backdropFilter: 'blur(8px) saturate(120%)',
-                                    WebkitBackdropFilter: 'blur(8px) saturate(120%)',
-                                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.1)',
+                                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                                    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
                                     borderRadius: '50%',
                                     width: '32px',
                                     height: '32px',
@@ -5069,14 +5078,14 @@ export default function AdminDashboard({ onExit }) {
                                     justifyContent: 'center'
                                   }}
                                   onMouseEnter={(e) => {
-                                    e.target.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.15) 100%)';
-                                    e.target.style.transform = 'translateY(-1px)';
-                                    e.target.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.2)';
+                                    e.target.style.background = 'rgba(245, 158, 11, 0.35)';
+                                    e.target.style.border = '1px solid rgba(245, 158, 11, 0.5)';
+                                    e.target.style.transform = 'scale(1.02)';
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.target.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%)';
-                                    e.target.style.transform = 'translateY(0)';
-                                    e.target.style.boxShadow = '0 2px 8px rgba(245, 158, 11, 0.1)';
+                                    e.target.style.background = 'rgba(245, 158, 11, 0.25)'; // Match base
+                                    e.target.style.border = '1px solid rgba(245, 158, 11, 0.4)'; // Match base
+                                    e.target.style.transform = 'scale(1)';
                                   }}
                                   title="View / Edit Order"
                                 >
@@ -5087,12 +5096,12 @@ export default function AdminDashboard({ onExit }) {
                                   onClick={() => setOrderingTableId(t.id || t._id)}
                                   className="p-2 transition-all duration-200 border"
                                   style={{
-                                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%)',
+                                    backdropFilter: 'blur(20px) saturate(150%)',
+                                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                    background: 'rgba(34, 197, 94, 0.25)', // Glassmorphism background
                                     color: '#14532d',
-                                    border: '1px solid rgba(34, 197, 94, 0.3)',
-                                    backdropFilter: 'blur(8px) saturate(120%)',
-                                    WebkitBackdropFilter: 'blur(8px) saturate(120%)',
-                                    boxShadow: '0 2px 8px rgba(34, 197, 94, 0.1)',
+                                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                                    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
                                     borderRadius: '50%',
                                     width: '32px',
                                     height: '32px',
@@ -5101,14 +5110,14 @@ export default function AdminDashboard({ onExit }) {
                                     justifyContent: 'center'
                                   }}
                                   onMouseEnter={(e) => {
-                                    e.target.style.background = 'linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)';
-                                    e.target.style.transform = 'translateY(-1px)';
-                                    e.target.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.2)';
+                                    e.target.style.background = 'rgba(34, 197, 94, 0.35)';
+                                    e.target.style.border = '1px solid rgba(34, 197, 94, 0.5)';
+                                    e.target.style.transform = 'scale(1.02)';
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.target.style.background = 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%)';
-                                    e.target.style.transform = 'translateY(0)';
-                                    e.target.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.1)';
+                                    e.target.style.background = 'rgba(34, 197, 94, 0.25)'; // Match base
+                                    e.target.style.border = '1px solid rgba(34, 197, 94, 0.4)'; // Match base
+                                    e.target.style.transform = 'scale(1)';
                                   }}
                                   title="Take Order"
                                 >
@@ -5128,39 +5137,33 @@ export default function AdminDashboard({ onExit }) {
                                 }}
                                 className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all duration-200"
                                 style={{
-                                  backdropFilter: 'blur(20px) saturate(120%)',
-                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                  background: 'rgba(239, 68, 68, 0.15)',
-                                  borderRadius: '50%',
-                                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  color: '#dc2626',
-                                  transition: 'all 0.2s ease',
-                                  outline: 'none'
+                                  ...deleteButtonStyles.base,
+                                  outline: 'none' // Remove default focus outline
                                 }}
                                 onFocus={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
                                   e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
                                   e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
                                 }}
                                 onBlur={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                                  e.target.style.boxShadow = 'none';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                                 }}
                                 title="Delete Table"
                                 onMouseEnter={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
                                   e.target.style.color = '#b91c1c';
                                   e.target.style.transform = 'scale(1.02)';
                                   e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.2)';
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
                                   e.target.style.color = '#dc2626';
                                   e.target.style.transform = 'scale(1)';
-                                  e.target.style.boxShadow = 'none';
+                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                                 }}
                               >
                                 <TrashIcon 
@@ -5360,16 +5363,10 @@ export default function AdminDashboard({ onExit }) {
                     return (
                       <div 
                         key={u.id || u._id} 
-                        className="p-4 transition-colors duration-150 group"
+                        className="p-4 group"
                         style={{
                           borderBottomColor: 'rgba(212, 167, 106, 0.2)',
                           backgroundColor: 'transparent'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = 'rgba(212, 167, 106, 0.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'transparent';
                         }}
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
@@ -5397,23 +5394,14 @@ export default function AdminDashboard({ onExit }) {
                               <h3 className="font-medium text-gray-900">{u.username}</h3>
                               <div className="flex items-center space-x-2 mt-1">
                                 <span 
-                                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${roleStyle}`}
+                                  className="text-xs px-3 py-1.5"
                                   style={{
-                                    backdropFilter: 'blur(20px) saturate(120%)',
-                                    WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                    border: u.role === 'admin' 
-                                      ? '1px solid rgba(147, 51, 234, 0.3)'
-                                      : u.role === 'chef'
-                                      ? '1px solid rgba(59, 130, 246, 0.3)'
-                                      : '1px solid rgba(34, 197, 94, 0.3)',
-                                    boxShadow: u.role === 'admin'
-                                      ? '0 2px 8px rgba(147, 51, 234, 0.1)'
-                                      : u.role === 'chef'
-                                      ? '0 2px 8px rgba(59, 130, 246, 0.1)'
-                                      : '0 2px 8px rgba(34, 197, 94, 0.1)'
+                                    ...(u.role === 'admin' ? statusBadgeStyles.preparing : 
+                                     u.role === 'chef' ? statusBadgeStyles.ready : 
+                                     statusBadgeStyles.served)
                                   }}
                                 >
-                                  {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                                  {u.role}
                                 </span>
                                 <span className="text-xs text-gray-500">ID: {u.id || u._id}</span>
                               </div>
@@ -5422,13 +5410,53 @@ export default function AdminDashboard({ onExit }) {
                           
                           {canDelete && (
                             <div className="mt-3 sm:mt-0 flex space-x-2">
-                              <button
+                              <div 
                                 onClick={() => resetUserPassword(u.id || u._id, u.username)}
-                                className="px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                                style={{
+                                  backdropFilter: 'blur(20px) saturate(150%)',
+                                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                  background: 'rgba(59, 130, 246, 0.25)', // Blue glassmorphism
+                                  borderRadius: '50%',
+                                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                                  color: '#2563eb',
+                                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                                  padding: '4px 8px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                                  e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
+                                  e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match base
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match base
+                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
+                                }}
                                 title="Reset Password"
+                                onMouseEnter={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
+                                  e.target.style.color = '#1d4ed8';
+                                  e.target.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match base
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match base
+                                  e.target.style.color = '#2563eb';
+                                  e.target.style.transform = 'scale(1)';
+                                }}
                               >
-                                Reset Password
-                              </button>
+                                <FiKey 
+                                  size={16}
+                                  color="#2563eb"
+                                  strokeWidth={2}
+                                />
+                              </div>
                               <div 
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete ${u.username}? This action cannot be undone.`)) {
@@ -5437,41 +5465,10 @@ export default function AdminDashboard({ onExit }) {
                                 }}
                                 className="w-8 h-8 flex items-center justify-center cursor-pointer"
                                 style={{
-                                  backdropFilter: 'blur(20px) saturate(120%)',
-                                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                                  background: 'rgba(239, 68, 68, 0.15)',
-                                  borderRadius: '50%',
-                                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  color: '#dc2626',
-                                  padding: '4px 8px',
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  outline: 'none'
-                                }}
-                                onFocus={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
-                                  e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
-                                  e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
-                                }}
-                                onBlur={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                                  e.target.style.boxShadow = 'none';
+                                  ...deleteButtonStyles.base,
+                                  outline: 'none' // Remove default focus outline
                                 }}
                                 title="Delete User"
-                                onMouseEnter={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
-                                  e.target.style.color = '#b91c1c';
-                                  e.target.style.transform = 'scale(1.02)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                                  e.target.style.color = '#dc2626';
-                                  e.target.style.transform = 'scale(1)';
-                                }}
                               >
                                 <TrashIcon 
                                   size={16}

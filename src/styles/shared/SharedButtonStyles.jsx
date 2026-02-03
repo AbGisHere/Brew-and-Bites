@@ -390,50 +390,42 @@ export const tableStatusStyles = {
     background: 'rgba(34, 197, 94, 0.15)',
     border: '1px solid rgba(34, 197, 94, 0.4)',
     color: '#ffffff',
+    borderRadius: '8px', // Add proper rounded corners
     boxShadow: '0 4px 16px rgba(34, 197, 94, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 12px rgba(34, 197, 94, 0.08)'
   }
 };
 
-// Status badge styles with glassmorphism
+// Status badge styles with glassmorphism - simple and clean like waiter dashboard
 export const statusBadgeStyles = {
   preparing: {
-    backdropFilter: 'blur(20px) saturate(150%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-    background: 'rgba(251, 191, 36, 0.12)', // Amber for preparing
-    border: '1px solid rgba(251, 191, 36, 0.35)',
-    color: '#92400e',
-    borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
-    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-    fontSize: '10px',
+    background: '#FFF8E1', // Light yellow background like the PREPARING image
+    border: '1px solid #FFECB3', // Subtle yellow border
+    color: '#8D6E63', // Brown text color like the PREPARING image
+    borderRadius: '8px', // Rounded corners like the image
+    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)', // Subtle inner highlight
+    fontSize: '11px',
     fontWeight: '600',
     letterSpacing: '0.025em',
     textTransform: 'uppercase'
   },
   ready: {
-    backdropFilter: 'blur(20px) saturate(150%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-    background: 'rgba(59, 130, 246, 0.12)', // Blue for ready
-    border: '1px solid rgba(59, 130, 246, 0.35)',
-    color: '#1e40af',
-    borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(59, 130, 246, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(59, 130, 246, 0.05)',
-    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-    fontSize: '10px',
+    background: '#E0F2F7', // Light blue background like the Chef image
+    border: '1px solid #B3E5FC', // Subtle blue border
+    color: '#2196F3', // Blue text color like the Chef image
+    borderRadius: '8px', // Rounded corners like the image
+    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)', // Subtle inner highlight
+    fontSize: '11px',
     fontWeight: '600',
     letterSpacing: '0.025em',
     textTransform: 'uppercase'
   },
   served: {
-    backdropFilter: 'blur(20px) saturate(150%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-    background: 'rgba(34, 197, 94, 0.12)', // Green for served
-    border: '1px solid rgba(34, 197, 94, 0.35)',
-    color: '#166534',
-    borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(34, 197, 94, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(34, 197, 94, 0.05)',
-    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-    fontSize: '10px',
+    background: '#E8F5E9', // Light green background
+    border: '1px solid #C8E6C9', // Subtle green border
+    color: '#66BB6A', // Green text color
+    borderRadius: '8px', // Rounded corners
+    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)', // Subtle inner highlight
+    fontSize: '11px',
     fontWeight: '600',
     letterSpacing: '0.025em',
     textTransform: 'uppercase'
@@ -441,13 +433,12 @@ export const statusBadgeStyles = {
   'ready-to-serve': {
     backdropFilter: 'blur(20px) saturate(150%)',
     WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-    background: 'rgba(59, 130, 246, 0.12)', // Blue for ready-to-serve
-    border: '1px solid rgba(59, 130, 246, 0.35)',
+    background: 'rgba(59, 130, 246, 0.25)',
+    border: '1px solid rgba(59, 130, 246, 0.4)',
     color: '#1e40af',
-    borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(59, 130, 246, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(59, 130, 246, 0.05)',
-    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-    fontSize: '10px',
+    borderRadius: '4px',
+    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
+    fontSize: '11px',
     fontWeight: '600',
     letterSpacing: '0.025em',
     textTransform: 'uppercase'
@@ -455,13 +446,24 @@ export const statusBadgeStyles = {
   'preparing-order': {
     backdropFilter: 'blur(20px) saturate(150%)',
     WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-    background: 'rgba(251, 191, 36, 0.12)', // Amber for preparing-order
-    border: '1px solid rgba(251, 191, 36, 0.35)',
+    background: 'rgba(251, 191, 36, 0.25)',
+    border: '1px solid rgba(251, 191, 36, 0.4)',
     color: '#92400e',
-    borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
-    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-    fontSize: '10px',
+    borderRadius: '4px',
+    boxShadow: '0 2px 8px rgba(251, 191, 36, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
+    fontSize: '11px',
+    fontWeight: '600',
+    letterSpacing: '0.025em',
+    textTransform: 'uppercase'
+  },
+  default: {
+    backdropFilter: 'blur(20px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+    background: 'rgba(212, 167, 106, 0.25)', // Glassmorphism background
+    border: '1px solid rgba(212, 167, 106, 0.4)',
+    color: '#92400e',
+    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+    fontSize: '11px',
     fontWeight: '600',
     letterSpacing: '0.025em',
     textTransform: 'uppercase'
@@ -481,15 +483,16 @@ export const orderItemStyles = {
   }
 };
 
-// Delete button styles for order items
+// Delete button styles for order items - with glassmorphism like status badges
 export const deleteButtonStyles = {
   base: {
-    backdropFilter: 'blur(20px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-    background: 'rgba(239, 68, 68, 0.15)', // Light glass red background (increased from 0.1)
+    backdropFilter: 'blur(20px) saturate(150%)', // Same as status badges
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)', // Same as status badges
+    background: 'rgba(239, 68, 68, 0.25)', // More visible for glassmorphism
     borderRadius: '50%', // Make it circular
-    border: '1px solid rgba(239, 68, 68, 0.3)', // More visible red outline
+    border: '1px solid rgba(239, 68, 68, 0.4)', // More visible red outline
     color: '#dc2626',
+    boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)', // Same inner highlight as status badges
     padding: '4px 8px',
     fontSize: '12px',
     cursor: 'pointer',
@@ -497,8 +500,8 @@ export const deleteButtonStyles = {
   },
   
   hover: {
-    background: 'rgba(239, 68, 68, 0.2)', // Slightly darker red on hover
-    border: '1px solid rgba(239, 68, 68, 0.4)', // More prominent red outline
+    background: 'rgba(239, 68, 68, 0.35)', // Darker red on hover to match new base
+    border: '1px solid rgba(239, 68, 68, 0.5)', // More prominent red outline
     color: '#b91c1c',
     transform: 'scale(1.02)' // Very subtle scale
   }
@@ -765,12 +768,13 @@ export const MenuItem = ({
               <div 
                 className="w-8 h-8 flex items-center justify-center cursor-pointer edit-btn"
                 style={{
-                  backdropFilter: 'blur(20px) saturate(120%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                  background: 'rgba(59, 130, 246, 0.15)', // Light glass blue background
-                  borderRadius: '50%', // Make it circular
-                  border: '1px solid rgba(59, 130, 246, 0.3)', // Blue outline
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(59, 130, 246, 0.25)', // More visible for glassmorphism
+                  borderRadius: '50%',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
                   color: '#2563eb',
+                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
                   padding: '4px 8px',
                   fontSize: '12px',
                   cursor: 'pointer',
@@ -793,14 +797,14 @@ export const MenuItem = ({
                 }}
                 title="Edit"
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+                  e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
                   e.target.style.color = '#1d4ed8';
                   e.target.style.transform = 'scale(1.02)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
-                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                  e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match new base color
+                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match new base color
                   e.target.style.color = '#2563eb';
                   e.target.style.transform = 'scale(1)';
                 }}
@@ -814,27 +818,18 @@ export const MenuItem = ({
               <div 
                 className="w-8 h-8 flex items-center justify-center cursor-pointer delete-btn"
                 style={{
-                  backdropFilter: 'blur(20px) saturate(120%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                  background: 'rgba(239, 68, 68, 0.15)', // Light glass red background
-                  borderRadius: '50%', // Make it circular
-                  border: '1px solid rgba(239, 68, 68, 0.3)', // More visible red outline
-                  color: '#dc2626',
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  ...deleteButtonStyles.base,
                   outline: 'none' // Remove default focus outline
                 }}
                 onFocus={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.25)';
+                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
                   e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
                   e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -842,16 +837,17 @@ export const MenuItem = ({
                 }}
                 title="Delete"
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
                   e.target.style.color = '#b91c1c';
                   e.target.style.transform = 'scale(1.02)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.15)';
-                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
                   e.target.style.color = '#dc2626';
                   e.target.style.transform = 'scale(1)';
+                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                 }}
               >
                 <TrashIcon 

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API_URL from '../config'
+import { colors, AnimatedButton, Section, statusBadgeStyles, deleteButtonStyles, quantityButtonStyles } from '../styles/shared'
 
 export default function CustomerOrdering() {
   const [menu, setMenu] = useState([])
@@ -197,28 +198,61 @@ export default function CustomerOrdering() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    <div className="min-h-screen flex items-center justify-center" style={{
+      background: 'linear-gradient(135deg, #f8f4f1 0%, #e8dcc6 100%)',
+      backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(212, 167, 106, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(212, 167, 106, 0.05) 0%, transparent 50%)'
+    }}>
+      <div style={{
+        backdropFilter: 'blur(25px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(25px) saturate(150%)',
+        background: 'rgba(255, 255, 255, 0.7)',
+        borderRadius: '20px',
+        border: '1px solid rgba(212, 167, 106, 0.2)',
+        boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+        padding: '40px'
+      }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: colors.primary }}></div>
+        <p className="mt-4" style={{ color: '#8B5A2B' }}>Loading menu...</p>
+      </div>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen pb-20" style={{
+      background: 'linear-gradient(135deg, #f8f4f1 0%, #e8dcc6 100%)',
+      backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(212, 167, 106, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(212, 167, 106, 0.05) 0%, transparent 50%)'
+    }}>
       {/* Header */}
-      <header className="bg-white shadow p-4 sticky top-0 z-10 flex justify-between items-center">
-        <div>
-            <h1 className="text-xl font-bold text-gray-900">Brew & Bites</h1>
-            {table && <p className="text-xs text-gray-500">Table: {table.name}</p>}
+      <header className="sticky top-0 z-10 p-4" style={{
+        backdropFilter: 'blur(25px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(25px) saturate(150%)',
+        background: 'rgba(255, 255, 255, 0.7)',
+        borderBottom: '1px solid rgba(212, 167, 106, 0.2)',
+        boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+      }}>
+        <div className="flex justify-between items-center max-w-4xl mx-auto">
+          <div>
+              <h1 className="text-xl font-bold" style={{ color: '#3E2723' }}>Brew & Bites</h1>
+              {table && <p className="text-xs" style={{ color: '#8B5A2B' }}>Table: {table.name}</p>}
+          </div>
+          <AnimatedButton
+            onClick={() => navigate('/')}
+            color={colors.primary}
+            hoverColor={colors.primaryDark}
+            padding="8px 20px"
+            minWidth="80px"
+            height="36px"
+          >
+            Exit
+          </AnimatedButton>
         </div>
-        <button onClick={() => navigate('/')} className="text-sm text-red-500 font-medium hover:text-red-700">Exit</button>
       </header>
 
       <div className="max-w-4xl mx-auto p-4 grid gap-6 lg:grid-cols-3">
         
         {/* LEFT COLUMN: MENU (Now Categorized) */}
         <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Menu</h2>
-            
+            <Section title="Menu">
             {/* Iterate over Categories */}
             {Object.keys(groupedMenu).length === 0 ? (
                 <div className="text-center py-10 text-gray-500">No menu items available.</div>
@@ -227,13 +261,26 @@ export default function CustomerOrdering() {
                     const isCollapsed = collapsedCategories[category];
                     
                     return (
-                        <div key={category} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                        <div key={category} className="overflow-hidden" style={{
+                          backdropFilter: 'blur(25px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(25px) saturate(150%)',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          borderRadius: '20px',
+                          border: '1px solid rgba(212, 167, 106, 0.2)',
+                          boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                          marginBottom: '16px'
+                        }}>
                             {/* Category Header */}
                             <button 
                                 onClick={() => toggleCategory(category)}
-                                className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                                className="w-full flex justify-between items-center p-4 transition-all duration-200"
+                                style={{
+                                  background: 'rgba(212, 167, 106, 0.08)',
+                                  borderBottom: isCollapsed ? 'none' : '1px solid rgba(212, 167, 106, 0.15)',
+                                  borderRadius: isCollapsed ? '20px' : '20px 20px 0 0'
+                                }}
                             >
-                                <h3 className="text-lg font-bold text-gray-800">{category}</h3>
+                                <h3 className="text-lg font-bold" style={{ color: '#3E2723' }}>{category}</h3>
                                 <div className="text-gray-500">
                                     {/* Chevron Icon Logic */}
                                     {isCollapsed ? (
@@ -250,22 +297,41 @@ export default function CustomerOrdering() {
 
                             {/* Category Items (Collapsible Content) */}
                             {!isCollapsed && (
-                                <div className="p-4 grid gap-4 sm:grid-cols-2 animate-fadeIn">
+                                <div className="p-4 grid gap-4 sm:grid-cols-2">
                                     {items.map(item => (
-                                        <div key={item._id} className="bg-white p-4 rounded-lg border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                                            <div>
-                                                <div className="flex justify-between items-start">
-                                                    <h4 className="font-bold text-gray-800">{item.name}</h4>
-                                                    <span className="text-primary font-bold">₹{item.price}</span>
-                                                </div>
-                                                <p className="text-sm text-gray-500 mt-1 mb-3">{item.description}</p>
+                                        <div key={item._id} className="flex items-start justify-between p-2 text-sm sm:text-base border rounded" style={{
+                                          backdropFilter: 'blur(40px) saturate(150%)',
+                                          WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+                                          background: 'rgba(212, 167, 106, 0.18)',
+                                          borderRadius: '22px',
+                                          border: '1px solid rgba(212, 167, 106, 0.22)',
+                                          boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 0 20px rgba(212, 167, 106, 0.12)',
+                                          transition: 'all 0.2s ease',
+                                          cursor: 'pointer',
+                                          position: 'relative',
+                                          overflow: 'hidden',
+                                          color: '#3E2723',
+                                          padding: '12px'
+                                        }}>
+                                            <div className="flex-1">
+                                                <div className="font-medium">{item.name} <span className="font-semibold" style={{ color: colors.primary }}>₹{item.price.toFixed(2)}</span></div>
+                                                <div className="text-xs" style={{ color: '#8B5A2B' }}>{item.description}</div>
                                             </div>
-                                            <button 
-                                                onClick={() => addToCart(item)} 
-                                                className="w-full bg-blue-50 text-blue-600 font-semibold py-2 rounded hover:bg-blue-100 transition-colors"
-                                            >
-                                                Add to Cart
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <AnimatedButton
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        addToCart(item);
+                                                    }} 
+                                                    color={colors.primary}
+                                                    hoverColor={colors.primaryDark}
+                                                    padding="6px 12px"
+                                                    minWidth="80px"
+                                                    height="32px"
+                                                >
+                                                    Add
+                                                </AnimatedButton>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -274,26 +340,37 @@ export default function CustomerOrdering() {
                     )
                 })
             )}
+            </Section>
         </div>
 
-        {/* RIGHT COLUMN: CART & STATUS (Unchanged) */}
+        {/* RIGHT COLUMN: CART & STATUS */}
         <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 sticky top-20">
-                <h2 className="text-xl font-bold mb-4 text-gray-900">Your Order</h2>
+            <div className="sticky top-20" style={{
+              backdropFilter: 'blur(25px) saturate(150%)',
+              WebkitBackdropFilter: 'blur(25px) saturate(150%)',
+              background: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '20px',
+              border: '1px solid rgba(212, 167, 106, 0.2)',
+              boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+              padding: '20px'
+            }}>
+                <h2 className="text-xl font-bold mb-4" style={{ color: '#3E2723' }}>Your Order</h2>
                 
                 {/* 1. Kitchen Status */}
                 {currentOrder?.items?.length > 0 && (
-                    <div className="mb-6 border-b pb-4">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Kitchen Status</h3>
+                    <div className="mb-6" style={{ borderBottom: '1px solid rgba(212, 167, 106, 0.15)', paddingBottom: '16px' }}>
+                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8B5A2B' }}>Kitchen Status</h3>
                         <div className="space-y-2">
                             {currentOrder.items.map((item, idx) => (
                                 <div key={idx} className="flex justify-between text-sm">
-                                    <span className="text-gray-600">{item.name} <span className="text-gray-400">x{item.qty}</span></span>
-                                    <span className={`font-medium px-2 py-0.5 rounded text-xs ${
-                                        item.status === 'served' ? 'bg-green-100 text-green-700' :
-                                        item.status === 'ready' ? 'bg-yellow-100 text-yellow-700' :
-                                        'bg-blue-50 text-blue-600'
-                                    }`}>
+                                    <span style={{ color: '#5D4037' }}>{item.name} <span style={{ color: '#8B5A2B' }}>x{item.qty}</span></span>
+                                    <span className="font-medium px-2 py-0.5 text-xs" style={{
+                                      ...statusBadgeStyles[item.status === 'served' ? 'available' : item.status === 'ready' ? 'preparing-order' : 'preparing'],
+                                      fontSize: '11px',
+                                      fontWeight: '600',
+                                      letterSpacing: '0.025em',
+                                      textTransform: 'uppercase'
+                                    }}>
                                         {item.status || 'Ordered'}
                                     </span>
                                 </div>
@@ -303,21 +380,38 @@ export default function CustomerOrdering() {
                 )}
 
                 {/* 2. New Cart Items */}
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">New Items (Cart)</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8B5A2B' }}>New Items (Cart)</h3>
                 {cart.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic mb-4">Cart is empty</p>
+                    <p className="text-sm italic mb-4" style={{ color: '#8B5A2B' }}>Cart is empty</p>
                 ) : (
                     <div className="space-y-3 mb-4">
                         {cart.map(item => (
-                            <div key={item._id} className="flex justify-between items-center">
+                            <div key={item._id} className="flex justify-between items-center" style={{
+                              backdropFilter: 'blur(15px) saturate(120%)',
+                              WebkitBackdropFilter: 'blur(15px) saturate(120%)',
+                              background: 'rgba(255, 255, 255, 0.4)',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(212, 167, 106, 0.1)',
+                              padding: '8px'
+                            }}>
                                 <div>
-                                    <div className="font-medium text-gray-800">{item.name}</div>
-                                    <div className="text-xs text-gray-500">₹{item.price} each</div>
+                                    <div className="font-medium" style={{ color: '#3E2723' }}>{item.name}</div>
+                                    <div className="text-xs" style={{ color: '#8B5A2B' }}>₹{item.price} each</div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-gray-50 rounded p-1">
-                                    <button onClick={() => updateQuantity(item._id, item.qty - 1)} className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-red-500 font-bold">-</button>
-                                    <span className="w-4 text-center text-sm font-medium">{item.qty}</span>
-                                    <button onClick={() => updateQuantity(item._id, item.qty + 1)} className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-green-500 font-bold">+</button>
+                                <div className="flex items-center gap-2" style={{
+                                  ...quantityButtonStyles.base
+                                }}>
+                                    <button onClick={() => updateQuantity(item._id, item.qty - 1)} className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-red-500 font-bold transition-colors" style={{
+                                      background: 'rgba(255, 255, 255, 0.8)',
+                                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                                      borderRadius: '4px'
+                                    }}>-</button>
+                                    <span className="w-4 text-center text-sm font-medium" style={{ color: '#3E2723' }}>{item.qty}</span>
+                                    <button onClick={() => updateQuantity(item._id, item.qty + 1)} className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-green-500 font-bold transition-colors" style={{
+                                      background: 'rgba(255, 255, 255, 0.8)',
+                                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                                      borderRadius: '4px'
+                                    }}>+</button>
                                 </div>
                             </div>
                         ))}
@@ -325,22 +419,26 @@ export default function CustomerOrdering() {
                 )}
 
                 {/* 3. Totals */}
-                <div className="pt-4 border-t border-gray-100">
+                <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(212, 167, 106, 0.15)' }}>
                     <div className="flex justify-between items-center mb-4">
-                        <span className="text-gray-600">Total Bill</span>
-                        <span className="text-xl font-bold text-primary">₹{getOrderTotal()}</span>
+                        <span style={{ color: '#5D4037' }}>Total Bill</span>
+                        <span className="text-xl font-bold" style={{ color: colors.primary }}>₹{getOrderTotal()}</span>
                     </div>
-                    <button 
+                    <AnimatedButton
                         onClick={submitOrder} 
                         disabled={submitting || cart.length === 0}
-                        className="w-full bg-primary hover:bg-opacity-90 text-white font-bold py-3 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center"
+                        color={colors.primary}
+                        hoverColor={colors.primaryDark}
+                        padding="12px 24px"
+                        minWidth="140px"
+                        height="44px"
                     >
                         {submitting ? (
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
                             'Place Order'
                         )}
-                    </button>
+                    </AnimatedButton>
                 </div>
             </div>
         </div>
@@ -348,8 +446,16 @@ export default function CustomerOrdering() {
       </div>
       
       {error && (
-        <div className="fixed bottom-4 left-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-lg text-center animate-bounce">
-            {error}
+        <div className="fixed bottom-4 left-4 right-4 p-4 rounded-lg shadow-lg text-center animate-bounce" style={{
+          backdropFilter: 'blur(25px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(25px) saturate(150%)',
+          background: 'rgba(239, 68, 68, 0.9)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          boxShadow: '0 8px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+          color: '#ffffff',
+          margin: '0 16px'
+        }}>
+          {error}
         </div>
       )}
     </div>

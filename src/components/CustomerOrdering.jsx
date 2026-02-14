@@ -64,7 +64,10 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
       if (!tableCode) {
         const storedTable = localStorage.getItem('currentTable')
         if (storedTable) {
-          setTable(JSON.parse(storedTable))
+          const tableData = JSON.parse(storedTable)
+          setTable(tableData)
+          // Also check for existing orders when using stored table
+          fetchExistingOrder(tableData._id)
         } else {
           navigate('/') 
           return
@@ -127,9 +130,47 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
       if (!response.ok) throw new Error(data.error || 'Invalid table code')
       setTable(data)
       localStorage.setItem('currentTable', JSON.stringify(data))
+      
+      // Pre-fetch existing order for this table
+      await fetchExistingOrder(data._id)
     } catch (err) {
       setError(err.message)
       setTimeout(() => navigate('/'), 2000)
+    }
+  }
+
+  const fetchExistingOrder = async (tableId) => {
+    try {
+      // Start/Get active order for this table
+      const orderRes = await fetch(`${API_URL}/api/orders/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableId })
+      })
+      
+      const orderData = await orderRes.json()
+      if (orderRes.ok && orderData.items && orderData.items.length > 0) {
+        // Pre-populate cart with existing items
+        const existingCart = orderData.items
+          .filter(item => item.status === 'preparing') // Only show items that are still being prepared
+          .map(item => ({
+            _id: item.itemId,
+            name: item.name,
+            price: item.price,
+            qty: item.qty,
+            status: item.status,
+            isExisting: true // Mark as existing item
+          }))
+        
+        if (existingCart.length > 0) {
+          setCart(existingCart)
+          setCurrentOrder(orderData)
+          console.log('Pre-fetched existing order items:', existingCart)
+        }
+      }
+    } catch (err) {
+      console.log('No existing order found or failed to fetch:', err.message)
+      // Don't show error to user, just continue without pre-populated cart
     }
   }
 
@@ -164,12 +205,23 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
     setCart(prev => prev.map(i => i._id === itemId ? { ...i, qty: newQty } : i))
   }
 
-  const getTotalPrice = () => cart.reduce((total, item) => total + (item.price * item.qty), 0)
-
-  const getOrderTotal = () => {
-    const cartTotal = getTotalPrice()
+  const getTotalPrice = () => {
+    // Include both cart items and items under preparation from current order
+    const cartTotal = cart.reduce((total, item) => total + (item.price * item.qty), 0)
     const orderTotal = currentOrder?.items?.reduce((t, i) => t + (i.price * i.qty), 0) || 0
     return cartTotal + orderTotal
+  }
+
+  const getTotalItemCount = () => {
+    // Include both cart items and items under preparation from current order
+    const cartCount = cart.reduce((total, item) => total + item.qty, 0)
+    const orderCount = currentOrder?.items?.reduce((t, i) => t + i.qty, 0) || 0
+    return cartCount + orderCount
+  }
+
+  const getOrderTotal = () => {
+    // This function now just returns the same as getTotalPrice since getTotalPrice includes everything
+    return getTotalPrice()
   }
 
   // --- Order Submission ---
@@ -191,8 +243,16 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
       const orderData = await orderRes.json()
       if (!orderRes.ok) throw new Error(orderData.error || 'Failed to start order')
 
-      // Step B: Prepare Items
-      const newItems = cart.map(item => ({
+      // Step B: Prepare Items - Separate existing from new
+      const existingItems = cart.filter(item => item.isExisting).map(item => ({
+        itemId: item._id,
+        name: item.name,
+        price: item.price,
+        qty: item.qty,
+        status: 'preparing'
+      }))
+      
+      const newItems = cart.filter(item => !item.isExisting).map(item => ({
         itemId: item._id,
         name: item.name,
         price: item.price,
@@ -200,14 +260,24 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
         status: 'preparing'
       }))
 
-      // Step C: Smart Merge
+      // Step C: Smart Merge - Only merge new items with existing order items
       let finalItems = orderData.items ? [...orderData.items] : []
+      
+      // Update quantities for existing items (match by itemId)
+      existingItems.forEach(existingItem => {
+        const existingIdx = finalItems.findIndex(i => i.itemId === existingItem.itemId)
+        if (existingIdx >= 0) {
+          finalItems[existingIdx].qty = existingItem.qty // Update with new quantity
+        }
+      })
+      
+      // Add completely new items
       newItems.forEach(newItem => {
         const existingIdx = finalItems.findIndex(i => i.itemId === newItem.itemId && i.status === 'preparing')
         if (existingIdx >= 0) {
-            finalItems[existingIdx].qty += newItem.qty
+          finalItems[existingIdx].qty += newItem.qty
         } else {
-            finalItems.push(newItem)
+          finalItems.push(newItem)
         }
       })
 
@@ -272,16 +342,14 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
               <h1 className="text-xl font-bold" style={{ color: '#3E2723' }}>Brew & Bites</h1>
               {table && <p className="text-xs" style={{ color: '#8B5A2B' }}>Table: {table.name}</p>}
           </div>
-          <AnimatedButton
-            onClick={() => navigate('/')}
-            color={colors.primary}
-            hoverColor={colors.primaryDark}
-            padding="8px 20px"
-            minWidth="80px"
-            height="36px"
-          >
-            Exit
-          </AnimatedButton>
+          <div className="text-right">
+            <div className="text-sm font-medium" style={{ color: '#8B5A2B' }}>
+              Cart: {getTotalItemCount()} items
+            </div>
+            <div className="text-lg font-bold" style={{ color: '#3E2723' }}>
+              ₹{getTotalPrice()}
+            </div>
+          </div>
         </div>
       </header>
 

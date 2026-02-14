@@ -4,7 +4,34 @@ import { useNavigate } from 'react-router-dom'
 import API_URL from '../config'
 import { colors, AnimatedButton, Section, statusBadgeStyles, deleteButtonStyles, quantityButtonStyles } from '../styles/shared'
 
-export default function CustomerOrdering() {
+// Access logging function
+const logAccess = async (pageType, userId, tableId, deviceId) => {
+  try {
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      ip: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip).catch(() => 'unknown')
+    }
+    
+    await fetch(`${API_URL}/api/log-access`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pageType,
+        userId,
+        tableId,
+        deviceId,
+        deviceInfo
+      })
+    })
+  } catch (error) {
+    console.error('Failed to log access:', error)
+  }
+}
+
+export default function CustomerOrdering({ tableId: propTableId, deviceId: propDeviceId }) {
   const [menu, setMenu] = useState([])
   const [cart, setCart] = useState([])
   const [table, setTable] = useState(null)
@@ -21,25 +48,35 @@ export default function CustomerOrdering() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // 1. Get table info
-    const urlParams = new URLSearchParams(window.location.search)
-    const tableCode = urlParams.get('table')
-    
-    if (!tableCode) {
-      const storedTable = localStorage.getItem('currentTable')
-      if (storedTable) {
-        setTable(JSON.parse(storedTable))
-      } else {
-        navigate('/') 
-        return
-      }
+    // Log access for customer ordering
+    const currentTableId = propTableId || table?.tableCode
+    logAccess('CustomerOrdering', null, currentTableId, propDeviceId)
+
+    // 1. Get table info - prioritize props over URL params
+    if (propTableId && propDeviceId) {
+      // Use props from URL routing
+      fetchTableInfo(propTableId)
     } else {
-      fetchTableInfo(tableCode)
+      // Fallback to URL params for backward compatibility
+      const urlParams = new URLSearchParams(window.location.search)
+      const tableCode = urlParams.get('table')
+      
+      if (!tableCode) {
+        const storedTable = localStorage.getItem('currentTable')
+        if (storedTable) {
+          setTable(JSON.parse(storedTable))
+        } else {
+          navigate('/') 
+          return
+        }
+      } else {
+        fetchTableInfo(tableCode)
+      }
     }
 
     // 2. Load Menu
     fetchMenu()
-  }, [navigate])
+  }, [navigate, propTableId, propDeviceId])
 
   // 3. Polling Logic
   useEffect(() => {

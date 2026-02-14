@@ -2,10 +2,11 @@
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const connectDB = require('./db');
 // Import the Schemas we created in Step 4
 // New (FIXED)
-const { User, Menu, Table, Coupon, Settings, Order } = require('./models/Schemas');
+const { User, Menu, Table, Coupon, Settings, Order, AccessLog } = require('./models/Schemas');
 // Import auto-seed functionality
 const { seedDatabase } = require('./utils/autoSeed');
 
@@ -47,6 +48,69 @@ app.get('/', (req, res) => {
 // Version endpoint
 app.get('/api/version', (req, res) => {
     res.json({ version: '1.4.2' });
+});
+
+// Access Logging endpoint
+app.post('/api/log-access', async (req, res) => {
+    try {
+        const { pageType, userId, tableId, deviceId, deviceInfo } = req.body;
+        
+        // Create access log entry
+        const accessLog = await AccessLog.create({
+            pageType,
+            userId,
+            tableId,
+            deviceId,
+            deviceInfo: {
+                ...deviceInfo,
+                timestamp: new Date(deviceInfo.timestamp) // Ensure proper Date object
+            }
+        });
+        
+        res.json({ success: true, logId: accessLog._id });
+    } catch (error) {
+        console.error('Access logging error:', error);
+        res.status(500).json({ error: 'Failed to log access' });
+    }
+});
+
+// Get access logs (admin only)
+app.get('/api/access-logs', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+        const user = await User.findById(decoded.userId);
+
+        if (!user || user.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { pageType, startDate, endDate, limit = 100 } = req.query;
+        
+        // Build filter
+        const filter = {};
+        if (pageType) filter.pageType = pageType;
+        if (startDate || endDate) {
+            filter.createdAt = {};
+            if (startDate) filter.createdAt.$gte = new Date(startDate);
+            if (endDate) filter.createdAt.$lte = new Date(endDate);
+        }
+
+        const logs = await AccessLog.find(filter)
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit))
+            .populate('userId', 'username role');
+
+        res.json(logs);
+    } catch (error) {
+        console.error('Error fetching access logs:', error);
+        res.status(500).json({ error: 'Failed to fetch access logs' });
+    }
 });
 
 // B. SEED ROUTE (This replaces your store.js seedData)

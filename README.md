@@ -1,5 +1,5 @@
 # ☕ Brew & Bites - Full Stack Cafe Management System
-![Version](https://img.shields.io/badge/version-1.8.0-green.svg) ![License](https://img.shields.io/badge/license-Proprietary-red)
+![Version](https://img.shields.io/badge/version-2.0.0-green.svg) ![License](https://img.shields.io/badge/license-Proprietary-red)
 
 A comprehensive MERN Stack application for managing a modern cafe. This system digitizes the entire workflow—from customers browsing the menu to waiters taking orders, chefs managing the kitchen queue, and admins overseeing sales. Now featuring a complete customer self-service ordering experience with QR codes and real-time order tracking.
 
@@ -8,38 +8,40 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 
 ---
 
-## 🚀 What's New in v1.8.0 (Invoice Settings & Receipt Enhancement)
+## 🚀 What's New in v2.0.0 (Premium Glassmorphism UI & Enhanced Features)
 
-### 🧾 Advanced Invoice Settings Management
-* **Complete Invoice Configuration**: New comprehensive invoice settings panel with full control over receipt appearance
-* **Restaurant Information Fields**: 
-  * Restaurant Name, Address, Contact, Email (each with individual show/hide toggles)
-  * Restaurant Logo upload with automatic compression and Base64 storage
-  * Smart logo sizing (max 300×150px) for optimal printing
-* **Tax & Regulatory Information**:
-  * GST Number and FSSAI Number with display toggles
-  * Organized in dedicated "Tax & Regulatory Information" section
-* **QR Code Integration**: Toggle QR code display on receipts for digital payment options
+### 🎨 Premium Glassmorphism Design System
+* **Waiter Dashboard Glass Effects**: Beautiful frosted glass effect on all UI elements
+  * Menu Items with glassy backgrounds and amber theme
+  * Current Order Items with individual glassy effects
+  * Status Tags with color-coded glassy styling
+  * Interactive Buttons with glassy styling
+  * Container Backgrounds with frosted glass effect
+* **Enhanced Visual Hierarchy**: Glass morphism creates depth and modern aesthetic
+* **Consistent Theme**: Warm amber color palette throughout the interface
+* **Smooth Animations**: Premium transitions and hover states
 
-### 🖨️ Enhanced Receipt Printing System
-* **Thermal Printer Optimization**: Redesigned print styles specifically for 80mm thermal printers
-* **Responsive Receipt Layout**: Mobile-optimized receipt modal with proper scaling on all devices
-* **Professional Receipt Design**:
-  * Side-by-side logo and restaurant information layout
-  * Clean product listing with quantity breakdowns
-  * Prominent total amount display with dashed borders
-  * Grayscale logo conversion for thermal printing
-* **Smart Print Functionality**: Direct iframe printing for better browser compatibility
+### 🧾 Advanced Invoice & Settings
+* **Complete Invoice Configuration**: Full control over receipt appearance
+* **Restaurant Information Management**:
+  * Customizable restaurant details with show/hide toggles
+  * Logo upload with automatic compression
+  * Tax & Regulatory Information (GST, FSSAI)
+* **QR Code Integration**: For digital payment options
 
-### 📱 Mobile Responsiveness Improvements
-* **Receipt Modal Optimization**: 
-  * Adaptive padding and margins for mobile screens
-  * Responsive grid layouts (hides icons on small screens)
-  * Touch-friendly button sizing and spacing
-* **Enhanced Mobile Experience**:
-  * Improved product grid layout (1fr 80px 85px on mobile)
-  * Better text wrapping and overflow handling
-  * Optimized font sizes for mobile readability
+### �️ Enhanced Admin Features
+* **Menu Management**:
+  - Mark items as out of stock
+  - Enhanced product organization
+* **Coupon System**:
+  - Expiry dates and usage restrictions
+  - Scheduling capabilities
+  - Improved management interface
+
+### �️ Professional Receipt System
+* **Thermal Printer Optimization**: 80mm thermal printer support
+* **Responsive Receipt Layout**: Works on all devices
+* **Smart Print Functionality**: Reliable browser printing
 
 ### 🔧 Technical Enhancements
 * **Image Compression Pipeline**: Automatic logo compression with size validation (2MB limit)
@@ -69,132 +71,125 @@ A comprehensive MERN Stack application for managing a modern cafe. This system d
 * **API Filtering**: Updated receipts endpoints to only fetch closed orders, not active ones
 * **SVG Compatibility**: Fixed React SVG attribute warnings across all components
 
----
-
-## 🚀 What's New in v1.7.0 (Production Stability & Configuration Management)
-
-### 🔧 Configuration & Deployment Fixes
-* **Dynamic API Configuration:** Enhanced environment detection for seamless local and production deployments.
-* **Table Code Seeding:** Implemented predictable test codes (910474, 139631) for consistent testing and development.
-* **CORS Optimization:** Improved cross-origin resource sharing configuration for production stability.
-* **Mixed Content Resolution:** Eliminated mixed content errors on Vercel deployment.
-
-### 🛠️ Technical Improvements
-* **Enhanced Debugging:** Added comprehensive logging for API URL verification and troubleshooting.
-* **Environment Detection:** Smart switching between localhost and production API endpoints.
-* **Error Handling:** Better validation and error reporting for API calls.
-* **Code Cleanup:** Removed hardcoded URLs and improved configuration management.
-
-### 🔒 Stability Enhancements
-* **Production-Ready Deployment:** Forced production API URL configuration for reliable cloud deployment.
-* **Consistent Testing Environment:** Standardized table codes for development and testing workflows.
-* **Improved Logging:** Enhanced debugging capabilities for easier troubleshooting.
-
----
-
-## 🎯 Recent Feature Highlights (v1.6.0 - v1.7.1)
-
-### 🎨 Visual Design & User Experience (v1.7.1)
-* **Stunning Background Pattern**: Beautiful conic gradient background with chocolate-themed color palette across entire website
-* **Enhanced Flip Menu Cards**: Horizontal flip animation with decorative SVG icons and animated floating circles
-* **Footer Color Harmony**: Gradient footer design that perfectly matches the background pattern
-* **Seamless Layout**: Clean page finish with no unwanted white space
-
-### 📱 Enhanced Customer Experience
-* **Collapsible Menu Categories:** Customers can now collapse/expand menu sections for easier navigation on mobile devices.
-* **Improved Real-Time Tracking:** Better polling logic for instant order status updates with enhanced error recovery.
-* **Streamlined QR Code Flow:** More reliable QR code generation with better fallback mechanisms.
-
-### 🔧 Developer Experience
-* **Predictable Test Environment:** Fixed table codes (910474, 139631) for consistent development and testing.
-* **Enhanced Code Documentation:** Comprehensive comments and improved code readability across all components.
-* **Dynamic Configuration:** Smart environment detection eliminates manual configuration between local and production deployments.
-* **Console Error-Free:** Resolved all SVG attribute warnings and version fetching issues.
-
-### 🚀 Production Readiness
-* **Zero-Configuration Deployment:** Eliminated mixed content errors and CORS issues for seamless Vercel deployment.
-* **Enhanced Debugging:** Comprehensive logging for troubleshooting API connectivity issues.
-* **Performance Optimizations:** Reduced bundle sizes and improved component rendering efficiency.
-* **Receipt Generation Control**: Fixed automatic receipt generation - now only appears when explicitly closing orders.
-
----
-
-## 🚀 What's New in v1.5.0 (Customer Ordering Revolution)
-
-### ✨ Major New Features
-* **Customer Self-Service Portal:** Complete customer-facing ordering system with QR code access.
-* **Table Code Authentication:** Secure 6-digit unique codes for each table.
-* **Real-Time Order Tracking:** Live status updates (Preparing → Prepared → Served).
-* **Smart Order Merging:** Seamlessly add items to existing orders without creating duplicates.
-* **Unified Cart Display:** Single view showing both cart items and existing ordered items with status tags.
-* **Mobile-Optimized Interface:** Responsive design perfect for smartphones and tablets.
-
-### 🎨 Customer Experience Enhancements
-* **Intuitive Cart Management:** Add, remove, and adjust quantities before ordering.
-* **Visual Status Indicators:** Color-coded tags (Yellow/Blue/Green) for item status.
-* **Order History:** Complete view of all ordered items with individual pricing.
-* **Real-Time Polling:** Automatic status updates every 3 seconds.
-* **Clean UI/UX:** Streamlined interface with no duplicate sections.
-
-### 🔧 Technical Improvements
-* **QR Code Generation:** Automatic QR code creation for all tables with unique URLs.
-* **Enhanced API Endpoints:** New routes for table validation and order polling.
-* **Fixed Currency Display:** All prices now show in INR (₹) instead of USD.
-* **Improved Error Handling:** Better validation and user feedback throughout ordering flow.
-* **Animated Admin Buttons:** Consistent theme styling across all admin controls.
-
----
-
 ## 📜 Version History
 
 For detailed version history and changelog, please see [CHANGELOG.md](./CHANGELOG.md)
-
-### **v1.8.0 (Invoice Settings & Receipt Enhancement)**
-* **Advanced Invoice Settings**: Complete invoice configuration panel with restaurant info, tax details, and logo upload
-* **Restaurant Logo Management**: Image upload with automatic compression and Base64 storage
-* **Tax & Regulatory Fields**: GST and FSSAI number management with display toggles
-* **Enhanced Receipt Printing**: Thermal printer optimization with professional layout design
-* **Mobile Responsiveness**: Improved receipt modal scaling and touch-friendly interface
-* **Technical Improvements**: Image compression pipeline, payload size management, and database migration support
-* **UI Consistency**: Unified toggle button styling across all settings panels
 
 ---
 
 ## 🌟 Comprehensive Feature List
 
-### � Customer Module (Self-Service Ordering)
-A complete customer-facing portal for seamless self-service ordering experience.
-* **QR Code Access:** Scan table QR codes to instantly access the ordering interface.
-* **Secure Authentication:** 6-digit unique table codes for secure access control.
-* **Interactive Menu:** Browse menu items with prices, descriptions, and categories.
-* **Smart Cart Management:** Add items, adjust quantities, and review before ordering.
-* **Real-Time Order Tracking:** Live status updates with color-coded indicators.
-* **Order Merging:** Add items to existing orders without creating duplicates.
-* **Mobile-First Design:** Optimized for smartphones and tablets with responsive layout.
+### 🎨 Premium UI/UX
+* **Glassmorphism Design System**
+  * Frosted glass effects across all dashboards
+  * Amber-themed color palette
+  * Smooth animations and transitions
+  * Consistent visual hierarchy
+* **Responsive Design**
+  * Mobile-optimized interfaces for all user roles
+  * Adaptive layouts for different screen sizes
+  * Touch-friendly controls
+  * Seamless experience across devices
 
-### �👑 Admin Module (Control Center)
-The Admin dashboard is the brain of the operation, allowing full control over the restaurant's data and settings.
-* **Menu Management:**
-    * **CRUD Operations:** Add, Edit, and Delete menu items.
-    * **Featured Dishes:** Toggle items as "Featured" to highlight them.
-    * **Search & Filter:** Instantly search through menu items or filter by category.
-* **Financial Suite:**
-    * **Receipt Management:** View a full history of all orders. Sort by Date, Table, or Amount.
-    * **Advanced Exports:** Download sales data as **PDF** or **CSV**.
-* **Invoice Settings & Branding:**
-    * **Restaurant Information:** Configure name, address, contact, and email with individual display toggles
-    * **Logo Management:** Upload and compress restaurant logo with automatic Base64 storage
-    * **Tax & Regulatory:** GST and FSSAI number management with receipt display options
-    * **QR Code Integration:** Toggle QR code display on receipts for digital payments
-    * **Professional Receipts:** Thermal printer-optimized receipt layouts with custom branding
-* **Staff & Floor Management:**
-    * **User Accounts:** Create and delete secure login credentials for Chefs and Waiters.
-    * **Table Layout:** Add or remove tables and see which ones currently have active orders.
-    * **Instant Order Taking:** Click any table to open the **Service Modal** and take orders immediately.
-* **System Configuration:**
-    * **Order Flow Control:** Toggle auto-submit vs manual order submission for waiters
-    * **Site Management:** Control website availability and maintenance mode
-    * **Tax Configuration:** Enable/disable and configure tax rates
+### 👥 Customer Module (Self-Service)
+* **Ordering System**
+  * QR code-based table access
+  * 6-digit secure table authentication
+  * Real-time menu with categories and pricing
+  * Smart cart with quantity adjustments
+  * Order merging with existing orders
+  * Real-time order status tracking
+  * Order history with detailed breakdowns
+* **User Experience**
+  * Collapsible menu categories
+  * Visual status indicators (Preparing/Ready/Served)
+  * Intuitive navigation
+  * Clean, distraction-free interface
+
+### 👑 Admin Dashboard
+* **Menu Management**
+  * Full CRUD operations for menu items
+  * Featured items highlighting
+  * Advanced search and filtering
+  * Category management
+  * Out-of-stock item handling
+  * Bulk operations
+* **Order Management**
+  * Real-time order monitoring
+  * Order status updates
+  * Advanced filtering and sorting
+  * Order history with search
+  * Receipt generation
+* **Financial Tools**
+  * Sales reporting and analytics
+  * Export to PDF/CSV
+  * Tax configuration
+  * Discount and coupon management
+* **Staff Management**
+  * User role management (Admin/Waiter/Chef)
+  * Staff performance metrics
+  * Shift management
+  * Access control
+* **Table Management**
+  * Dynamic table layout
+  * Table status tracking
+  * QR code generation
+  * Capacity management
+
+### 🧾 Invoice & Receipt System
+* **Customization**
+  * Restaurant information management
+  * Logo upload with compression
+  * Tax and regulatory fields
+  * Custom receipt templates
+* **Printing**
+  * Thermal printer optimization (80mm)
+  * Professional layout design
+  * Grayscale conversion for receipts
+  * Print preview functionality
+* **Digital Features**
+  * QR code integration for payments
+  * Digital receipt options
+  * Email receipt delivery
+
+### 🔧 System Configuration
+* **General Settings**
+  * Business hours
+  * Currency and locale
+  * Tax rates and rules
+  * Service charges
+* **Security**
+  * Role-based access control
+  * Secure authentication
+  * Activity logging
+  * Data backup
+* **Integration**
+  * Payment gateway setup
+  * Hardware integration (printers, scanners)
+  * API access control
+
+### 🚀 Performance & Optimization
+* **Image Management**
+  * Automatic image compression
+  * Responsive image loading
+  * Optimized storage
+* **Technical Features**
+  * Real-time updates via WebSocket
+  * Offline capabilities
+  * Progressive Web App (PWA) support
+  * SEO optimization
+
+### 🛠️ Developer Features
+* **Environment Management**
+  * Development/Production modes
+  * Test data seeding
+  * Database migrations
+  * API documentation
+* **Debugging Tools**
+  * Comprehensive logging
+  * Error tracking
+  * Performance monitoring
+  * Testing utilities
 
 ### 🤵 Waiter Module (Service)
 Designed for tablets and mobile devices to be used tableside.
@@ -206,19 +201,6 @@ Designed for tablets and mobile devices to be used tableside.
 A streamlined, real-time dashboard for the kitchen staff.
 * **Workflow Tracking:** Move items from `Preparing` ➝ `Ready` ➝ `Served`.
 * **Performance:** Optimized for performance to handle 50+ active orders without freezing.
-
----
-
-## 🍳 Feature Spotlight: Chef Batch View
-The **Batch View** is a high-performance mode designed for efficiency in busy kitchens. Instead of fulfilling orders ticket-by-ticket (e.g., "Table 1 needs a Burger", "Table 2 needs a Burger"), it aggregates identical items so chefs can cook in bulk.
-
-### How it Works:
-1.  **Live Aggregation:** The system instantly sums up all pending items across every active order. If 5 tables order Cappuccinos, the chef sees **"5x Cappuccino Pending"**.
-2.  **Smart Item Splitting:** When a chef marks **2** items as "Ready" out of a batch of **5**, the system performs complex logic in the background:
-    * It finds the specific orders containing those items (using **FIFO** logic to prioritize older orders).
-    * It **splits** the order items in the database (e.g., converting "4x Burgers" into "2x Burgers (Ready)" and "2x Burgers (Preparing)").
-    * It generates new valid MongoDB IDs for the split items to ensure data integrity.
-3.  **Zero Latency:** The UI updates optimistically, meaning the chef sees the change immediately while the server processes the split in the background.
 
 ---
 

@@ -118,6 +118,20 @@ const OrderSchema = new mongoose.Schema({
     timeToComplete: { type: Number } // in seconds
 });
 
+// 7. ACCESS LOG
+const AccessLogSchema = new mongoose.Schema({
+    pageType: { type: String, required: true }, // 'Admin', 'Waiter', 'Chef', 'TableDevice'
+    userId: { type: String, default: null }, // User ID if authenticated
+    tableId: { type: String, default: null }, // Table ID for table/device access
+    deviceId: { type: String, default: null }, // Device ID for table/device access
+    deviceInfo: {
+        userAgent: String,
+        timestamp: { type: Date, default: Date.now },
+        ip: String
+    },
+    createdAt: { type: Date, default: Date.now }
+});
+
 // Export all blueprints so other files can use them
 module.exports = {
     User: mongoose.model('User', UserSchema),
@@ -125,5 +139,6 @@ module.exports = {
     Table: mongoose.model('Table', TableSchema),
     Coupon: mongoose.model('Coupon', CouponSchema),
     Settings: mongoose.model('Settings', SettingsSchema),
-    Order: mongoose.model('Order', OrderSchema)
+    Order: mongoose.model('Order', OrderSchema),
+    AccessLog: mongoose.model('AccessLog', AccessLogSchema)
 };

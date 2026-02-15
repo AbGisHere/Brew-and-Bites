@@ -22,7 +22,7 @@ html, body, #root {
   overflow-x: hidden; /* Prevent horizontal scroll */
   width: 100%;
   max-width: 100vw; /* Ensure content doesn't exceed viewport width */
-  position: relative;
+  position: static;
   background-color: #693319; /* Fallback solid color */
   background:
     conic-gradient(from -135deg at 6.5% 90%, #996349 0 15%, #fff0 0 100%) 50% /
@@ -94,7 +94,7 @@ html, body, #root {
   /* Fix for mobile viewport units */
   html, body, #root {
     overflow-x: hidden;
-    position: relative;
+    position: static;
     width: 100%;
     max-width: 100vw;
   }

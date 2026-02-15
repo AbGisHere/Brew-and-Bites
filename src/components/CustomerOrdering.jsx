@@ -1,5 +1,6 @@
 // src/components/CustomerOrdering.jsx
 import React, { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import API_URL from '../config'
 import { colors, AnimatedButton, Section, statusBadgeStyles, deleteButtonStyles, quantityButtonStyles } from '../styles/shared'
@@ -44,6 +45,7 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
   // New State for Collapsible Categories
   // Stores true if a category is collapsed (hidden), false if open
   const [collapsedCategories, setCollapsedCategories] = useState({})
+  const [showCartDetails, setShowCartDetails] = useState(false) // New state for cart visibility
 
   const navigate = useNavigate()
 
@@ -150,23 +152,7 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
       
       const orderData = await orderRes.json()
       if (orderRes.ok && orderData.items && orderData.items.length > 0) {
-        // Pre-populate cart with existing items
-        const existingCart = orderData.items
-          .filter(item => item.status === 'preparing') // Only show items that are still being prepared
-          .map(item => ({
-            _id: item.itemId,
-            name: item.name,
-            price: item.price,
-            qty: item.qty,
-            status: item.status,
-            isExisting: true // Mark as existing item
-          }))
-        
-        if (existingCart.length > 0) {
-          setCart(existingCart)
-          setCurrentOrder(orderData)
-          console.log('Pre-fetched existing order items:', existingCart)
-        }
+        setCurrentOrder(orderData)
       }
     } catch (err) {
       console.log('No existing order found or failed to fetch:', err.message)
@@ -307,15 +293,10 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{
       background: 'linear-gradient(135deg, #f8f4f1 0%, #e8dcc6 100%)',
-      backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(212, 167, 106, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(212, 167, 106, 0.05) 0%, transparent 50%)'
+      backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(212, 167, 106, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(212, 167, 106, 0.05) 0%, transparent 50%)',
+      position: 'relative'
     }}>
-      <div style={{
-        backdropFilter: 'blur(25px) saturate(150%)',
-        WebkitBackdropFilter: 'blur(25px) saturate(150%)',
-        background: 'rgba(255, 255, 255, 0.7)',
-        borderRadius: '20px',
-        border: '1px solid rgba(212, 167, 106, 0.2)',
-        boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+      <div className="text-center" style={{
         padding: '40px'
       }}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: colors.primary }}></div>
@@ -325,9 +306,10 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
   )
 
   return (
-    <div className="min-h-screen pb-20" style={{
+    <div className="min-h-screen" style={{
       background: 'linear-gradient(135deg, #f8f4f1 0%, #e8dcc6 100%)',
-      backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(212, 167, 106, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(212, 167, 106, 0.05) 0%, transparent 50%)'
+      backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(212, 167, 106, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(212, 167, 106, 0.05) 0%, transparent 50%)',
+      position: 'relative'
     }}>
       {/* Header */}
       <header className="sticky top-0 z-10 p-4" style={{
@@ -450,7 +432,7 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
 
         {/* RIGHT COLUMN: CART & STATUS */}
         <div className="lg:col-span-1 space-y-6">
-            <div className="sticky top-20" style={{
+            <div className={`sticky top-20 ${showCartDetails ? 'block' : 'hidden lg:block'}`} style={{
               backdropFilter: 'blur(25px) saturate(150%)',
               WebkitBackdropFilter: 'blur(25px) saturate(150%)',
               background: 'rgba(255, 255, 255, 0.9)',
@@ -547,9 +529,135 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
                 </div>
             </div>
         </div>
-
       </div>
-      
+
+      {getTotalItemCount() > 0 &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <button
+            type="button"
+            className="lg:hidden fixed bottom-4 right-4 z-50 rounded-full shadow-lg"
+            onClick={() => setShowCartDetails(true)}
+            style={{
+              position: 'fixed',
+              right: '16px',
+              bottom: '16px',
+              background: '#D4A76A',
+              color: '#3E2723',
+              padding: '12px 16px',
+              fontWeight: 700,
+              borderRadius: '9999px',
+              zIndex: 60,
+              boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+            }}
+          >
+            Cart ({getTotalItemCount()}) · ₹{getTotalPrice()}
+          </button>,
+          document.body
+        )}
+
+      {/* Cart Details Overlay - Mobile Only - Outside Main Container */}
+      {showCartDetails &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4" onClick={() => setShowCartDetails(false)}>
+            <div
+              className="bg-white rounded-lg shadow-xl p-4 max-h-[80vh] overflow-y-auto w-full"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'relative',
+                maxWidth: '520px'
+              }}
+            >
+              <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold" style={{ color: '#3E2723' }}>Your Order</h3>
+                <button
+                  onClick={() => setShowCartDetails(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Kitchen Status */}
+              {currentOrder?.items?.length > 0 && (
+                <div className="mb-6" style={{ borderBottom: '1px solid rgba(212, 167, 106, 0.15)', paddingBottom: '16px' }}>
+                  <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8B5A2B' }}>Kitchen Status</h3>
+                  <div className="space-y-2">
+                    {currentOrder.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span style={{ color: '#5D4037' }}>
+                          {item.name} <span style={{ color: '#8B5A2B' }}>x{item.qty}</span>
+                        </span>
+                        <span
+                          className="text-xs px-3 py-1.5"
+                          style={statusBadgeStyles[item.status || 'preparing']}
+                        >
+                          {item.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Cart Items */}
+              <div className="space-y-3">
+                {cart.map((item) => (
+                  <div key={item._id} className="flex justify-between items-center" style={{ borderBottom: '1px solid rgba(212, 167, 106, 0.1)', paddingBottom: '12px' }}>
+                    <div className="flex-1">
+                      <h4 style={{ color: '#3E2723', fontWeight: '600' }}>{item.name}</h4>
+                      <p style={{ color: '#8B5A2B', fontSize: '14px' }}>₹{item.price}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => updateQuantity(item._id, item.qty - 1)} className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-red-500 font-bold transition-colors" style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                        borderRadius: '4px'
+                      }}>-</button>
+                      <span className="w-4 text-center text-sm font-medium" style={{ color: '#3E2723' }}>{item.qty}</span>
+                      <button onClick={() => updateQuantity(item._id, item.qty + 1)} className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-green-500 font-bold transition-colors" style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                        borderRadius: '4px'
+                      }}>+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totals */}
+              <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(212, 167, 106, 0.15)' }}>
+                <div className="flex justify-between items-center mb-4">
+                  <span style={{ color: '#5D4037' }}>Total Bill</span>
+                  <span className="text-xl font-bold" style={{ color: '#D4A76A' }}>₹{getOrderTotal()}</span>
+                </div>
+                <AnimatedButton
+                  onClick={submitOrder}
+                  disabled={submitting || cart.length === 0}
+                  color="#D4A76A"
+                  hoverColor="#3E2723"
+                  padding="12px 24px"
+                  minWidth="140px"
+                  height="44px"
+                  width="100%"
+                >
+                  {submitting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    'Place Order'
+                  )}
+                </AnimatedButton>
+              </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+
+      {/* Error Message */}
       {error && (
         <div className="fixed bottom-4 left-4 right-4 p-4 rounded-lg shadow-lg text-center animate-bounce" style={{
           backdropFilter: 'blur(25px) saturate(150%)',

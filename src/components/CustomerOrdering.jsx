@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import API_URL from '../config'
 import { colors, AnimatedButton, Section, statusBadgeStyles, deleteButtonStyles, quantityButtonStyles } from '../styles/shared'
+import TrashIcon from './icons/TrashIcon'
 
 // Access logging function
 const logAccess = async (pageType, userId, tableId, deviceId) => {
@@ -174,20 +175,59 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
 
   // --- Cart Management ---
   const addToCart = (item) => {
+    const baselineQty = getBaselineQtyForItem(item._id)
+
     setCart(prev => {
       const existing = prev.find(i => i._id === item._id)
+      const existingDelta = existing?.qty || 0
+
       if (existing) {
-        return prev.map(i => i._id === item._id ? { ...i, qty: i.qty + 1 } : i)
+        return prev.map(i => i._id === item._id ? { ...i, qty: existingDelta + 1 } : i)
       }
+
+      if (baselineQty > 0) {
+        return [...prev, { _id: item._id, qty: 1, name: item.name, price: item.price }]
+      }
+
       return [...prev, { ...item, qty: 1 }]
     })
   }
 
+  const getBaselineQtyForItem = (itemId) => {
+    const baseline = currentOrder?.items?.reduce((t, it) => {
+      if (it.itemId === itemId) return t + (it.qty || 0)
+      return t
+    }, 0)
+    return baseline || 0
+  }
+
   const updateQuantity = (itemId, newQty) => {
-    if (newQty <= 0) {
+    const baselineQty = getBaselineQtyForItem(itemId)
+
+    if (baselineQty > 0) {
+      const desiredTotal = Math.max(newQty, baselineQty)
+      const desiredDelta = desiredTotal - baselineQty
+
+      if (desiredDelta <= 0) {
         setCart(prev => prev.filter(i => i._id !== itemId))
         return
+      }
+
+      setCart(prev => {
+        const existing = prev.find(i => i._id === itemId)
+        if (existing) {
+          return prev.map(i => i._id === itemId ? { ...i, qty: desiredDelta } : i)
+        }
+        return [...prev, { _id: itemId, qty: desiredDelta }]
+      })
+      return
     }
+
+    if (newQty <= 0) {
+      setCart(prev => prev.filter(i => i._id !== itemId))
+      return
+    }
+
     setCart(prev => prev.map(i => i._id === itemId ? { ...i, qty: newQty } : i))
   }
 
@@ -229,41 +269,45 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
       const orderData = await orderRes.json()
       if (!orderRes.ok) throw new Error(orderData.error || 'Failed to start order')
 
-      // Step B: Prepare Items - Separate existing from new
-      const existingItems = cart.filter(item => item.isExisting).map(item => ({
-        itemId: item._id,
-        name: item.name,
-        price: item.price,
-        qty: item.qty,
-        status: 'preparing'
-      }))
-      
-      const newItems = cart.filter(item => !item.isExisting).map(item => ({
-        itemId: item._id,
-        name: item.name,
-        price: item.price,
-        qty: item.qty,
-        status: 'preparing'
-      }))
+      // Step B: Only send the delta above what is already on the order.
+      // The cart qty is treated as the desired total (baseline + new additions).
+      const baselineByItemId = (orderData.items || []).reduce((acc, it) => {
+        // Only treat non-served quantities as "already sent to kitchen" baseline.
+        // Served items should not block re-ordering the same item.
+        if (it.status === 'served') return acc
+        acc[it.itemId] = (acc[it.itemId] || 0) + (it.qty || 0)
+        return acc
+      }, {})
 
-      // Step C: Smart Merge - Only merge new items with existing order items
+      const deltaItems = cart
+        .map((ci) => {
+          const baseline = baselineByItemId[ci._id] || 0
+          const delta = ci.qty - baseline
+          if (delta <= 0) return null
+          return {
+            itemId: ci._id,
+            name: ci.name,
+            price: ci.price,
+            qty: delta,
+            status: 'preparing'
+          }
+        })
+        .filter(Boolean)
+
+      if (deltaItems.length === 0) {
+        setSubmitting(false)
+        return
+      }
+
+      // Step C: Smart Merge - add only delta to an existing non-served row.
+      // Never merge into a served row.
       let finalItems = orderData.items ? [...orderData.items] : []
-      
-      // Update quantities for existing items (match by itemId)
-      existingItems.forEach(existingItem => {
-        const existingIdx = finalItems.findIndex(i => i.itemId === existingItem.itemId)
+      deltaItems.forEach(deltaItem => {
+        const existingIdx = finalItems.findIndex(i => i.itemId === deltaItem.itemId && i.status !== 'served')
         if (existingIdx >= 0) {
-          finalItems[existingIdx].qty = existingItem.qty // Update with new quantity
-        }
-      })
-      
-      // Add completely new items
-      newItems.forEach(newItem => {
-        const existingIdx = finalItems.findIndex(i => i.itemId === newItem.itemId && i.status === 'preparing')
-        if (existingIdx >= 0) {
-          finalItems[existingIdx].qty += newItem.qty
+          finalItems[existingIdx].qty += deltaItem.qty
         } else {
-          finalItems.push(newItem)
+          finalItems.push(deltaItem)
         }
       })
 
@@ -404,21 +448,99 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
                                                 <div className="font-medium">{item.name} <span className="font-semibold" style={{ color: colors.primary }}>₹{item.price.toFixed(2)}</span></div>
                                                 <div className="text-xs" style={{ color: '#8B5A2B' }}>{item.description}</div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <AnimatedButton
+                                            {(() => {
+                                              const existing = cart.find(i => i._id === item._id)
+                                              const baselineQty = getBaselineQtyForItem(item._id)
+                                              const deltaQty = existing?.qty || 0
+                                              const totalQty = baselineQty + deltaQty
+                                              const showControls = totalQty > 0
+                                              const showDelete = baselineQty === 0 && totalQty === 1
+
+                                              if (!showControls) {
+                                                return (
+                                                  <AnimatedButton
                                                     onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        addToCart(item);
-                                                    }} 
+                                                      e.stopPropagation()
+                                                      addToCart(item)
+                                                    }}
                                                     color={colors.primary}
                                                     hoverColor={colors.primaryDark}
                                                     padding="6px 12px"
-                                                    minWidth="80px"
+                                                    minWidth="110px"
                                                     height="32px"
-                                                >
-                                                    Add
-                                                </AnimatedButton>
-                                            </div>
+                                                  >
+                                                    Add to cart
+                                                  </AnimatedButton>
+                                                )
+                                              }
+
+                                              return (
+                                                <div className="flex items-center gap-2">
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation()
+                                                      if (showDelete) {
+                                                        updateQuantity(item._id, 0)
+                                                      } else {
+                                                        updateQuantity(item._id, totalQty - 1)
+                                                      }
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                      if (!showDelete) return
+                                                      Object.assign(e.currentTarget.style, {
+                                                        background: 'rgba(239, 68, 68, 0.35)',
+                                                        border: '1px solid rgba(239, 68, 68, 0.5)',
+                                                        color: '#dc2626',
+                                                        transform: 'scale(1.02)'
+                                                      })
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                      if (!showDelete) return
+                                                      Object.assign(e.currentTarget.style, deleteButtonStyles.base)
+                                                    }}
+                                                    className="w-8 h-8 flex items-center justify-center cursor-pointer quantity-button"
+                                                    style={showDelete ? deleteButtonStyles.base : {
+                                                      ...deleteButtonStyles.base,
+                                                      background: 'rgba(212, 167, 106, 0.25)',
+                                                      border: '1px solid rgba(212, 167, 106, 0.4)',
+                                                      color: '#3E2723'
+                                                    }}
+                                                  >
+                                                    {showDelete ? (
+                                                      <TrashIcon
+                                                        size={16}
+                                                        color="#dc2626"
+                                                        strokeWidth={2}
+                                                        dangerHover={true}
+                                                        shakeOnClick={true}
+                                                      />
+                                                    ) : (
+                                                      <span style={{ fontSize: '16px', fontWeight: 'bold' }}>-</span>
+                                                    )}
+                                                  </button>
+
+                                                  <div className="w-12 text-center py-1">
+                                                    ×{totalQty}
+                                                  </div>
+
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation()
+                                                      addToCart(item)
+                                                    }}
+                                                    className="w-8 h-8 flex items-center justify-center cursor-pointer quantity-button"
+                                                    style={{
+                                                      ...deleteButtonStyles.base,
+                                                      background: 'rgba(212, 167, 106, 0.25)',
+                                                      border: '1px solid rgba(212, 167, 106, 0.4)',
+                                                      color: '#3E2723'
+                                                    }}
+                                                  >
+                                                    <span style={{ fontSize: '16px', fontWeight: 'bold' }}>+</span>
+                                                  </button>
+                                                </div>
+                                              )
+                                            })()}
                                         </div>
                                     ))}
                                 </div>
@@ -451,14 +573,8 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
                             {currentOrder.items.map((item, idx) => (
                                 <div key={idx} className="flex justify-between text-sm">
                                     <span style={{ color: '#5D4037' }}>{item.name} <span style={{ color: '#8B5A2B' }}>x{item.qty}</span></span>
-                                    <span className="font-medium px-2 py-0.5 text-xs" style={{
-                                      ...statusBadgeStyles[item.status === 'served' ? 'available' : item.status === 'ready' ? 'preparing-order' : 'preparing'],
-                                      fontSize: '11px',
-                                      fontWeight: '600',
-                                      letterSpacing: '0.025em',
-                                      textTransform: 'uppercase'
-                                    }}>
-                                        {item.status || 'Ordered'}
+                                    <span className="text-xs px-3 py-1.5" style={statusBadgeStyles[item.status || 'preparing']}>
+                                      {item.status}
                                     </span>
                                 </div>
                             ))}
@@ -485,9 +601,7 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
                                     <div className="font-medium" style={{ color: '#3E2723' }}>{item.name}</div>
                                     <div className="text-xs" style={{ color: '#8B5A2B' }}>₹{item.price} each</div>
                                 </div>
-                                <div className="flex items-center gap-2" style={{
-                                  ...quantityButtonStyles.base
-                                }}>
+                                <div className="flex items-center gap-2">
                                     <button onClick={() => updateQuantity(item._id, item.qty - 1)} className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-red-500 font-bold transition-colors" style={{
                                       background: 'rgba(255, 255, 255, 0.8)',
                                       boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
@@ -590,10 +704,13 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
                         <span style={{ color: '#5D4037' }}>
                           {item.name} <span style={{ color: '#8B5A2B' }}>x{item.qty}</span>
                         </span>
-                        <span
-                          className="text-xs px-3 py-1.5"
-                          style={statusBadgeStyles[item.status || 'preparing']}
-                        >
+                        <span className="font-medium px-2 py-0.5 text-xs" style={{
+                          ...statusBadgeStyles[item.status === 'served' ? 'available' : item.status === 'ready' ? 'preparing-order' : 'preparing'],
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          letterSpacing: '0.025em',
+                          textTransform: 'uppercase'
+                        }}>
                           {item.status}
                         </span>
                       </div>

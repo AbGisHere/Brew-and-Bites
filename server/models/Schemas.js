@@ -98,6 +98,7 @@ const OrderItemSchema = new mongoose.Schema({
 
 const OrderSchema = new mongoose.Schema({
     tableId: String,
+    customerId: String, // Customer who placed the order
     items: [OrderItemSchema], // List of items
     status: { type: String, default: 'open' }, // Main order status (open/completed)
     chefStatus: { type: String, default: 'preparing' }, // Tracks chef's completion status

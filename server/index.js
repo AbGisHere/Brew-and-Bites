@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const connectDB = require('./db');
 // Import the Schemas we created in Step 4
 // New (FIXED)
@@ -38,6 +39,48 @@ app.use(cors({
 })); // Allow React to talk to us
 app.use(express.json()); // Allow reading JSON bodies
 
+// --- Demo customer OTP/session store (in-memory) ---
+// NOTE: This is intended for demo/dev only. OTP is hashed and never returned from the API.
+// For production, replace with SMS provider + persistent store.
+const CUSTOMER_JWT_SECRET = process.env.CUSTOMER_JWT_SECRET || process.env.JWT_SECRET || 'fallback_secret'
+const DEMO_OTP_TTL_MS = 5 * 60 * 1000
+const demoOtpStore = new Map() // phone -> { otpHash, expiresAt, name }
+
+const normalizePhone = (phone) => String(phone || '').replace(/\D/g, '')
+
+const hashOtp = (otp) => crypto.createHash('sha256').update(String(otp)).digest('hex')
+
+const generateOtp = () => {
+  // 6-digit numeric OTP
+  return String(Math.floor(100000 + Math.random() * 900000))
+}
+
+const signCustomerToken = ({ phone, name }) => {
+  return jwt.sign(
+    { phone, name, type: 'customer' },
+    CUSTOMER_JWT_SECRET,
+    { expiresIn: '7d' }
+  )
+}
+
+const requireCustomerAuth = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' })
+    }
+    const token = authHeader.split(' ')[1]
+    const decoded = jwt.verify(token, CUSTOMER_JWT_SECRET)
+    if (!decoded || decoded.type !== 'customer') {
+      return res.status(401).json({ error: 'Invalid token' })
+    }
+    req.customer = decoded
+    next()
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid token' })
+  }
+}
+
     // --- ROUTES ---
 
 // A. TEST ROUTE
@@ -49,6 +92,61 @@ app.get('/', (req, res) => {
 app.get('/api/version', (req, res) => {
     res.json({ version: '1.4.2' });
 });
+
+// --- Customer demo OTP auth ---
+app.post('/api/customer/auth/request-otp', async (req, res) => {
+  try {
+    const { phone, name } = req.body || {}
+    const normalizedPhone = normalizePhone(phone)
+    const normalizedName = String(name || '').trim()
+    if (!normalizedPhone || normalizedPhone.length < 10) {
+      return res.status(400).json({ error: 'Invalid phone number' })
+    }
+    if (!normalizedName) {
+      return res.status(400).json({ error: 'Name is required' })
+    }
+
+    const otp = generateOtp()
+    demoOtpStore.set(normalizedPhone, {
+      otpHash: hashOtp(otp),
+      expiresAt: Date.now() + DEMO_OTP_TTL_MS,
+      name: normalizedName
+    })
+
+    // Never return OTP to client. For demo/dev, print to server logs.
+    console.log(`[DEMO OTP] phone=${normalizedPhone} otp=${otp} (expires in 5 min)`)
+
+    return res.json({ success: true })
+  } catch (e) {
+    return res.status(500).json({ error: e.message })
+  }
+})
+
+app.post('/api/customer/auth/verify-otp', async (req, res) => {
+  try {
+    const { phone, otp } = req.body || {}
+    const normalizedPhone = normalizePhone(phone)
+    const record = demoOtpStore.get(normalizedPhone)
+    if (!record) return res.status(400).json({ error: 'OTP not requested or expired' })
+    if (Date.now() > record.expiresAt) {
+      demoOtpStore.delete(normalizedPhone)
+      return res.status(400).json({ error: 'OTP expired' })
+    }
+    if (hashOtp(otp) !== record.otpHash) {
+      return res.status(400).json({ error: 'Invalid OTP' })
+    }
+
+    demoOtpStore.delete(normalizedPhone)
+    const token = signCustomerToken({ phone: normalizedPhone, name: record.name })
+    return res.json({ token, customer: { phone: normalizedPhone, name: record.name } })
+  } catch (e) {
+    return res.status(500).json({ error: e.message })
+  }
+})
+
+app.get('/api/customer/me', requireCustomerAuth, async (req, res) => {
+  return res.json({ customer: { phone: req.customer.phone, name: req.customer.name } })
+})
 
 // Access Logging endpoint
 app.post('/api/log-access', async (req, res) => {
@@ -1011,7 +1109,7 @@ app.post('/api/login', async (req, res) => {
 
     // 2. START OR GET ACTIVE ORDER FOR A TABLE
     app.post('/api/orders/start', async (req, res) => {
-        const { tableId } = req.body;
+        const { tableId, customerId } = req.body;
         try {
             // Check if table exists
             const table = await Table.findById(tableId);
@@ -1021,6 +1119,11 @@ app.post('/api/login', async (req, res) => {
             if (table.activeOrderId) {
                 const existingOrder = await Order.findById(table.activeOrderId);
                 if (existingOrder && existingOrder.status === 'open') {
+                    // If customerId provided and order has no customer, associate it
+                    if (customerId && !existingOrder.customerId) {
+                        existingOrder.customerId = customerId;
+                        await existingOrder.save();
+                    }
                     return res.json(existingOrder);
                 }
             }
@@ -1028,6 +1131,7 @@ app.post('/api/login', async (req, res) => {
             // Create new order with timing info
             const newOrder = await Order.create({
                 tableId: tableId, // Storing the Table ID string
+                customerId: customerId || null,
                 status: 'open',
                 items: [],
                 total: 0,

@@ -1,12 +1,17 @@
 import { useMemo, useState, useEffect } from 'react';
-// REMOVED: import { store } from '../store'; 
+// REMOVED: import { store } from '../store';
 import API_URL from '../config'; // <--- 1. IMPORT THIS
 import './MenuFlipCard.css'; // Import flip card styles
+import { useTheme } from '../context/ThemeContext'
+import { useInView } from '../hooks/useInView'
 
 export default function Menu() {
   const [menu, setMenu] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDark } = useTheme()
+  const [headerRef, headerVisible] = useInView()
+  const [cardsRef, cardsVisible] = useInView()
   
   // Calculate categories based on the loaded menu data
   const categories = useMemo(() => Object.keys(menu).filter(cat => menu[cat].length > 0), [menu]);
@@ -55,68 +60,131 @@ export default function Menu() {
     }
   }, [categories, activeCategory]);
 
+  const sectionBgLoading = isDark
+    ? 'linear-gradient(180deg, #0f0806 0%, #0a0605 100%)'
+    : 'linear-gradient(180deg, #FFF3E8 0%, #FFF8F0 100%)'
+
   if (isLoading) {
     return (
-      <div className="py-20 text-center">
-        <div className="text-xl font-semibold text-gray-600">Loading delicious items...</div>
+      <div className="py-32 text-center" style={{ background: sectionBgLoading }}>
+        <div
+          className="text-lg font-medium tracking-wide"
+          style={{ color: isDark ? 'rgba(212, 167, 106, 0.6)' : 'rgba(139, 90, 43, 0.6)' }}
+        >
+          Loading delicious items...
+        </div>
       </div>
     );
   }
 
+  // Derive theme values here so they're available in all branches
+  const sectionBg = isDark
+    ? 'linear-gradient(180deg, #0f0806 0%, #0a0605 100%)'
+    : 'linear-gradient(180deg, #FFF3E8 0%, #FFF8F0 100%)'
+  const glowBg = isDark
+    ? 'radial-gradient(ellipse 70% 40% at 50% 30%, rgba(139,90,43,0.07) 0%, transparent 70%)'
+    : 'radial-gradient(ellipse 70% 40% at 50% 30%, rgba(255,200,130,0.18) 0%, transparent 70%)'
+  const eyebrowColor = isDark ? '#D4A76A' : '#8B5A2B'
+  const eyebrowLineL = isDark ? 'linear-gradient(90deg, transparent, #D4A76A)' : 'linear-gradient(90deg, transparent, #8B5A2B)'
+  const eyebrowLineR = isDark ? 'linear-gradient(90deg, #D4A76A, transparent)' : 'linear-gradient(90deg, #8B5A2B, transparent)'
+  const titleGradient = isDark ? 'linear-gradient(135deg, #F5DEB3, #D4A76A)' : 'linear-gradient(135deg, #3d1a08, #8B5A2B)'
+  const subText = isDark ? 'rgba(245,222,179,0.5)' : 'rgba(42,11,0,0.5)'
+  const noItemsText = isDark ? 'rgba(245,222,179,0.4)' : 'rgba(42,11,0,0.4)'
+  const filterActiveBg = isDark ? 'linear-gradient(135deg, #D4A76A, #B9864B)' : 'linear-gradient(135deg, #8B5A2B, #693319)'
+  const filterActiveColor = isDark ? '#0a0605' : '#FFF8F0'
+  const filterActiveGlow = isDark ? '0 0 20px rgba(212,167,106,0.35)' : '0 0 15px rgba(139,90,43,0.2)'
+  const filterInactiveBg = isDark ? 'rgba(139, 90, 43, 0.1)' : 'rgba(139, 90, 43, 0.06)'
+  const filterInactiveBorder = isDark ? 'rgba(212, 167, 106, 0.2)' : 'rgba(139, 90, 43, 0.2)'
+  const filterInactiveColor = isDark ? 'rgba(245, 222, 179, 0.6)' : 'rgba(42, 11, 0, 0.6)'
+  const backBtnBg = isDark ? 'rgba(139, 90, 43, 0.12)' : 'rgba(139, 90, 43, 0.08)'
+  const backBtnBorder = isDark ? 'rgba(212, 167, 106, 0.35)' : 'rgba(139, 90, 43, 0.3)'
+  const backBtnColor = isDark ? '#D4A76A' : '#8B5A2B'
+
   if (error) {
     return (
-      <div className="py-20 text-center text-red-600">
-        {error}
+      <div className="py-32 text-center" style={{ background: sectionBg }}>
+        <div style={{ color: 'rgba(255, 100, 100, 0.7)' }}>{error}</div>
       </div>
     );
   }
 
   return (
-    <section id="menu" className="py-12 md:py-20 bg-opacity-90">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Our Menu</h2>
-          <div className="w-24 h-1 bg-primary mx-auto mb-6"></div>
-          <p className="text-gray-700 max-w-2xl mx-auto text-lg">
+    <section
+      id="menu"
+      className="py-20 relative overflow-hidden"
+      style={{ background: sectionBg, transition: 'background 0.5s ease' }}
+    >
+      {/* Background glow */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: glowBg }} />
+
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
+        {/* Header */}
+        <div
+          ref={headerRef}
+          className={`text-center mb-14 ${headerVisible ? 'anim-fade-up' : 'anim-hidden'}`}
+        >
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-px w-8" style={{ background: eyebrowLineL }} />
+            <span className="text-xs tracking-[0.4em] uppercase font-semibold" style={{ color: eyebrowColor }}>
+              Explore
+            </span>
+            <div className="h-px w-8" style={{ background: eyebrowLineR }} />
+          </div>
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-4"
+            style={{ background: titleGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+          >
+            Our Menu
+          </h2>
+          <p className="max-w-xl mx-auto" style={{ color: subText }}>
             We carefully select the finest ingredients to create delicious and healthy meals for you.
           </p>
         </div>
 
-        {/* Menu Categories */}
-        <div className="flex flex-wrap justify-center mb-12 gap-2">
+        {/* Category pills */}
+        <div className={`flex flex-wrap justify-center mb-12 gap-3 ${headerVisible ? 'anim-fade-up' : 'anim-hidden'}`} style={{ animationDelay: '0.15s' }}>
           {categories.length > 0 ? (
             categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`px-6 py-2 rounded-full font-medium transition-colors ${
+                className="px-6 py-2 rounded-full font-medium text-sm transition-all hover:scale-105"
+                style={
                   activeCategory === category
-                    ? 'bg-primary text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
+                    ? { background: filterActiveBg, color: filterActiveColor, boxShadow: filterActiveGlow }
+                    : { background: filterInactiveBg, border: `1px solid ${filterInactiveBorder}`, color: filterInactiveColor }
+                }
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </button>
             ))
           ) : (
-            <div className="text-gray-500 py-4">No featured categories available</div>
+            <div style={{ color: noItemsText }} className="py-4">
+              No featured categories available
+            </div>
           )}
         </div>
 
-        {/* Menu Items (flip cards) */}
-        <div className="menu-cards grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-10 px-4 sm:px-0">
+        {/* Menu Items (flip cards — existing styles preserved) */}
+        <div ref={cardsRef} className="menu-cards grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-10 px-4 sm:px-0">
           {activeCategory && menu[activeCategory]?.length > 0 ? (
             menu[activeCategory].map((item, index) => (
               <div key={`${activeCategory}-${index}`} className="card horizontal-flip">
                 <div className="content">
                   <div className="back">
                     <div className="back-content">
-                      <svg stroke="#ffffff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" height="50px" width="50px" fill="#ffffff">
-                        <g strokeWidth="0" id="SVGRepo_bgCarrier"></g>
-                        <g strokeLinejoin="round" strokeLinecap="round" id="SVGRepo_tracerCarrier"></g>
-                        <g id="SVGRepo_iconCarrier">
-                          <path d="M20.84375 0.03125C20.191406 0.0703125 19.652344 0.425781 19.21875 1.53125C18.988281 2.117188 18.5 3.558594 18.03125 4.9375C17.792969 5.636719 17.570313 6.273438 17.40625 6.75C17.390625 6.796875 17.414063 6.855469 17.40625 6.90625C17.398438 6.925781 17.351563 6.949219 17.34375 6.96875L17.25 7.25C18.566406 7.65625 19.539063 8.058594 19.625 8.09375C22.597656 9.21875 28.351563 11.847656 33.28125 16.78125C38.5 22 41.183594 28.265625 42.09375 30.71875C42.113281 30.761719 42.375 31.535156 42.75 32.84375C42.757813 32.839844 42.777344 32.847656 42.78125 32.84375C43.34375 32.664063 44.953125 32.09375 46.3125 31.625C47.109375 31.351563 47.808594 31.117188 48.15625 31C49.003906 30.714844 49.542969 30.292969 49.8125 29.6875C50.074219 29.109375 50.066406 28.429688 49.75 27.6875C49.605469 27.347656 49.441406 26.917969 49.25 26.4375C47.878906 23.007813 45.007813 15.882813 39.59375 10.46875C33.613281 4.484375 25.792969 1.210938 22.125 0.21875C21.648438 0.0898438 21.234375 0.0078125 20.84375 0.03125Z M 16.46875 9.09375L0.0625 48.625C-0.09375 48.996094 -0.00390625 49.433594 0.28125 49.71875C0.472656 49.910156 0.738281 50 1 50C1.128906 50 1.253906 49.988281 1.375 49.9375L40.90625 33.59375C40.523438 32.242188 40.222656 31.449219 40.21875 31.4375C39.351563 29.089844 36.816406 23.128906 31.875 18.1875C27.035156 13.34375 21.167969 10.804688 18.875 9.9375C18.84375 9.925781 17.8125 9.5 16.46875 9.09375Z M 17 16C19.761719 16 22 18.238281 22 21C22 23.761719 19.761719 26 17 26C15.140625 26 13.550781 24.972656 12.6875 23.46875L15.6875 16.1875C16.101563 16.074219 16.550781 16 17 16 Z M 31 22C32.65625 22 34 23.34375 34 25C34 25.917969 33.585938 26.730469 32.9375 27.28125L32.90625 27.28125C33.570313 27.996094 34 28.949219 34 30C34 32.210938 32.210938 34 30 34C27.789063 34 26 32.210938 26 30C26 28.359375 26.996094 26.960938 28.40625 26.34375L28.3125 26.3125C28.117188 25.917969 28 25.472656 28 25C28 23.34375 29.34375 22 31 22 Z M 21 32C23.210938 32 25 33.789063 25 36C25 36.855469 24.710938 37.660156 24.25 38.3125L20.3125 39.9375C18.429688 39.609375 17 37.976563 17 36C17 33.789063 18.789063 32 21 32 Z M 9 34C10.65625 34 12 35.34375 12 37C12 38.65625 10.65625 40 9 40C7.902344 40 6.960938 39.414063 6.4375 38.53125L8.25 34.09375C8.488281 34.03125 8.742188 34 9 34Z"></path>
-                        </g>
+                      {/* Coffee cup with steam — café themed */}
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="50px" width="50px" fill="none">
+                        {/* Steam wisps */}
+                        <path d="M7 4C7 5.2 5.5 5.8 5.5 7S7 8.8 7 10" stroke="#D4A76A" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+                        <path d="M12 3C12 4.4 10.5 5 10.5 6.5S12 8.5 12 10" stroke="#D4A76A" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+                        <path d="M17 4C17 5.2 15.5 5.8 15.5 7S17 8.8 17 10" stroke="#D4A76A" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+                        {/* Cup body */}
+                        <path d="M3 11h18l-1.5 8a2 2 0 01-2 1.5H6.5a2 2 0 01-2-1.5L3 11z" stroke="#ffffff" strokeWidth="1.4" fill="none" strokeLinejoin="round"/>
+                        {/* Handle */}
+                        <path d="M19 13.5h1.5a1.5 1.5 0 010 3H19" stroke="#ffffff" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+                        {/* Saucer */}
+                        <path d="M2 21.5h20" stroke="#D4A76A" strokeWidth="1.4" strokeLinecap="round"/>
                       </svg>
                       <strong>{item.name}</strong>
                     </div>
@@ -152,16 +220,21 @@ export default function Menu() {
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center py-8 text-gray-500">
+            <div className="col-span-full text-center py-8" style={{ color: noItemsText }}>
               No featured dishes in this category. Please check back later.
             </div>
           )}
         </div>
 
-        <div className="text-center mt-16">
-          <button 
+        <div className={`text-center mt-16 ${cardsVisible ? 'anim-fade-up' : 'anim-hidden'}`}>
+          <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="bg-primary hover:bg-opacity-90 text-white font-semibold py-3 px-8 rounded-full transition-all transform hover:scale-105 text-lg"
+            className="font-semibold py-3 px-10 rounded-full transition-all hover:scale-105"
+            style={{
+              background: backBtnBg,
+              border: `1px solid ${backBtnBorder}`,
+              color: backBtnColor,
+            }}
           >
             Back to Top
           </button>

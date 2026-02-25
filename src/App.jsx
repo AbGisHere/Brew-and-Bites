@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Specialties from './components/Specialties'
@@ -86,6 +86,16 @@ function App() {
   const [loginRole, setLoginRole] = useState('admin')
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Restore the dashboard background (conic gradient + glassmorphism) on
+  // non-landing routes, so dashboards look exactly as they did before the
+  // landing page redesign. The landing page controls its own backgrounds.
+  useEffect(() => {
+    const isDashboard = /^\/(admin|waiter|chef|order|customer-order|[^/]+\/[^/]+)/.test(location.pathname)
+    document.body.classList.toggle('dashboard-bg', isDashboard)
+    return () => document.body.classList.remove('dashboard-bg')
+  }, [location.pathname])
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1200)

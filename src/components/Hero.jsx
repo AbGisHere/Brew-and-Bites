@@ -1,69 +1,186 @@
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Sparkles, Stars } from '@react-three/drei'
+import { Sparkles, Stars, Environment } from '@react-three/drei'
 import { motion, useScroll, useTransform } from 'motion/react'
 import { useTheme } from '../context/ThemeContext'
 
-// ─── Coffee Bean ──────────────────────────────────────────────────────────────
-function CoffeeBean({ position, speed = 1.0, beanScale = 1.0, isDark }) {
-  const meshRef = useRef()
-  const initY = position[1]
-  const color = useMemo(() => {
-    const palette = isDark
-      ? ['#3d1a08', '#5c2a12', '#2a0b00', '#6b3420', '#4a1a08']
-      : ['#5c2a12', '#8B5A2B', '#3d1a08', '#7a3b1a', '#6b3420']
-    return palette[Math.floor(Math.random() * palette.length)]
-  }, [isDark])
+// ── Roast levels 0 (light) → 6 (french) ──────────────────────────────────────
+const ROAST_COLORS = [
+  '#d9934c', // 0  light roast — warm bright tan
+  '#c07830', // 1  medium-light
+  '#ab6525', // 2  medium
+  '#8B5A2B', // 3  medium (standard)
+  '#7a4220', // 4  medium-dark
+  '#5c2a12', // 5  dark
+  '#3a1508', // 6  very dark / french roast
+]
 
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    if (!meshRef.current) return
-    meshRef.current.position.y = initY + Math.sin(t * speed + position[0]) * 0.35
-    meshRef.current.rotation.x += 0.004 * speed
-    meshRef.current.rotation.z += 0.007 * speed
+// ── Shape variants: [widthRatio, depthRatio] — Y is always 1.0 (long axis) ───
+const SHAPES = [
+  [0.64, 0.47], // standard
+  [0.59, 0.42], // slim / elongated
+  [0.72, 0.56], // rounder / plump
+  [0.61, 0.39], // very flat
+  [0.68, 0.51], // medium-round
+]
+
+// ── Material finishes ─────────────────────────────────────────────────────────
+const MATS = [
+  { roughness: 0.62, clearcoat: 0.50, ccRough: 0.52 }, // fresh / oily sheen
+  { roughness: 0.80, clearcoat: 0.20, ccRough: 0.78 }, // standard
+  { roughness: 0.95, clearcoat: 0.03, ccRough: 0.97 }, // matte / aged
+]
+
+// ── Shader modifier — applied once at module level, shared across all beans ──
+// Adds: (1) a crease groove along the long axis, (2) two-octave grain noise.
+function addBeanShader(shader) {
+  // Pass object-space position from vertex → fragment
+  shader.vertexShader = shader.vertexShader
+    .replace(
+      '#include <common>',
+      '#include <common>\nvarying vec3 vBeanPos;'
+    )
+    .replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\nvBeanPos = position;'
+    )
+
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      '#include <common>',
+      '#include <common>\nvarying vec3 vBeanPos;'
+    )
+    .replace(
+      // Hook in right after diffuseColor is declared
+      'vec4 diffuseColor = vec4( diffuse, opacity );',
+      `vec4 diffuseColor = vec4( diffuse, opacity );
+
+      // ── Crease groove ──────────────────────────────────────────────────────
+      // The bean's long axis is Y.  The crease runs along Y at X ≈ 0.
+      // Sphere base radius is 0.30, so normalise by it.
+      float xAbs      = abs(vBeanPos.x) / 0.30;
+      // Fade the crease at the pointed tips (|y| → bR)
+      float tipFade   = 1.0 - smoothstep(0.68, 0.96, abs(vBeanPos.y) / 0.30);
+      float crease    = smoothstep(0.09, 0.0, xAbs) * 0.72 * tipFade;
+      diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.06, crease);
+
+      // ── Grain / surface irregularity ───────────────────────────────────────
+      // Two-octave hash noise — coarse (scale×14) + fine (scale×38)
+      vec3 p1 = vBeanPos * 14.0;
+      float n1 = fract(sin(dot(p1, vec3(127.1, 311.7,  74.3))) * 43758.5453) * 0.10 - 0.05;
+      vec3 p2 = vBeanPos * 38.0;
+      float n2 = fract(sin(dot(p2, vec3(269.5, 183.3, 246.1))) * 12345.6789) * 0.06 - 0.03;
+      diffuseColor.rgb = clamp(diffuseColor.rgb + n1 + n2, 0.0, 1.0);`
+    )
+}
+
+// ─── CoffeeBean ───────────────────────────────────────────────────────────────
+function CoffeeBean({
+  position, speed = 1.0, beanScale = 1.0, isDark,
+  roastLevel = 3, shapeIdx = 0, matIdx = 0,
+  initialRotation = [0, 0, 0],
+}) {
+  const groupRef  = useRef()
+  const elapsed   = useRef(0) // avoids THREE.Clock.getElapsedTime()
+  const initPos   = useMemo(() => [position[0], position[1], position[2]], [])
+
+  const color      = ROAST_COLORS[roastLevel % ROAST_COLORS.length]
+  const [sw, sd]   = SHAPES[shapeIdx % SHAPES.length]
+  const mat        = MATS[matIdx % MATS.length]
+  const s          = beanScale
+  const bR         = 0.30
+
+  const rotDir = shapeIdx % 2 === 0 ? 1 : -1
+  const phase  = initPos[0] * 1.9 + initPos[2] * 0.7
+
+  // delta-based time — no THREE.Clock calls from our code
+  useFrame((_, delta) => {
+    if (!groupRef.current) return
+    elapsed.current += delta
+    const t = elapsed.current
+    groupRef.current.position.y = initPos[1] + Math.sin(t * speed + phase) * 0.42
+    groupRef.current.position.x = initPos[0] + Math.cos(t * speed * 0.52 + initPos[2]) * 0.15
+    groupRef.current.rotation.x += 0.0025 * speed
+    groupRef.current.rotation.y += 0.0034 * speed * rotDir
+    groupRef.current.rotation.z += 0.0016 * speed * rotDir
   })
 
+  const emissiveInt = isDark
+    ? (roastLevel <= 2 ? 0.22 : 0.11)
+    : (roastLevel <= 2 ? 0.09 : 0.02)
+
   return (
-    <mesh ref={meshRef} position={position} scale={[beanScale, beanScale * 0.65, beanScale * 0.45]}>
-      <sphereGeometry args={[0.22, 8, 6]} />
-      <meshStandardMaterial
-        color={color}
-        roughness={isDark ? 0.85 : 0.7}
-        metalness={0.05}
-        emissive={color}
-        emissiveIntensity={isDark ? 0.18 : 0.08}
-      />
-    </mesh>
+    <group ref={groupRef} position={position} rotation={initialRotation}>
+      <mesh scale={[sw * s, 1.0 * s, sd * s]}>
+        <sphereGeometry args={[bR, 24, 18]} />
+        <meshPhysicalMaterial
+          color={color}
+          roughness={mat.roughness}
+          metalness={0.0}
+          clearcoat={mat.clearcoat}
+          clearcoatRoughness={mat.ccRough}
+          emissive={color}
+          emissiveIntensity={emissiveInt}
+          onBeforeCompile={addBeanShader}
+        />
+      </mesh>
+    </group>
   )
 }
 
 // ─── Scene ────────────────────────────────────────────────────────────────────
 function Scene({ mouseX, mouseY, isDark }) {
   const sceneRef = useRef()
+
   useFrame(() => {
-    if (sceneRef.current) {
-      sceneRef.current.rotation.y += (mouseX * 0.1 - sceneRef.current.rotation.y) * 0.03
-      sceneRef.current.rotation.x += (-mouseY * 0.06 - sceneRef.current.rotation.x) * 0.03
-    }
+    if (!sceneRef.current) return
+    sceneRef.current.rotation.y += (mouseX  *  0.10 - sceneRef.current.rotation.y) * 0.03
+    sceneRef.current.rotation.x += (-mouseY * 0.06  - sceneRef.current.rotation.x) * 0.03
   })
+
   const beans = useMemo(() =>
-    Array.from({ length: 22 }, () => ({
-      position: [(Math.random() - 0.5) * 14, (Math.random() - 0.5) * 9, (Math.random() - 0.5) * 5 - 1],
-      speed: 0.2 + Math.random() * 0.4,
-      beanScale: 0.35 + Math.random() * 0.8,
+    Array.from({ length: 26 }, (_, i) => ({
+      position: [
+        (Math.random() - 0.5) * 16,
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 7 - 0.5,
+      ],
+      speed:           0.14 + Math.random() * 0.42,
+      beanScale:       0.45 + Math.random() * 1.40,
+      roastLevel:      Math.floor(Math.random() * 7),
+      shapeIdx:        i % SHAPES.length,
+      matIdx:          Math.floor(Math.random() * MATS.length),
+      initialRotation: [
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+      ],
     }))
   , [])
+
   return (
     <>
-      <ambientLight intensity={isDark ? 0.25 : 0.9} color={isDark ? '#D4A76A' : '#FFF3E0'} />
-      <pointLight position={[4, 4, 4]} intensity={isDark ? 2.8 : 1.6} color="#D4A76A" />
-      <pointLight position={[-5, 2, 3]} intensity={isDark ? 1.6 : 0.9} color="#FF8C42" />
-      <pointLight position={[0, -4, 2]} intensity={isDark ? 0.8 : 0.3} color="#8B5A2B" />
-      <pointLight position={[1.8, 2, 5]} intensity={isDark ? 1.2 : 0.6} color="#FFB347" />
+      <ambientLight intensity={isDark ? 0.18 : 0.75} color={isDark ? '#D4A76A' : '#FFF3E0'} />
+      <pointLight position={[ 5,  5,  5]} intensity={isDark ? 3.5 : 2.0} color="#D4A76A" />
+      <pointLight position={[-6,  3,  3]} intensity={isDark ? 2.0 : 1.1} color="#FF8C42" />
+      <pointLight position={[ 0, -5,  2]} intensity={isDark ? 1.1 : 0.4} color="#8B5A2B" />
+      <pointLight position={[ 2,  3,  7]} intensity={isDark ? 1.6 : 0.8} color="#FFB347" />
+      <pointLight position={[-4, -2,  4]} intensity={isDark ? 0.9 : 0.3} color="#D4A76A" />
+      <Environment preset={isDark ? 'sunset' : 'dawn'} background={false} />
       <group ref={sceneRef}>
-        {isDark && <Stars radius={50} depth={30} count={300} factor={2} saturation={0} fade speed={0.3} />}
-        <Sparkles count={isDark ? 55 : 30} scale={[18, 12, 8]} size={isDark ? 1.5 : 1.1} speed={0.15} color={isDark ? '#D4A76A' : '#B9864B'} opacity={isDark ? 0.35 : 0.2} />
-{beans.map((bean, i) => (
+        {isDark && (
+          <Stars radius={55} depth={35} count={360} factor={2} saturation={0} fade speed={0.28} />
+        )}
+        {/* Dark mode: warm gold dust — Light mode: dark coffee-brown dust (needs contrast vs cream) */}
+        <Sparkles
+          count={isDark ? 60 : 90}
+          scale={[18, 12, 8]}
+          size={isDark ? 1.6 : 2.2}
+          speed={0.14}
+          color={isDark ? '#D4A76A' : '#4a1e08'}
+          opacity={isDark ? 0.28 : 0.60}
+        />
+        {beans.map((bean, i) => (
           <CoffeeBean key={i} isDark={isDark} {...bean} />
         ))}
       </group>
@@ -74,13 +191,15 @@ function Scene({ mouseX, mouseY, isDark }) {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 export default function Hero({ onAdminLogin, onWaiterLogin }) {
   const { isDark } = useTheme()
-  const [mouse, setMouse] = useState({ x: 0, y: 0 })
+  const [mouse, setMouse]     = useState({ x: 0, y: 0 })
   const [mounted, setMounted] = useState(false)
-  const heroRef = useRef()
 
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -100])
-  const textOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0])
+  // Use plain window scroll — avoids motion warning about container position.
+  // Hero is h-screen (100vh), so scrollY 0→innerHeight covers start→end of section.
+  const { scrollY } = useScroll()
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+  const textY       = useTransform(scrollY, [0, vh],        [0, -100])
+  const textOpacity = useTransform(scrollY, [0, vh * 0.75], [1, 0])
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 80)
@@ -89,7 +208,7 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
 
   useEffect(() => {
     const handle = (e) => setMouse({
-      x: (e.clientX / window.innerWidth - 0.5) * 2,
+      x: (e.clientX / window.innerWidth  - 0.5) * 2,
       y: (e.clientY / window.innerHeight - 0.5) * 2,
     })
     window.addEventListener('mousemove', handle)
@@ -105,7 +224,7 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
     : 'linear-gradient(135deg, #8B5A2B, #D4A76A)'
 
   return (
-    <section ref={heroRef} id="home" className="relative h-screen overflow-hidden" style={{ background: bg }}>
+    <section id="home" className="relative h-screen overflow-hidden" style={{ background: bg }}>
       {/* 3D Canvas */}
       <div className="absolute inset-0">
         <Canvas camera={{ position: [0, 0, 8], fov: 60 }} gl={{ antialias: true }}>
@@ -123,7 +242,8 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
       }} />
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none" style={{ background: `linear-gradient(to bottom, transparent, ${fadeBottom})` }} />
+      <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
+        style={{ background: `linear-gradient(to bottom, transparent, ${fadeBottom})` }} />
 
       {/* Text block — scroll parallax */}
       <motion.div

@@ -62,9 +62,10 @@ export default function Gallery() {
   return (
     <section
       id="gallery"
-      className="py-24 relative overflow-hidden"
+      className="py-20 relative overflow-hidden"
       style={{ background: sectionBg, transition: 'background 0.5s ease' }}
     >
+      <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: isDark ? 'linear-gradient(90deg, transparent, rgba(212,167,106,0.22), transparent)' : 'linear-gradient(90deg, transparent, rgba(139,90,43,0.16), transparent)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: glowBg }} />
 
       <div className="container mx-auto px-6 relative z-10">

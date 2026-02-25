@@ -122,7 +122,6 @@ function App() {
                 <Hero onAdminLogin={openAdminLogin} onWaiterLogin={openStaffLogin} />
                 <Specialties />
                 <About />
-                <FeaturedItems />
                 <Gallery />
                 <Contact />
               </main>

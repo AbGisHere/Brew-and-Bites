@@ -91,17 +91,27 @@ export default function Specialties() {
     ? 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(139,90,43,0.06) 0%, transparent 70%)'
     : 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(255,200,130,0.14) 0%, transparent 70%)'
 
+  const topDivider = isDark
+    ? 'linear-gradient(90deg, transparent, rgba(212,167,106,0.22), transparent)'
+    : 'linear-gradient(90deg, transparent, rgba(139,90,43,0.16), transparent)'
+
   return (
-    <section className="py-24 relative overflow-hidden" style={{ background: sectionBg, transition: 'background 0.5s ease' }}>
+    <section className="py-20 relative overflow-hidden" style={{ background: sectionBg, transition: 'background 0.5s ease' }}>
+      <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: topDivider }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: glowBg }} />
       <div className="container mx-auto px-6 relative z-10">
 
-        {/* Header — left-aligned, editorial */}
+        {/* Header */}
         <div
           ref={headerRef}
-          className={`mb-16 ${headerVisible ? 'anim-fade-up' : 'anim-hidden'}`}
+          className={`mb-12 ${headerVisible ? 'anim-fade-up' : 'anim-hidden'}`}
         >
-          <div className="h-px w-12 mb-5" style={{ background: isDark ? 'linear-gradient(90deg, #D4A76A, transparent)' : 'linear-gradient(90deg, #8B5A2B, transparent)' }} />
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px w-8" style={{ background: isDark ? 'linear-gradient(90deg, #D4A76A, transparent)' : 'linear-gradient(90deg, #8B5A2B, transparent)' }} />
+            <span className="text-xs tracking-[0.4em] uppercase font-semibold" style={{ color: accentColor }}>
+              Why We're Different
+            </span>
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold leading-snug" style={{ color: titleColor }}>
             Three reasons<br />
             <span style={{ color: accentColor }}>to come back.</span>

@@ -76,7 +76,7 @@ export default function FeaturedItems() {
 
   if (isLoading) {
     return (
-      <section className="py-24 relative" style={{ background: sectionBg }}>
+      <section className="py-20 relative" style={{ background: sectionBg }}>
         <div className="text-center py-16" style={{ color: isDark ? 'rgba(212,167,106,0.4)' : 'rgba(139,90,43,0.4)' }}>
           <div className="text-sm tracking-widest uppercase">Loading signatures...</div>
         </div>
@@ -87,7 +87,8 @@ export default function FeaturedItems() {
   if (!items.length) return null
 
   return (
-    <section className="py-24 relative overflow-hidden" style={{ background: sectionBg, transition: 'background 0.5s ease' }}>
+    <section className="py-20 relative overflow-hidden" style={{ background: sectionBg, transition: 'background 0.5s ease' }}>
+      <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: isDark ? 'linear-gradient(90deg, transparent, rgba(212,167,106,0.22), transparent)' : 'linear-gradient(90deg, transparent, rgba(139,90,43,0.16), transparent)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: glowBg }} />
 
       <div className="container mx-auto px-6 relative z-10">

@@ -37,81 +37,8 @@ function CoffeeBean({ position, speed = 1.0, beanScale = 1.0, isDark }) {
   )
 }
 
-// ─── Coffee Nebula ────────────────────────────────────────────────────────────
-// A spiral particle galaxy — 2800 points in espresso → caramel → cream colors.
-// No geometry, no objects — just light arranged in a slow arc.
-// Tilts on scroll, spins lazily on idle, reacts to mouse via the Scene group.
-function CoffeeNebula({ isDark, scrollRef }) {
-  const pointsRef = useRef()
-  const COUNT = 2800
-
-  const { positions, colors } = useMemo(() => {
-    const positions = new Float32Array(COUNT * 3)
-    const colors    = new Float32Array(COUNT * 3)
-
-    for (let i = 0; i < COUNT; i++) {
-      const t      = i / COUNT
-      const angle  = t * Math.PI * 22
-      const radius = t * 6.4 + Math.random() * 0.9
-      const jitter = 1.0
-
-      // Archimedean spiral in XZ, gentle Y spread
-      positions[i * 3]     = Math.cos(angle) * radius + (Math.random() - 0.5) * jitter
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 4.2 + Math.sin(t * Math.PI * 4) * 1.0
-      positions[i * 3 + 2] = Math.sin(angle) * radius * 0.38 + (Math.random() - 0.5) * jitter * 0.55
-
-      // Palette: dark espresso · gold caramel · warm cream
-      const c = Math.random()
-      if (c < 0.38) {
-        colors[i * 3]     = 0.14 + Math.random() * 0.14
-        colors[i * 3 + 1] = 0.05 + Math.random() * 0.05
-        colors[i * 3 + 2] = 0.01
-      } else if (c < 0.72) {
-        colors[i * 3]     = 0.82 + Math.random() * 0.10
-        colors[i * 3 + 1] = 0.65 + Math.random() * 0.09
-        colors[i * 3 + 2] = 0.26 + Math.random() * 0.10
-      } else {
-        colors[i * 3]     = 0.96 + Math.random() * 0.04
-        colors[i * 3 + 1] = 0.87 + Math.random() * 0.05
-        colors[i * 3 + 2] = 0.70 + Math.random() * 0.06
-      }
-    }
-    return { positions, colors }
-  }, [])
-
-  useFrame(({ clock }) => {
-    if (!pointsRef.current) return
-    const t      = clock.getElapsedTime()
-    const scroll = scrollRef.current
-
-    pointsRef.current.rotation.y = t * 0.055
-    pointsRef.current.rotation.x = scroll * 0.85
-    pointsRef.current.scale.setScalar(1 + scroll * 0.3)
-    pointsRef.current.material.opacity = isDark
-      ? Math.max(0.22, 0.88 - scroll * 0.65)
-      : Math.max(0.18, 0.72 - scroll * 0.55)
-  })
-
-  return (
-    <points ref={pointsRef} position={[1.6, 0.2, -1]}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={COUNT} array={positions} itemSize={3} />
-        <bufferAttribute attach="attributes-color"    count={COUNT} array={colors}    itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={isDark ? 0.052 : 0.042}
-        vertexColors
-        transparent
-        opacity={isDark ? 0.88 : 0.72}
-        sizeAttenuation
-        depthWrite={false}
-      />
-    </points>
-  )
-}
-
 // ─── Scene ────────────────────────────────────────────────────────────────────
-function Scene({ mouseX, mouseY, isDark, scrollRef }) {
+function Scene({ mouseX, mouseY, isDark }) {
   const sceneRef = useRef()
   useFrame(() => {
     if (sceneRef.current) {
@@ -136,8 +63,7 @@ function Scene({ mouseX, mouseY, isDark, scrollRef }) {
       <group ref={sceneRef}>
         {isDark && <Stars radius={50} depth={30} count={300} factor={2} saturation={0} fade speed={0.3} />}
         <Sparkles count={isDark ? 55 : 30} scale={[18, 12, 8]} size={isDark ? 1.5 : 1.1} speed={0.15} color={isDark ? '#D4A76A' : '#B9864B'} opacity={isDark ? 0.35 : 0.2} />
-        <CoffeeNebula isDark={isDark} scrollRef={scrollRef} />
-        {beans.map((bean, i) => (
+{beans.map((bean, i) => (
           <CoffeeBean key={i} isDark={isDark} {...bean} />
         ))}
       </group>
@@ -155,12 +81,6 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const textY = useTransform(scrollYProgress, [0, 1], [0, -100])
   const textOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0])
-
-  // Sync scroll progress into a plain ref so the Three.js useFrame loop can read it
-  const scrollRef = useRef(0)
-  useEffect(() => {
-    return scrollYProgress.on('change', v => { scrollRef.current = v })
-  }, [scrollYProgress])
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 80)
@@ -190,7 +110,7 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
       <div className="absolute inset-0">
         <Canvas camera={{ position: [0, 0, 8], fov: 60 }} gl={{ antialias: true }}>
           <Suspense fallback={null}>
-            <Scene mouseX={mouse.x} mouseY={mouse.y} isDark={isDark} scrollRef={scrollRef} />
+            <Scene mouseX={mouse.x} mouseY={mouse.y} isDark={isDark} />
           </Suspense>
         </Canvas>
       </div>

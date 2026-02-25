@@ -189,7 +189,7 @@ function Scene({ mouseX, mouseY, isDark }) {
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
-export default function Hero({ onAdminLogin, onWaiterLogin }) {
+export default function Hero({ onAdminLogin, onWaiterLogin, onOrderNow }) {
   const { isDark } = useTheme()
   const [mouse, setMouse]     = useState({ x: 0, y: 0 })
   const [mounted, setMounted] = useState(false)
@@ -207,12 +207,25 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
   }, [])
 
   useEffect(() => {
-    const handle = (e) => setMouse({
+    // Mouse on desktop
+    const onMouse = (e) => setMouse({
       x: (e.clientX / window.innerWidth  - 0.5) * 2,
       y: (e.clientY / window.innerHeight - 0.5) * 2,
     })
-    window.addEventListener('mousemove', handle)
-    return () => window.removeEventListener('mousemove', handle)
+    // Touch on mobile — use tilt from finger position
+    const onTouch = (e) => {
+      const t = e.touches[0]
+      setMouse({
+        x: (t.clientX / window.innerWidth  - 0.5) * 2,
+        y: (t.clientY / window.innerHeight - 0.5) * 2,
+      })
+    }
+    window.addEventListener('mousemove', onMouse)
+    window.addEventListener('touchmove', onTouch, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', onMouse)
+      window.removeEventListener('touchmove', onTouch)
+    }
   }, [])
 
   const bg = isDark
@@ -247,48 +260,53 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
 
       {/* Text block — scroll parallax */}
       <motion.div
-        className="relative z-10 h-full flex flex-col justify-center px-8 md:px-16 lg:px-24"
+        className="relative z-10 h-full flex flex-col justify-center px-5 sm:px-8 md:px-16 lg:px-24"
         style={{ y: textY, opacity: textOpacity, maxWidth: '680px' }}
       >
-        {/* Eyebrow */}
+        {/* Eyebrow — condensed on mobile, full on sm+ */}
         <motion.div
-          className="flex items-center gap-3 mb-8"
+          className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-8 overflow-hidden"
           initial={{ opacity: 0, x: -20 }}
           animate={mounted ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.1 }}
         >
-          <div className="h-px w-10" style={{ background: isDark ? 'linear-gradient(90deg, #D4A76A, transparent)' : 'linear-gradient(90deg, #8B5A2B, transparent)' }} />
-          <span className="text-xs tracking-[0.45em] uppercase font-semibold" style={{ color: isDark ? '#D4A76A' : '#8B5A2B' }}>
-            Specialty Coffee &amp; Kitchen · Est. 2015
+          <div className="hidden sm:block h-px w-10 shrink-0" style={{ background: isDark ? 'linear-gradient(90deg, #D4A76A, transparent)' : 'linear-gradient(90deg, #8B5A2B, transparent)' }} />
+          <span
+            className="text-[10px] sm:text-xs tracking-[0.12em] sm:tracking-[0.35em] uppercase font-semibold whitespace-nowrap"
+            style={{ color: isDark ? '#D4A76A' : '#8B5A2B' }}
+          >
+            {/* Short on mobile, full on sm+ */}
+            <span className="sm:hidden">Specialty Coffee · Est. 2015</span>
+            <span className="hidden sm:inline">Specialty Coffee &amp; Kitchen · Est. 2015</span>
           </span>
         </motion.div>
 
-        {/* Staircase title */}
+        {/* Staircase title — tighter min size on phones */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={mounted ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.85, delay: 0.2 }}
-          style={{ lineHeight: 0.88, marginBottom: '2.5rem' }}
+          style={{ lineHeight: 0.88, marginBottom: '2rem' }}
         >
-          <div style={{ fontSize: 'clamp(64px, 10.5vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', color: isDark ? '#F5DEB3' : '#1a0805' }}>
+          <div style={{ fontSize: 'clamp(48px, 12vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', color: isDark ? '#F5DEB3' : '#1a0805' }}>
             BREW
           </div>
           <div style={{
-            fontSize: 'clamp(30px, 5vw, 68px)', fontWeight: 300, paddingLeft: '2vw',
+            fontSize: 'clamp(24px, 5.5vw, 68px)', fontWeight: 300, paddingLeft: '2vw',
             letterSpacing: '0.06em',
             background: goldGrad,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
             &amp;
           </div>
-          <div style={{ fontSize: 'clamp(64px, 10.5vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', paddingLeft: '3.5vw', color: isDark ? '#F5DEB3' : '#1a0805' }}>
+          <div style={{ fontSize: 'clamp(48px, 12vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', paddingLeft: '3.5vw', color: isDark ? '#F5DEB3' : '#1a0805' }}>
             BITES
           </div>
         </motion.div>
 
         {/* Tagline */}
         <motion.p
-          className="text-lg md:text-xl mb-2 font-light"
+          className="text-base sm:text-lg md:text-xl mb-1 sm:mb-2 font-light"
           style={{ color: isDark ? 'rgba(245,222,179,0.6)' : 'rgba(26,8,5,0.6)' }}
           initial={{ opacity: 0, y: 16 }}
           animate={mounted ? { opacity: 1, y: 0 } : {}}
@@ -297,15 +315,15 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
           Every cup, a ceremony.
         </motion.p>
 
-        {/* Stats line */}
+        {/* Stats line — no wide tracking on mobile to prevent overflow */}
         <motion.p
-          className="text-xs tracking-widest mb-10"
+          className="text-[10px] sm:text-xs tracking-wide sm:tracking-widest mb-7 sm:mb-10"
           style={{ color: isDark ? 'rgba(212,167,106,0.45)' : 'rgba(139,90,43,0.5)' }}
           initial={{ opacity: 0 }}
           animate={mounted ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.45 }}
         >
-          10K+ happy guests · 50+ menu items · 4.9★ rating
+          10K+ guests · 50+ items · 4.9★
         </motion.p>
 
         {/* Order Now */}
@@ -315,8 +333,8 @@ export default function Hero({ onAdminLogin, onWaiterLogin }) {
           transition={{ duration: 0.6, delay: 0.52 }}
         >
           <button
-            onClick={() => window.location.href = '/order'}
-            className="group inline-flex items-center gap-3 px-8 py-4 rounded-full font-bold text-sm tracking-[0.12em] transition-all duration-200 hover:scale-105 active:scale-95 mb-6"
+            onClick={onOrderNow}
+            className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-xs sm:text-sm tracking-[0.12em] transition-all duration-200 hover:scale-105 active:scale-95 mb-5 sm:mb-6"
             style={{
               background: isDark
                 ? 'linear-gradient(135deg, #D4A76A 0%, #B9864B 60%, #8B5A2B 100%)'

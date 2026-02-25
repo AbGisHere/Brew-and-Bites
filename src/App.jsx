@@ -84,6 +84,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [loginOpen, setLoginOpen] = useState(false)
   const [loginRole, setLoginRole] = useState('admin')
+  const [orderOpen, setOrderOpen] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -92,7 +93,7 @@ function App() {
   // non-landing routes, so dashboards look exactly as they did before the
   // landing page redesign. The landing page controls its own backgrounds.
   useEffect(() => {
-    const isDashboard = /^\/(admin|waiter|chef|order|customer-order|[^/]+\/[^/]+)/.test(location.pathname)
+    const isDashboard = /^\/(admin|waiter|chef|customer-order|[^/]+\/[^/]+)/.test(location.pathname)
     document.body.classList.toggle('dashboard-bg', isDashboard)
     return () => document.body.classList.remove('dashboard-bg')
   }, [location.pathname])
@@ -129,7 +130,7 @@ function App() {
                 onWaiterLogin={openStaffLogin}
               />
               <main className="flex-grow">
-                <Hero onAdminLogin={openAdminLogin} onWaiterLogin={openStaffLogin} />
+                <Hero onAdminLogin={openAdminLogin} onWaiterLogin={openStaffLogin} onOrderNow={() => setOrderOpen(true)} />
                 <Specialties />
                 <About />
                 <Gallery />
@@ -142,6 +143,7 @@ function App() {
                 defaultRole={loginRole}
                 onLoggedIn={handleLogin}
               />
+              <TableCodeEntry open={orderOpen} onClose={() => setOrderOpen(false)} />
             </>
           } />
 
@@ -149,7 +151,7 @@ function App() {
           <Route path="/waiter" element={<ProtectedRoute role="waiter"><WaiterPage /></ProtectedRoute>} />
           <Route path="/chef" element={<ProtectedRoute role="chef"><ChefPage /></ProtectedRoute>} />
           <Route path="/:tableId/:deviceId" element={<TableDevicePage />} />
-          <Route path="/order" element={<TableCodeEntry />} />
+          <Route path="/order" element={<Navigate to="/" replace />} />
           <Route path="/customer-order" element={<CustomerOrdering />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

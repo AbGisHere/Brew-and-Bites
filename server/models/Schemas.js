@@ -93,7 +93,8 @@ const OrderItemSchema = new mongoose.Schema({
     // New timing fields for items
     startedAt: { type: Date },
     completedAt: { type: Date },
-    timeToComplete: { type: Number } // in seconds
+    timeToComplete: { type: Number }, // in seconds
+    orderedBy: { type: String, default: null } // Name of the guest who ordered this item
 });
 
 const OrderSchema = new mongoose.Schema({
@@ -111,6 +112,12 @@ const OrderSchema = new mongoose.Schema({
     discount: { type: Number, default: 0 },
     couponCode: String,
     kitchenPrepared: { type: Boolean, default: false },
+    // Guests seated at this table for this order (for per-person tracking)
+    guests: [{
+        name: { type: String, required: true },
+        phone: { type: String, default: '' },
+        joinedAt: { type: Date, default: Date.now }
+    }],
     // Order timing fields
     createdAt: { type: Date, default: Date.now },
     orderTime: { type: Date, default: Date.now },

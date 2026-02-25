@@ -96,21 +96,16 @@ app.get('/api/version', (req, res) => {
 // --- Customer demo OTP auth ---
 app.post('/api/customer/auth/request-otp', async (req, res) => {
   try {
-    const { phone, name } = req.body || {}
+    const { phone } = req.body || {}
     const normalizedPhone = normalizePhone(phone)
-    const normalizedName = String(name || '').trim()
     if (!normalizedPhone || normalizedPhone.length < 10) {
       return res.status(400).json({ error: 'Invalid phone number' })
-    }
-    if (!normalizedName) {
-      return res.status(400).json({ error: 'Name is required' })
     }
 
     const otp = generateOtp()
     demoOtpStore.set(normalizedPhone, {
       otpHash: hashOtp(otp),
       expiresAt: Date.now() + DEMO_OTP_TTL_MS,
-      name: normalizedName
     })
 
     // Never return OTP to client. For demo/dev, print to server logs.
@@ -137,8 +132,9 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
     }
 
     demoOtpStore.delete(normalizedPhone)
-    const token = signCustomerToken({ phone: normalizedPhone, name: record.name })
-    return res.json({ token, customer: { phone: normalizedPhone, name: record.name } })
+    // Name is not known yet — it's chosen in the identity step after OTP verification.
+    // Return only the verified phone; frontend handles session state.
+    return res.json({ success: true, phone: normalizedPhone })
   } catch (e) {
     return res.status(500).json({ error: e.message })
   }
@@ -1279,6 +1275,57 @@ app.post('/api/login', async (req, res) => {
             res.status(500).json({ error: "Failed to delete receipt" });
         }
     });
+
+    // JOIN TABLE ORDER (register a guest to the active order for this table)
+    app.post('/api/orders/join', async (req, res) => {
+        try {
+            const { tableId, guest } = req.body || {}
+            if (!tableId || !guest?.name) {
+                return res.status(400).json({ error: 'tableId and guest.name are required' })
+            }
+
+            const table = await Table.findById(tableId)
+            if (!table) return res.status(404).json({ error: 'Table not found' })
+
+            // Get or create an active order for this table
+            let order = null
+            if (table.activeOrderId) {
+                order = await Order.findById(table.activeOrderId)
+            }
+            if (!order || order.status !== 'open') {
+                order = await Order.create({
+                    tableId,
+                    status: 'open',
+                    items: [],
+                    guests: [],
+                    total: 0,
+                    orderTime: new Date(),
+                    startedAt: new Date()
+                })
+                table.activeOrderId = order._id
+                await table.save()
+            }
+
+            // Add guest if not already present (match by phone if provided, else by name)
+            const normalizedPhone = normalizePhone(guest.phone)
+            const alreadyExists = order.guests.some(g =>
+                (normalizedPhone && normalizePhone(g.phone) === normalizedPhone) ||
+                g.name.toLowerCase() === guest.name.trim().toLowerCase()
+            )
+            if (!alreadyExists) {
+                order.guests.push({
+                    name: guest.name.trim(),
+                    phone: normalizedPhone || '',
+                    joinedAt: new Date()
+                })
+                await order.save()
+            }
+
+            return res.json(order)
+        } catch (e) {
+            return res.status(500).json({ error: e.message })
+        }
+    })
 
     // Start Server
     app.listen(PORT, () => {

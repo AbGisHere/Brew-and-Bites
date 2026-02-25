@@ -42,10 +42,10 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
 
   // --- Auth & Session States ---
   const [customer, setCustomer] = useState(null)
-  const [customerToken, setCustomerToken] = useState(() => localStorage.getItem('cafe_customer_token') || '')
-  
+  const [customerToken, setCustomerToken] = useState('')  // Never restore from localStorage — always re-auth
+
   // Auth Flow: 'phone' -> 'otp' -> 'identity' (select user) -> 'name' (if new) -> 'authed'
-  const [authStep, setAuthStep] = useState('phone') 
+  const [authStep, setAuthStep] = useState('phone')
   const [authName, setAuthName] = useState('')
   const [authPhone, setAuthPhone] = useState('')
   const [authOtp, setAuthOtp] = useState('')
@@ -60,23 +60,15 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
 
   const normalizePhoneClient = (p) => String(p || '').replace(/\D/g, '')
 
-  // 1. Initialization & Restoration
+  // 1. Always start with a clean auth state — clear any stale localStorage data on mount
   useEffect(() => {
-    // If we have a token, try to restore session
-    if (customerToken && !customer) {
-        // Simulating session restore - in real app, fetch /me
-        const storedName = localStorage.getItem('cafe_customer_name')
-        const storedPhone = localStorage.getItem('cafe_customer_phone')
-        if (storedName && storedPhone) {
-            setCustomer({ name: storedName, phone: storedPhone })
-        } else {
-            // Token invalid or stale
-            setAuthStep('phone')
-        }
-    } else if (!customerToken) {
-        setAuthStep('phone')
-    }
-  }, [customerToken, customer])
+    localStorage.removeItem('cafe_customer_token')
+    localStorage.removeItem('cafe_customer_name')
+    localStorage.removeItem('cafe_customer_phone')
+    setCustomer(null)
+    setCustomerToken('')
+    setAuthStep('phone')
+  }, [])
 
   // 2. Table & Menu Loading (Only after auth or partially in background)
   useEffect(() => {
@@ -180,39 +172,63 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
 
   const requestOtp = async () => {
     const phone = normalizePhoneClient(authPhone)
-    if (!phone || phone.length < 10) return setAuthError('Invalid phone number')
+    if (!phone || phone.length < 10) return setAuthError('Enter a valid 10-digit phone number')
     setAuthLoading(true)
     setAuthError('')
-    
-    // Simulate API delay
-    setTimeout(() => {
-        setAuthLoading(false)
-        setAuthStep('otp')
-    }, 800)
+    try {
+      const res = await fetch(`${API_URL}/api/customer/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send OTP')
+      setAuthStep('otp')
+    } catch (err) {
+      setAuthError(err.message)
+    } finally {
+      setAuthLoading(false)
+    }
   }
 
   const verifyOtp = async () => {
     const phone = normalizePhoneClient(authPhone)
     const otp = String(authOtp || '').trim()
-    if (otp !== '1234') return setAuthError('Invalid OTP (Use 1234)') // Mock
-    
+    if (!otp) return setAuthError('Enter the OTP')
     setAuthLoading(true)
-    
-    // IDENTITY RESOLUTION
-    // 1. Check if order exists (we fetched it in useEffect)
-    // 2. If order has guests, show list.
-    // 3. Else ask for name.
-    
-    // Refresh order to be sure we have latest guests
-    let latestOrder = currentOrder
-    if (table?._id) latestOrder = await fetchExistingOrder(table._id)
+    setAuthError('')
+    try {
+      const res = await fetch(`${API_URL}/api/customer/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Invalid OTP')
 
-    setAuthLoading(false)
+      // OTP verified — now decide identity step based on who's already at the table
+      let latestOrder = currentOrder
+      if (table?._id) latestOrder = await fetchExistingOrder(table._id)
 
-    if (latestOrder && latestOrder.guests && latestOrder.guests.length > 0) {
-        setAuthStep('identity') // Go to "Who are you?" screen
-    } else {
-        setAuthStep('name') // Go to "Enter Name" screen
+      if (latestOrder?.guests?.length > 0) {
+        // If this phone is already registered as a guest, auto-identify
+        const matchedGuest = latestOrder.guests.find(
+          g => g.phone && normalizePhoneClient(g.phone) === phone
+        )
+        if (matchedGuest) {
+          completeLogin(matchedGuest.name, phone)
+          return
+        }
+        // Others are seated — let them pick or join as new
+        setAuthStep('identity')
+      } else {
+        // First person at this table — just ask for name
+        setAuthStep('name')
+      }
+    } catch (err) {
+      setAuthError(err.message)
+    } finally {
+      setAuthLoading(false)
     }
   }
 
@@ -467,40 +483,64 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
           border: '1px solid rgba(212, 167, 106, 0.2)',
           boxShadow: '0 16px 40px rgba(62, 39, 35, 0.12)'
         }}>
-          <div className="text-2xl font-bold mb-2" style={{ color: '#3E2723' }}>Welcome</div>
+          <div className="text-2xl font-bold mb-1" style={{ color: '#3E2723' }}>
+          {authStep === 'phone' && 'Welcome'}
+          {authStep === 'otp' && 'Verify your number'}
+          {authStep === 'identity' && "Who's ordering?"}
+          {authStep === 'name' && "What\u2019s your name?"}
+        </div>
+        <div className="text-xs mb-4 flex gap-1 items-center" style={{ color: '#D4A76A' }}>
+          {['phone','otp','identity','name'].map((s, i) => {
+            const stepOrder = { phone: 0, otp: 1, identity: 2, name: authStep === 'identity' ? 3 : 2 }
+            const current = stepOrder[authStep] ?? 0
+            return <span key={s} className="w-2 h-2 rounded-full" style={{ background: i <= current ? '#D4A76A' : 'rgba(212,167,106,0.2)', display: ['phone','otp','name'].includes(s) ? 'inline-block' : 'none' }} />
+          })}
+        </div>
           
           {authStep === 'phone' && (
              <div className="space-y-4">
-               <div className="text-sm mb-2" style={{ color: '#8B5A2B' }}>Enter your phone number to start.</div>
+               <div className="text-sm mb-2" style={{ color: '#8B5A2B' }}>Enter your phone number to receive a one-time code.</div>
                <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: '#5D4037' }}>Phone Number</label>
                   <input
                     value={authPhone}
-                    onChange={(e) => setAuthPhone(e.target.value)}
+                    onChange={(e) => { setAuthError(''); setAuthPhone(e.target.value) }}
                     className="w-full rounded-lg px-3 py-2"
                     inputMode="numeric"
+                    placeholder="10-digit mobile number"
                     style={{ border: '1px solid rgba(212, 167, 106, 0.25)', background: 'rgba(255, 255, 255, 0.8)' }}
+                    onKeyDown={(e) => e.key === 'Enter' && requestOtp()}
                   />
                </div>
                <AnimatedButton onClick={requestOtp} disabled={authLoading} color={colors.primary} width="100%">
-                  {authLoading ? 'Sending…' : 'Get OTP'}
+                  {authLoading ? 'Sending…' : 'Get OTP →'}
                </AnimatedButton>
              </div>
           )}
 
           {authStep === 'otp' && (
             <div className="space-y-4">
-              <div className="text-sm mb-2" style={{ color: '#8B5A2B' }}>Enter the OTP sent to {authPhone}</div>
+              <div className="text-sm" style={{ color: '#8B5A2B' }}>Enter the 6-digit code sent to <strong>{authPhone}</strong>.</div>
+              <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(212,167,106,0.12)', color: '#8B5A2B', border: '1px solid rgba(212,167,106,0.2)' }}>
+                Demo mode — OTP is printed in the server console.
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: '#5D4037' }}>OTP</label>
                 <input
                   value={authOtp}
-                  onChange={(e) => setAuthOtp(e.target.value)}
+                  onChange={(e) => { setAuthError(''); setAuthOtp(e.target.value.replace(/\D/g, '')) }}
                   className="w-full rounded-lg px-3 py-2 text-center tracking-widest"
                   inputMode="numeric"
                   maxLength={6}
-                  style={{ border: '1px solid rgba(212, 167, 106, 0.25)', background: 'rgba(255, 255, 255, 0.8)' }}
+                  autoFocus
+                  style={{ border: '1px solid rgba(212, 167, 106, 0.25)', background: 'rgba(255, 255, 255, 0.8)', fontSize: '1.25rem', letterSpacing: '0.4em' }}
+                  onKeyDown={(e) => e.key === 'Enter' && verifyOtp()}
                 />
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { setAuthStep('phone'); setAuthOtp(''); setAuthError('') }} className="text-xs underline" style={{ color: '#8B5A2B', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  ← Change number
+                </button>
               </div>
               <AnimatedButton onClick={verifyOtp} disabled={authLoading} color={colors.primary} width="100%">
                 {authLoading ? 'Verifying…' : 'Verify OTP'}
@@ -508,59 +548,76 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
             </div>
           )}
 
-          {/* NEW STEP: Identity Selection */}
+          {/* Identity Selection — shown when other guests are already at the table */}
           {authStep === 'identity' && (
-             <div className="space-y-4">
-                <div className="text-sm mb-4" style={{ color: '#8B5A2B' }}>
-                    There is an open order on this table. Who are you?
+             <div className="space-y-3">
+                <div className="text-sm" style={{ color: '#8B5A2B' }}>
+                    Someone's already ordering at this table. Are you one of them?
                 </div>
-                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
                     {currentOrder?.guests?.map((g, i) => (
-                        <button 
+                        <button
                             key={i}
+                            type="button"
                             onClick={() => handleIdentitySelection(g.name)}
-                            className="w-full p-3 rounded-lg text-left flex justify-between items-center transition-all"
+                            className="w-full p-3 rounded-xl text-left flex justify-between items-center transition-all hover:scale-[1.01]"
                             style={{
-                                background: 'rgba(212, 167, 106, 0.1)',
-                                border: '1px solid rgba(212, 167, 106, 0.2)',
-                                color: '#3E2723'
+                                background: 'rgba(212, 167, 106, 0.12)',
+                                border: '1.5px solid rgba(212, 167, 106, 0.3)',
+                                color: '#3E2723',
+                                cursor: 'pointer',
                             }}
                         >
-                            <span className="font-bold">{g.name}</span>
-                            <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">Join</span>
+                            <div>
+                                <div className="font-bold text-sm">{g.name}</div>
+                                <div className="text-xs" style={{ color: '#8B5A2B' }}>Joined {new Date(g.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                            </div>
+                            <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ background: 'rgba(212,167,106,0.25)', color: '#8B5A2B' }}>That's me</span>
                         </button>
                     ))}
                 </div>
-                <div className="flex items-center gap-2 py-2">
-                    <div className="h-px bg-gray-300 flex-1"></div>
-                    <span className="text-xs text-gray-500">OR</span>
-                    <div className="h-px bg-gray-300 flex-1"></div>
+                <div className="flex items-center gap-2 py-1">
+                    <div className="h-px flex-1" style={{ background: 'rgba(212,167,106,0.2)' }}></div>
+                    <span className="text-xs" style={{ color: '#8B5A2B' }}>or</span>
+                    <div className="h-px flex-1" style={{ background: 'rgba(212,167,106,0.2)' }}></div>
                 </div>
-                <AnimatedButton 
-                    onClick={() => setAuthStep('name')} 
-                    color="transparent" 
-                    hoverColor="rgba(212, 167, 106, 0.1)"
-                    width="100%"
+                <button
+                    type="button"
+                    onClick={() => { setAuthName(''); setAuthStep('name') }}
+                    className="w-full p-3 rounded-xl text-center font-semibold text-sm transition-all"
+                    style={{
+                        background: 'transparent',
+                        border: '1.5px dashed rgba(212, 167, 106, 0.35)',
+                        color: '#D4A76A',
+                        cursor: 'pointer',
+                    }}
                 >
-                    <span style={{color: '#D4A76A'}}>I am a new guest</span>
-                </AnimatedButton>
+                    I'm a new person at this table
+                </button>
              </div>
           )}
 
           {authStep === 'name' && (
             <div className="space-y-4">
-              <div className="text-sm mb-2" style={{ color: '#8B5A2B' }}>Please enter your name to join the table.</div>
+              <div className="text-sm" style={{ color: '#8B5A2B' }}>
+                {currentOrder?.guests?.length > 0
+                  ? "What\u2019s your name? It\u2019ll appear on the shared order."
+                  : "What\u2019s your name? We\u2019ll track your orders separately."}
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: '#5D4037' }}>Your Name</label>
                 <input
                   value={authName}
-                  onChange={(e) => setAuthName(e.target.value)}
+                  onChange={(e) => { setAuthError(''); setAuthName(e.target.value) }}
                   className="w-full rounded-lg px-3 py-2"
+                  placeholder="e.g. Abhinav"
+                  autoFocus
                   style={{ border: '1px solid rgba(212, 167, 106, 0.25)', background: 'rgba(255, 255, 255, 0.8)' }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
                 />
               </div>
               <AnimatedButton onClick={handleNameSubmit} disabled={authLoading} color={colors.primary} width="100%">
-                Start Ordering
+                {authLoading ? 'Joining…' : 'Start Ordering →'}
               </AnimatedButton>
             </div>
           )}

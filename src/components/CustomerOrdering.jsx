@@ -45,12 +45,14 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
   const [customerToken, setCustomerToken] = useState('')  // Never restore from localStorage — always re-auth
 
   // Auth Flow: 'phone' -> 'otp' -> 'identity' (select user) -> 'name' (if new) -> 'authed'
+  // If table already has guests, OTP is skipped: 'phone' -> 'identity' | 'name' -> 'authed'
   const [authStep, setAuthStep] = useState('phone')
   const [authName, setAuthName] = useState('')
   const [authPhone, setAuthPhone] = useState('')
   const [authOtp, setAuthOtp] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
+  const [tableHasGuests, setTableHasGuests] = useState(false)
 
   const navigate = useNavigate()
 
@@ -148,6 +150,8 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
       const orderData = await orderRes.json()
       if (orderRes.ok && orderData.items) {
         setCurrentOrder(orderData)
+        // If the table already has guests, subsequent customers skip OTP
+        setTableHasGuests((orderData.guests?.length ?? 0) > 0)
         return orderData
       }
     } catch (err) {
@@ -175,6 +179,31 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
     if (!phone || phone.length < 10) return setAuthError('Enter a valid 10-digit phone number')
     setAuthLoading(true)
     setAuthError('')
+
+    // Table already has guests — skip OTP, identify by phone only
+    if (tableHasGuests) {
+      try {
+        const latestOrder = await fetchExistingOrder(table?._id)
+        const order = latestOrder || currentOrder
+        const matchedGuest = order?.guests?.find(
+          g => g.phone && normalizePhoneClient(g.phone) === phone
+        )
+        if (matchedGuest) {
+          completeLogin(matchedGuest.name, phone)
+        } else if (order?.guests?.length > 0) {
+          setAuthStep('identity')
+        } else {
+          setAuthStep('name')
+        }
+      } catch (err) {
+        setAuthError(err.message)
+      } finally {
+        setAuthLoading(false)
+      }
+      return
+    }
+
+    // First person at the table — full OTP flow
     try {
       const res = await fetch(`${API_URL}/api/customer/auth/request-otp`, {
         method: 'POST',
@@ -491,15 +520,22 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
         </div>
         <div className="text-xs mb-4 flex gap-1 items-center" style={{ color: '#D4A76A' }}>
           {['phone','otp','identity','name'].map((s, i) => {
-            const stepOrder = { phone: 0, otp: 1, identity: 2, name: authStep === 'identity' ? 3 : 2 }
+            const visibleSteps = tableHasGuests ? ['phone','name'] : ['phone','otp','name']
+            const stepOrder = tableHasGuests
+              ? { phone: 0, identity: 1, name: 1 }
+              : { phone: 0, otp: 1, identity: 2, name: authStep === 'identity' ? 3 : 2 }
             const current = stepOrder[authStep] ?? 0
-            return <span key={s} className="w-2 h-2 rounded-full" style={{ background: i <= current ? '#D4A76A' : 'rgba(212,167,106,0.2)', display: ['phone','otp','name'].includes(s) ? 'inline-block' : 'none' }} />
+            return <span key={s} className="w-2 h-2 rounded-full" style={{ background: i <= current ? '#D4A76A' : 'rgba(212,167,106,0.2)', display: visibleSteps.includes(s) ? 'inline-block' : 'none' }} />
           })}
         </div>
           
           {authStep === 'phone' && (
              <div className="space-y-4">
-               <div className="text-sm mb-2" style={{ color: '#8B5A2B' }}>Enter your phone number to receive a one-time code.</div>
+               <div className="text-sm mb-2" style={{ color: '#8B5A2B' }}>
+                 {tableHasGuests
+                   ? 'Enter your phone number to join the table.'
+                   : 'Enter your phone number to receive a one-time code.'}
+               </div>
                <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: '#5D4037' }}>Phone Number</label>
                   <input
@@ -513,7 +549,9 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
                   />
                </div>
                <AnimatedButton onClick={requestOtp} disabled={authLoading} color={colors.primary} width="100%">
-                  {authLoading ? 'Sending…' : 'Get OTP →'}
+                  {authLoading
+                    ? (tableHasGuests ? 'Joining…' : 'Sending…')
+                    : (tableHasGuests ? 'Continue →' : 'Get OTP →')}
                </AnimatedButton>
              </div>
           )}

@@ -5188,8 +5188,300 @@ export default function AdminDashboard({ onExit }) {
       )}
 
       {tab==='sales' && (
-        <Section title="Sales">
-          <div className="text-3xl font-bold">₹{salesTotal.toFixed(2)}</div>
+        <Section title="Sales Dashboard">
+          {/* Key Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div 
+              className="rounded-lg p-4 border-l-4"
+              style={{
+                backdropFilter: 'blur(20px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                borderLeft: '4px solid rgba(34, 197, 94, 0.5)',
+                borderRadius: '16px',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+              }}
+            >
+              <div className="text-sm text-gray-600 mb-1" style={{ color: '#3E2723', fontWeight: '500' }}>Total Sales</div>
+              <div className="text-2xl font-bold" style={{ color: '#16a34a', fontWeight: '600' }}>₹{salesTotal.toFixed(2)}</div>
+              <div className="text-xs mt-1" style={{ color: '#6b7280' }}>
+                {receipts.filter(r => r.status === 'closed').length} orders
+              </div>
+            </div>
+            
+            <div 
+              className="rounded-lg p-4 border-l-4"
+              style={{
+                backdropFilter: 'blur(20px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                borderLeft: '4px solid rgba(59, 130, 246, 0.5)',
+                borderRadius: '16px',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+              }}
+            >
+              <div className="text-sm text-gray-600 mb-1" style={{ color: '#3E2723', fontWeight: '500' }}>Average Order Value</div>
+              <div className="text-2xl font-bold" style={{ color: '#2563eb', fontWeight: '600' }}>
+                ₹{receipts.length > 0 ? (salesTotal / receipts.filter(r => r.status === 'closed').length).toFixed(2) : '0.00'}
+              </div>
+              <div className="text-xs mt-1" style={{ color: '#6b7280' }}>Per order average</div>
+            </div>
+            
+            <div 
+              className="rounded-lg p-4 border-l-4"
+              style={{
+                backdropFilter: 'blur(20px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                borderLeft: '4px solid rgba(168, 85, 247, 0.5)',
+                borderRadius: '16px',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+              }}
+            >
+              <div className="text-sm text-gray-600 mb-1" style={{ color: '#3E2723', fontWeight: '500' }}>Total Items Sold</div>
+              <div className="text-2xl font-bold" style={{ color: '#9333ea', fontWeight: '600' }}>
+                {receipts.reduce((sum, r) => sum + (r.items?.reduce((itemSum, item) => itemSum + (item.qty || 0), 0) || 0), 0)}
+              </div>
+              <div className="text-xs mt-1" style={{ color: '#6b7280' }}>All menu items</div>
+            </div>
+            
+            <div 
+              className="rounded-lg p-4 border-l-4"
+              style={{
+                backdropFilter: 'blur(20px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                borderLeft: '4px solid rgba(251, 146, 60, 0.5)',
+                borderRadius: '16px',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+              }}
+            >
+              <div className="text-sm text-gray-600 mb-1" style={{ color: '#3E2723', fontWeight: '500' }}>Active Orders</div>
+              <div className="text-2xl font-bold" style={{ color: '#ea580c', fontWeight: '600' }}>
+                {receipts.filter(r => r.status === 'open').length}
+              </div>
+              <div className="text-xs mt-1" style={{ color: '#6b7280' }}>Currently being prepared</div>
+            </div>
+          </div>
+
+          {/* Sales Charts and Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Top Selling Items */}
+            <div 
+              className="rounded-lg p-4"
+              style={{
+                backdropFilter: 'blur(20px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                borderRadius: '16px',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+              }}
+            >
+              <h3 className="text-lg font-semibold mb-4" style={{ color: '#3E2723', fontWeight: '500' }}>Top Selling Items</h3>
+              <div className="space-y-2">
+                {(() => {
+                  const itemSales = {};
+                  receipts.forEach(receipt => {
+                    if (receipt.items) {
+                      receipt.items.forEach(item => {
+                        const itemName = item.name || 'Unknown Item';
+                        if (!itemSales[itemName]) {
+                          itemSales[itemName] = { name: itemName, quantity: 0, revenue: 0 };
+                        }
+                        itemSales[itemName].quantity += item.qty || 0;
+                        itemSales[itemName].revenue += (item.price || 0) * (item.qty || 0);
+                      });
+                    }
+                  });
+                  
+                  const topItems = Object.values(itemSales)
+                    .sort((a, b) => b.quantity - a.quantity)
+                    .slice(0, 5);
+                  
+                  return topItems.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 rounded transition-all duration-200" style={{
+                      backgroundColor: 'transparent',
+                      borderRadius: '8px'
+                    }} onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(212, 167, 106, 0.1)';
+                    }} onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                    }}>
+                      <div className="flex-1">
+                        <div className="font-medium" style={{ color: '#3E2723' }}>{item.name}</div>
+                        <div className="text-sm" style={{ color: '#6b7280' }}>{item.quantity} sold</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold" style={{ color: '#16a34a' }}>₹{item.revenue.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+
+            {/* Recent Orders */}
+            <div 
+              className="rounded-lg p-4"
+              style={{
+                backdropFilter: 'blur(20px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                borderRadius: '16px',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+              }}
+            >
+              <h3 className="text-lg font-semibold mb-4" style={{ color: '#3E2723', fontWeight: '500' }}>Recent Orders</h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {receipts
+                  .filter(r => r.status === 'closed')
+                  .sort((a, b) => new Date(b.createdAt || b.orderTime) - new Date(a.createdAt || b.orderTime))
+                  .slice(0, 5)
+                  .map((receipt, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 rounded transition-all duration-200 border-b" style={{
+                      backgroundColor: 'transparent',
+                      borderRadius: '8px',
+                      borderBottomColor: 'rgba(212, 167, 106, 0.1)'
+                    }} onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(212, 167, 106, 0.1)';
+                    }} onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                    }}>
+                      <div className="flex-1">
+                        <div className="font-medium" style={{ color: '#3E2723' }}>
+                          Table {receipt.tableId || 'Unknown'}
+                        </div>
+                        <div className="text-sm" style={{ color: '#6b7280' }}>
+                          {new Date(receipt.createdAt || receipt.orderTime).toLocaleDateString()} • 
+                          {receipt.items?.length || 0} items
+                        </div>
+                        {receipt.couponCode && (
+                          <div className="text-xs" style={{ color: '#16a34a' }}>Coupon: {receipt.couponCode}</div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold" style={{ color: '#16a34a' }}>₹{receipt.total?.toFixed(2) || '0.00'}</div>
+                        {receipt.discount > 0 && (
+                          <div className="text-xs" style={{ color: '#dc2626' }}>-₹{receipt.discount.toFixed(2)}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div 
+            className="rounded-lg p-4"
+            style={{
+              backdropFilter: 'blur(20px) saturate(150%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+              background: 'rgba(255, 255, 255, 0.7)',
+              borderRadius: '16px',
+              border: '1px solid rgba(212, 167, 106, 0.2)',
+              boxShadow: '0 8px 32px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+            }}
+          >
+            <h3 className="text-lg font-semibold mb-4" style={{ color: '#3E2723', fontWeight: '500' }}>Quick Actions</h3>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => generateSalesPDF()}
+                className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(34, 197, 94, 0.25)',
+                  color: '#14532d',
+                  border: '1px solid rgba(34, 197, 94, 0.4)',
+                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '12px',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(34, 197, 94, 0.35)';
+                  e.target.style.border = '1px solid rgba(34, 197, 94, 0.5)';
+                  e.target.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(34, 197, 94, 0.25)';
+                  e.target.style.border = '1px solid rgba(34, 197, 94, 0.4)';
+                  e.target.style.transform = 'scale(1)';
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export Sales Report
+              </button>
+              
+              <button
+                onClick={() => setTab('receipts')}
+                className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(59, 130, 246, 0.25)',
+                  color: '#1e3a8a',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '12px',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
+                  e.target.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.25)';
+                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+                  e.target.style.transform = 'scale(1)';
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                View All Receipts
+              </button>
+              
+              <button
+                onClick={() => setTab('menu')}
+                className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
+                style={{
+                  backdropFilter: 'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  background: 'rgba(168, 85, 247, 0.25)',
+                  color: '#6b21a8',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '12px',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(168, 85, 247, 0.35)';
+                  e.target.style.border = '1px solid rgba(168, 85, 247, 0.5)';
+                  e.target.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(168, 85, 247, 0.25)';
+                  e.target.style.border = '1px solid rgba(168, 85, 247, 0.4)';
+                  e.target.style.transform = 'scale(1)';
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Manage Menu
+              </button>
+            </div>
+          </div>
         </Section>
       )}
 

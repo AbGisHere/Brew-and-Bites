@@ -544,7 +544,27 @@ app.post('/api/login', async (req, res) => {
     // 2. TABLE MANAGEMENT
     app.post('/api/tables', async (req, res) => {
         try {
-            const newTable = await Table.create(req.body);
+            const { name } = req.body;
+            
+            // Generate unique 6-digit code
+            let code;
+            let isUnique = false;
+            while (!isUnique) {
+                code = Math.floor(100000 + Math.random() * 900000).toString();
+                const existingTable = await Table.findOne({ tableCode: code });
+                if (!existingTable) {
+                    isUnique = true;
+                }
+            }
+            
+            // Generate dynamic URL using the frontend URL from settings or fallback to localhost
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            
+            const newTable = await Table.create({
+                name,
+                tableCode: code,
+                qrCode: `${frontendUrl}/order?table=${code}`
+            });
             res.json(newTable);
         } catch (e) { res.status(500).json({ error: e.message }); }
     });

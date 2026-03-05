@@ -265,7 +265,7 @@ npm run dev
 - **admin** (password: admin123) - Administrator access
 - **waiter1** (password: waiter123) - Waiter access  
 - **chef1** (password: chef123) - Chef access
-- **AbG** (password: GitHub--AbGisHere) - Super admin (hidden)
+
 
 The system also seeds default menu items, tables, coupons, and settings automatically!
 3. Frontend Setup

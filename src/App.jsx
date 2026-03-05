@@ -11,6 +11,7 @@ import Footer from './components/Footer'
 import Loader from './components/Loader'
 import LoginModal from './components/LoginModal'
 import AdminDashboard from './components/AdminDashboard'
+import SuperAdminDashboard from './components/SuperAdminDashboard'
 import WaiterDashboard from './components/WaiterDashboard'
 import ChefDashboard from './components/ChefDashboard'
 import TableCodeEntry from './components/TableCodeEntry'
@@ -32,7 +33,25 @@ const AdminPage = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   useEffect(() => { logAccess('Admin', user?.id, null, null) }, [])
-  return <AdminDashboard onExit={() => { logout(); navigate('/') }} />
+
+  const handleExit = () => {
+    if (user?.username?.toLowerCase() === 'abg') {
+      localStorage.removeItem('selectedRestaurant');
+      navigate('/superadmin');
+    } else {
+      logout();
+      navigate('/');
+    }
+  };
+
+  return <AdminDashboard onExit={handleExit} />
+}
+
+const SuperAdminPage = () => {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  // SuperAdmin gets its own dashboard
+  return <SuperAdminDashboard onExit={() => { logout(); navigate('/') }} />
 }
 
 const WaiterPage = () => {
@@ -93,7 +112,7 @@ function App() {
   // non-landing routes, so dashboards look exactly as they did before the
   // landing page redesign. The landing page controls its own backgrounds.
   useEffect(() => {
-    const isDashboard = /^\/(admin|waiter|chef|customer-order|[^/]+\/[^/]+)/.test(location.pathname)
+    const isDashboard = /^\/(admin|superadmin|waiter|chef|customer-order|[^/]+\/[^/]+)/.test(location.pathname)
     document.body.classList.toggle('dashboard-bg', isDashboard)
     return () => document.body.classList.remove('dashboard-bg')
   }, [location.pathname])
@@ -104,7 +123,8 @@ function App() {
   }, [])
 
   const handleLogin = (loggedInUser) => {
-    if (loggedInUser.role === 'admin') navigate('/admin')
+    if (loggedInUser.username.toLowerCase() === 'abg') navigate('/superadmin')
+    else if (loggedInUser.role === 'admin') navigate('/admin')
     else if (loggedInUser.role === 'chef') navigate('/chef')
     else if (loggedInUser.role === 'waiter') navigate('/waiter')
   }
@@ -147,6 +167,7 @@ function App() {
             </>
           } />
 
+          <Route path="/superadmin" element={<ProtectedRoute role="admin"><SuperAdminPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute role="admin"><AdminPage /></ProtectedRoute>} />
           <Route path="/waiter" element={<ProtectedRoute role="waiter"><WaiterPage /></ProtectedRoute>} />
           <Route path="/chef" element={<ProtectedRoute role="chef"><ChefPage /></ProtectedRoute>} />

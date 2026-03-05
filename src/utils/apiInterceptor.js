@@ -16,8 +16,11 @@ window.fetch = async (...args) => {
     }
 
     // We only care about adding x-restaurant-id for API calls.
-    // We don't want to interfere with external URLs (like ipify).
-    const isApiCall = typeof resource === 'string' && resource.includes('/api/');
+    // We don't want to interfere with external URLs (like ipify) OR authentication routes.
+    const isApiCall = typeof resource === 'string' &&
+        resource.includes('/api/') &&
+        !resource.includes('/api/login') &&
+        !resource.includes('/api/customer/auth');
 
     if (isApiCall) {
         // 1. Try to get restaurant ID from currently selected restaurant (Super Admin override)

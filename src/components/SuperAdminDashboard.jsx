@@ -222,33 +222,16 @@ const SuperAdminDashboard = ({ onExit }) => {
                                                     >
                                                         <PenIcon style={{ width: 14, height: 14 }} /> Manage
                                                     </button>
-                                                    {/* Toggle — table-button (brown) style */}
-                                                    <button
-                                                        className="table-button"
+                                                    {/* Toggle — proper AnimatedButton, same as all other buttons in the app */}
+                                                    <AnimatedButton
                                                         onClick={() => handleToggle(rest._id)}
-                                                        style={{
-                                                            ...tableButtonStyles.base,
-                                                            padding: '8px 14px',
-                                                            fontSize: 13,
-                                                            fontWeight: 600,
-                                                            cursor: 'pointer',
-                                                            minWidth: 110,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            gap: 6,
-                                                            // Override the base colour to reflect suspend/resume intent
-                                                            background: isActive
-                                                                ? 'rgba(239,68,68,0.12)'
-                                                                : 'rgba(34,197,94,0.12)',
-                                                            border: isActive
-                                                                ? '1px solid rgba(239,68,68,0.3)'
-                                                                : '1px solid rgba(34,197,94,0.3)',
-                                                            color: isActive ? '#c0392b' : '#27ae60',
-                                                        }}
+                                                        color={colors.primary}
+                                                        hoverColor={colors.primaryDark}
+                                                        minWidth="130px"
+                                                        height="36px"
                                                     >
-                                                        {isActive ? '⛔ Suspend' : '✅ Reactivate'}
-                                                    </button>
+                                                        {isActive ? 'Suspend' : 'Reactivate'}
+                                                    </AnimatedButton>
                                                 </div>
                                             </td>
                                         </tr>

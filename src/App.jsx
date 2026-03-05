@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom'
+import { animatedButtonStyles, colors } from './styles/shared/SharedButtonStyles'
+import { cardStyles } from './styles/shared/CardStyles'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Specialties from './components/Specialties'
@@ -34,17 +36,52 @@ const AdminPage = () => {
   const navigate = useNavigate()
   useEffect(() => { logAccess('Admin', user?.id, null, null) }, [])
 
-  const handleExit = () => {
-    if (user?.username?.toLowerCase() === 'abg') {
-      localStorage.removeItem('selectedRestaurant');
-      navigate('/superadmin');
-    } else {
-      logout();
-      navigate('/');
-    }
-  };
+  const isSuperAdmin = user?.username?.toLowerCase() === 'abg'
+  const selectedRest = isSuperAdmin ? (() => { try { return JSON.parse(localStorage.getItem('selectedRestaurant')) } catch { return null } })() : null
 
-  return <AdminDashboard onExit={handleExit} />
+  const handleExit = () => {
+    if (isSuperAdmin) {
+      localStorage.removeItem('selectedRestaurant')
+      navigate('/superadmin')
+    } else {
+      logout()
+      navigate('/')
+    }
+  }
+
+  return (
+    <>
+      {/* ─── Back-to-portal banner, shown when AbG is managing a restaurant ─── */}
+      {isSuperAdmin && selectedRest && (
+        <div style={{
+          ...cardStyles.card,
+          borderRadius: 0,
+          margin: 0,
+          padding: '10px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          position: 'sticky',
+          top: 0,
+          zIndex: 200,
+          borderBottom: '1px solid rgba(212,167,106,0.25)',
+        }}>
+          <style>{animatedButtonStyles.hoverStyles}</style>
+          <span style={{ fontSize: 13, color: colors.brown, fontWeight: 600 }}>
+            Managing: <strong style={{ color: colors.primaryDark }}>{selectedRest.name}</strong>
+          </span>
+          <button
+            className="close-button"
+            onClick={handleExit}
+            style={{ ...animatedButtonStyles.closeButton, minWidth: 180, marginLeft: 'auto' }}
+          >
+            ← Back to Super Admin Portal
+          </button>
+        </div>
+      )}
+      <AdminDashboard onExit={handleExit} />
+    </>
+  )
 }
 
 const SuperAdminPage = () => {

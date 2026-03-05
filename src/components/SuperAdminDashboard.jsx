@@ -1,382 +1,323 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import API_URL from '../config';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { Section, cardStyles } from '../styles/shared/CardStyles'
+import { AnimatedButton, animatedButtonStyles, tableButtonStyles, statusBadgeStyles, colors } from '../styles/shared/SharedButtonStyles'
+import PenIcon from './icons/PenIcon'
+import API_URL from '../config'
 
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+const StatCard = ({ label, value, icon }) => (
+    <div style={{
+        ...cardStyles.card,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        padding: '20px 24px',
+    }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: colors.brown, letterSpacing: '0.04em' }}>{label}</span>
+            <span style={{ fontSize: '22px' }}>{icon}</span>
+        </div>
+        <div style={{ fontSize: '28px', fontWeight: 800, color: colors.primaryDark, lineHeight: 1.1 }}>{value}</div>
+    </div>
+)
+
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+const StatusBadge = ({ active }) => (
+    <span style={{
+        ...(active ? statusBadgeStyles.served : statusBadgeStyles.preparing),
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '5px',
+        padding: '4px 12px',
+        borderRadius: '20px',
+        fontSize: '11px',
+        fontWeight: 700,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+    }}>
+        <span style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: active ? '#66BB6A' : '#E88B5E',
+            display: 'inline-block',
+        }} />
+        {active ? 'Active' : 'Suspended'}
+    </span>
+)
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
 const SuperAdminDashboard = ({ onExit }) => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    const [restaurants, setRestaurants] = useState([]);
-    const [analytics, setAnalytics] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [showNewModal, setShowNewModal] = useState(false);
-    const [newRestName, setNewRestName] = useState('');
-    const [creating, setCreating] = useState(false);
+    const { user } = useAuth()
+    const navigate = useNavigate()
+    const [restaurants, setRestaurants] = useState([])
+    const [analytics, setAnalytics] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [showModal, setShowModal] = useState(false)
+    const [newName, setNewName] = useState('')
+    const [creating, setCreating] = useState(false)
 
     useEffect(() => {
-        fetchData();
-        localStorage.removeItem('selectedRestaurant');
-    }, []);
+        fetchData()
+        localStorage.removeItem('selectedRestaurant')
+    }, [])
+
+    const authHeaders = () => ({ 'Authorization': `Bearer ${user?.id}` })
 
     const fetchData = async () => {
         try {
-            const token = user?.id;
-            const headers = { 'Authorization': `Bearer ${token}` };
-            const [restRes, analyticsRes] = await Promise.all([
-                fetch(`${API_URL}/api/superadmin/restaurants`, { headers }),
-                fetch(`${API_URL}/api/superadmin/analytics`, { headers })
-            ]);
-            const [restData, analyticsData] = await Promise.all([
-                restRes.json(), analyticsRes.json()
-            ]);
-            setRestaurants(Array.isArray(restData) ? restData : []);
-            setAnalytics(analyticsData);
-        } catch (e) {
-            console.error('Error fetching superadmin data:', e);
-        } finally {
-            setLoading(false);
-        }
-    };
+            const [rr, ar] = await Promise.all([
+                fetch(`${API_URL}/api/superadmin/restaurants`, { headers: authHeaders() }),
+                fetch(`${API_URL}/api/superadmin/analytics`, { headers: authHeaders() }),
+            ])
+            const [rd, ad] = await Promise.all([rr.json(), ar.json()])
+            setRestaurants(Array.isArray(rd) ? rd : [])
+            setAnalytics(ad)
+        } catch (e) { console.error(e) }
+        finally { setLoading(false) }
+    }
 
-    const handleToggleStatus = async (id) => {
-        try {
-            const token = user?.id;
-            await fetch(`${API_URL}/api/superadmin/restaurants/${id}/toggle`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            fetchData();
-        } catch (e) { console.error(e); }
-    };
+    const handleToggle = async (id) => {
+        await fetch(`${API_URL}/api/superadmin/restaurants/${id}/toggle`, {
+            method: 'PUT', headers: authHeaders()
+        })
+        fetchData()
+    }
 
-    const handleCreateRestaurant = async (e) => {
-        e.preventDefault();
-        if (!newRestName.trim()) return;
-        setCreating(true);
+    const handleCreate = async (e) => {
+        e.preventDefault()
+        if (!newName.trim()) return
+        setCreating(true)
         try {
-            const token = user?.id;
             await fetch(`${API_URL}/api/superadmin/restaurants`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newRestName.trim() })
-            });
-            setNewRestName('');
-            setShowNewModal(false);
-            fetchData();
-        } catch (e) { console.error(e); } finally { setCreating(false); }
-    };
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName.trim() }),
+            })
+            setNewName(''); setShowModal(false); fetchData()
+        } catch (e) { console.error(e) }
+        finally { setCreating(false) }
+    }
 
-    const handleManage = (restaurant) => {
-        localStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
-        navigate('/admin');
-    };
-
-    // Shared card style matching the app's glassmorphism aesthetic
-    const cardStyle = {
-        background: 'rgba(253, 243, 229, 0.75)',
-        backdropFilter: 'blur(20px) saturate(150%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-        border: '1px solid rgba(212, 167, 106, 0.25)',
-        borderRadius: '18px',
-        boxShadow: '0 8px 32px rgba(139, 90, 43, 0.10), inset 0 1px 0 rgba(255,255,255,0.6)',
-    };
-
-    const sectionHeaderStyle = {
-        fontSize: '0.7rem',
-        fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: '#8B5A2B',
-        marginBottom: '0.25rem',
-    };
-
-    const bigNumberStyle = {
-        fontSize: '2rem',
-        fontWeight: 800,
-        color: '#3E2723',
-        lineHeight: 1.1,
-    };
-
-    const subLabelStyle = {
-        fontSize: '0.78rem',
-        color: '#A0522D',
-        marginTop: '0.2rem',
-    };
-
-    const primaryBtnStyle = {
-        background: 'linear-gradient(135deg, #D4A76A 0%, #B9864B 50%, #8B5A2B 100%)',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '10px',
-        padding: '0.55rem 1.25rem',
-        fontWeight: 700,
-        fontSize: '0.85rem',
-        cursor: 'pointer',
-        boxShadow: '0 4px 16px rgba(139, 90, 43, 0.25)',
-        transition: 'all 0.2s ease',
-    };
+    const handleManage = (rest) => {
+        localStorage.setItem('selectedRestaurant', JSON.stringify(rest))
+        navigate('/admin')
+    }
 
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: '#8B5A2B', fontWeight: 600, fontSize: '1.1rem' }}>
-            <div className="loader" style={{ marginRight: '1rem' }} />
-            Loading Portal...
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+            <div className="loader" />
         </div>
-    );
+    )
 
     return (
-        <div style={{ minHeight: '100vh', padding: '1.5rem', fontFamily: 'inherit', maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ maxWidth: 1300, margin: '0 auto', padding: '24px 20px', fontFamily: 'inherit' }}>
+            <style>{animatedButtonStyles.hoverStyles}</style>
 
             {/* ── HEADER ── */}
-            <div style={{ ...cardStyle, padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+            <div style={{ ...cardStyles.card, padding: '20px 28px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 <div>
-                    <div style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#A0522D', fontWeight: 600 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: colors.brown, marginBottom: 4 }}>
                         Super Admin Portal
                     </div>
-                    <h1 style={{ fontSize: '1.7rem', fontWeight: 800, color: '#3E2723', margin: 0, lineHeight: 1.2 }}>
-                        Welcome back, {user?.username} 👑
+                    <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: colors.primaryDark }}>
+                        Restaurant Network
                     </h1>
-                    <div style={{ fontSize: '0.8rem', color: '#8B5A2B', marginTop: '0.15rem' }}>
-                        Manage your entire restaurant network from one place
-                    </div>
+                    <p style={{ margin: '4px 0 0', fontSize: 13, color: colors.brown }}>
+                        Logged in as <strong>{user?.username}</strong> · Full network access
+                    </p>
                 </div>
+                {/* Exit button — using the close-button pattern from the shared system */}
                 <button
+                    className="close-button"
                     onClick={onExit}
                     style={{
-                        background: 'rgba(139, 90, 43, 0.1)',
-                        border: '1px solid rgba(139, 90, 43, 0.2)',
-                        borderRadius: '10px',
-                        padding: '0.6rem 1.1rem',
-                        color: '#8B5A2B',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        transition: 'all 0.2s',
+                        ...animatedButtonStyles.closeButton,
+                        minWidth: 120,
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(139, 90, 43, 0.18)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(139, 90, 43, 0.1)'}
                 >
-                    <span>↩</span> Exit
+                    ↩ Exit Portal
                 </button>
             </div>
 
-            {/* ── ANALYTICS CARDS ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                {[
-                    { label: 'Network Earnings', value: `₹${(analytics?.totalEarnings || 0).toFixed(2)}`, icon: '💰', note: 'All time, all restaurants' },
-                    { label: 'Total Orders', value: analytics?.totalOrders ?? 0, icon: '📋', note: 'Across all locations' },
-                    { label: 'Active Restaurants', value: analytics?.activeRestaurants ?? 0, icon: '✅', note: 'Currently serving' },
-                    { label: 'Suspended', value: analytics?.suspendedRestaurants ?? 0, icon: '⛔', note: 'Currently paused' },
-                ].map(({ label, value, icon, note }) => (
-                    <div key={label} style={{ ...cardStyle, padding: '1.25rem 1.5rem' }}>
-                        <div style={{ fontSize: '1.8rem', marginBottom: '0.4rem' }}>{icon}</div>
-                        <div style={sectionHeaderStyle}>{label}</div>
-                        <div style={bigNumberStyle}>{value}</div>
-                        <div style={subLabelStyle}>{note}</div>
-                    </div>
-                ))}
+            {/* ── STATS ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16, marginBottom: 24 }}>
+                <StatCard label="Network Earnings" value={`₹${(analytics?.totalEarnings || 0).toFixed(2)}`} icon="💰" />
+                <StatCard label="Total Orders" value={analytics?.totalOrders ?? 0} icon="📋" />
+                <StatCard label="Active" value={analytics?.activeRestaurants ?? 0} icon="✅" />
+                <StatCard label="Suspended" value={analytics?.suspendedRestaurants ?? 0} icon="⛔" />
             </div>
 
-            {/* ── RESTAURANT TABLE ── */}
-            <div style={{ ...cardStyle, padding: '1.5rem 1.75rem' }}>
-                {/* Table header row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div>
-                        <div style={sectionHeaderStyle}>Managed Locations</div>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#3E2723', margin: 0 }}>
-                            All Restaurants
-                        </h2>
-                    </div>
-                    <button
-                        onClick={() => setShowNewModal(true)}
-                        style={primaryBtnStyle}
-                        onMouseEnter={e => e.currentTarget.style.boxShadow = '0 6px 24px rgba(139, 90, 43, 0.4)'}
-                        onMouseLeave={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(139, 90, 43, 0.25)'}
+            {/* ── RESTAURANTS TABLE ── */}
+            <Section title={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                    <span>Managed Restaurants</span>
+                    {/* Add button — AnimatedButton, exact same as rest of app */}
+                    <AnimatedButton
+                        onClick={() => setShowModal(true)}
+                        color={colors.primary}
+                        hoverColor={colors.primaryDark}
+                        minWidth="180px"
+                        height="38px"
                     >
                         + Add Restaurant
-                    </button>
+                    </AnimatedButton>
                 </div>
-
+            }>
                 {restaurants.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem', color: '#A0522D', fontStyle: 'italic' }}>
-                        No restaurants yet. Click "+ Add Restaurant" to get started!
-                    </div>
+                    <p style={{ color: colors.brown, textAlign: 'center', padding: '32px 0', fontStyle: 'italic' }}>
+                        No restaurants yet — click "+ Add Restaurant" to get started.
+                    </p>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid rgba(212, 167, 106, 0.2)' }}>
+                                <tr style={{ borderBottom: `2px solid rgba(212,167,106, 0.2)` }}>
                                     {['Restaurant', 'Created', 'Earnings', 'Status', 'Actions'].map(h => (
                                         <th key={h} style={{
-                                            padding: '0.6rem 1rem',
-                                            textAlign: h === 'Earnings' ? 'right' : h === 'Status' || h === 'Actions' ? 'center' : 'left',
-                                            fontSize: '0.68rem',
-                                            fontWeight: 700,
-                                            letterSpacing: '0.1em',
-                                            textTransform: 'uppercase',
-                                            color: '#8B5A2B',
+                                            padding: '10px 12px',
+                                            textAlign: h === 'Earnings' ? 'right' : (h === 'Status' || h === 'Actions') ? 'center' : 'left',
+                                            fontSize: 11, fontWeight: 700,
+                                            letterSpacing: '0.1em', textTransform: 'uppercase',
+                                            color: colors.brown,
                                         }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {restaurants.map((rest, i) => {
-                                    const isActive = rest.status === 'active';
+                                    const isActive = rest.status === 'active'
                                     return (
                                         <tr
                                             key={rest._id}
                                             style={{
-                                                borderBottom: i < restaurants.length - 1 ? '1px solid rgba(212, 167, 106, 0.12)' : 'none',
-                                                transition: 'background 0.15s',
+                                                borderBottom: i < restaurants.length - 1
+                                                    ? '1px solid rgba(212,167,106,0.12)' : 'none',
                                             }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(212, 167, 106, 0.08)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                         >
-                                            <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: '#3E2723', fontSize: '0.95rem' }}>
+                                            {/* Name */}
+                                            <td style={{ padding: '14px 12px', fontWeight: 700, color: colors.primaryDark, fontSize: 15 }}>
                                                 🍽 {rest.name}
                                             </td>
-                                            <td style={{ padding: '0.85rem 1rem', color: '#8B5A2B', fontSize: '0.85rem' }}>
+                                            {/* Date */}
+                                            <td style={{ padding: '14px 12px', color: colors.brown, fontSize: 13 }}>
                                                 {new Date(rest.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </td>
-                                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right', fontWeight: 700, color: '#5a7a2b', fontSize: '0.95rem', fontVariantNumeric: 'tabular-nums' }}>
+                                            {/* Earnings */}
+                                            <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 700, color: '#5a7a2b', fontVariantNumeric: 'tabular-nums', fontSize: 14 }}>
                                                 ₹{(rest.earnings || 0).toFixed(2)}
                                             </td>
-                                            <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                                                <span style={{
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.3rem',
-                                                    padding: '0.25rem 0.75rem',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.78rem',
-                                                    fontWeight: 700,
-                                                    background: isActive ? 'rgba(90, 122, 43, 0.12)' : 'rgba(180, 60, 40, 0.1)',
-                                                    color: isActive ? '#4a6626' : '#b43c28',
-                                                    border: `1px solid ${isActive ? 'rgba(90,122,43,0.25)' : 'rgba(180,60,40,0.2)'}`,
-                                                }}>
-                                                    {isActive ? '● Active' : '● Suspended'}
-                                                </span>
+                                            {/* Status badge */}
+                                            <td style={{ padding: '14px 12px', textAlign: 'center' }}>
+                                                <StatusBadge active={isActive} />
                                             </td>
-                                            <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                            {/* Action buttons — exact tableButtonStyles from shared system */}
+                                            <td style={{ padding: '14px 12px', textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                                                    {/* Manage — view-button style from shared system */}
                                                     <button
+                                                        className="view-button admin-button"
                                                         onClick={() => handleManage(rest)}
-                                                        style={{
-                                                            background: 'rgba(212, 167, 106, 0.15)',
-                                                            border: '1px solid rgba(212, 167, 106, 0.35)',
-                                                            borderRadius: '8px',
-                                                            padding: '0.4rem 0.9rem',
-                                                            color: '#7a4f1a',
-                                                            fontWeight: 600,
-                                                            fontSize: '0.8rem',
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.15s',
-                                                        }}
-                                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(212,167,106,0.3)'; e.currentTarget.style.color = '#3E2723'; }}
-                                                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(212,167,106,0.15)'; e.currentTarget.style.color = '#7a4f1a'; }}
+                                                        style={{ ...tableButtonStyles.adminButton, minWidth: 110 }}
                                                     >
-                                                        ⚙ Manage
+                                                        <PenIcon style={{ width: 14, height: 14 }} /> Manage
                                                     </button>
+                                                    {/* Toggle — table-button (brown) style */}
                                                     <button
-                                                        onClick={() => handleToggleStatus(rest._id)}
+                                                        className="table-button"
+                                                        onClick={() => handleToggle(rest._id)}
                                                         style={{
-                                                            background: isActive ? 'rgba(180, 60, 40, 0.08)' : 'rgba(90, 122, 43, 0.1)',
-                                                            border: `1px solid ${isActive ? 'rgba(180,60,40,0.25)' : 'rgba(90,122,43,0.25)'}`,
-                                                            borderRadius: '8px',
-                                                            padding: '0.4rem 0.9rem',
-                                                            color: isActive ? '#b43c28' : '#4a6626',
+                                                            ...tableButtonStyles.base,
+                                                            padding: '8px 14px',
+                                                            fontSize: 13,
                                                             fontWeight: 600,
-                                                            fontSize: '0.8rem',
                                                             cursor: 'pointer',
-                                                            transition: 'all 0.15s',
+                                                            minWidth: 110,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            gap: 6,
+                                                            // Override the base colour to reflect suspend/resume intent
+                                                            background: isActive
+                                                                ? 'rgba(239,68,68,0.12)'
+                                                                : 'rgba(34,197,94,0.12)',
+                                                            border: isActive
+                                                                ? '1px solid rgba(239,68,68,0.3)'
+                                                                : '1px solid rgba(34,197,94,0.3)',
+                                                            color: isActive ? '#c0392b' : '#27ae60',
                                                         }}
-                                                        onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-                                                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                                                     >
                                                         {isActive ? '⛔ Suspend' : '✅ Reactivate'}
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
-                                    );
+                                    )
                                 })}
                             </tbody>
                         </table>
                     </div>
                 )}
-            </div>
+            </Section>
 
             {/* ── NEW RESTAURANT MODAL ── */}
-            {showNewModal && (
+            {showModal && (
                 <div style={{
-                    position: 'fixed', inset: 0,
-                    background: 'rgba(62, 39, 35, 0.35)',
-                    backdropFilter: 'blur(8px)',
-                    zIndex: 200,
+                    position: 'fixed', inset: 0, zIndex: 300,
+                    background: 'rgba(62,39,35,0.4)',
+                    backdropFilter: 'blur(10px)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '1rem',
+                    padding: 16,
                 }}>
-                    <div style={{
-                        ...cardStyle,
-                        background: 'rgba(255, 250, 242, 0.97)',
-                        width: '100%',
-                        maxWidth: '420px',
-                        padding: '2rem',
-                        animation: 'scaleIn 0.25s cubic-bezier(0.22,1,0.36,1) both',
+                    <div className="anim-scale-in" style={{
+                        ...cardStyles.card,
+                        background: 'rgba(255,250,245,0.97)',
+                        width: '100%', maxWidth: 420,
+                        padding: 28,
                     }}>
-                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#3E2723', margin: '0 0 0.25rem' }}>
-                            🍽 New Restaurant
-                        </h3>
-                        <p style={{ fontSize: '0.85rem', color: '#8B5A2B', margin: '0 0 1.25rem' }}>
-                            Add a new location to your network. You can configure its menu, tables, and staff afterwards.
+                        <h3 style={{ ...cardStyles.title, marginBottom: 6 }}>🍽 New Restaurant</h3>
+                        <p style={{ fontSize: 13, color: colors.brown, margin: '0 0 20px' }}>
+                            Give your new location a name. Menu, tables, and staff can be added after.
                         </p>
-                        <form onSubmit={handleCreateRestaurant}>
-                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#8B5A2B', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                        <form onSubmit={handleCreate}>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.brown, marginBottom: 6 }}>
                                 Restaurant Name
                             </label>
                             <input
+                                className="input"
                                 type="text"
-                                value={newRestName}
-                                onChange={e => setNewRestName(e.target.value)}
+                                value={newName}
+                                onChange={e => setNewName(e.target.value)}
                                 required
                                 autoFocus
                                 placeholder="e.g. Pizza Palace"
-                                className="input"
-                                style={{ marginBottom: '1.25rem' }}
+                                style={{ marginBottom: 20 }}
                             />
-                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                {/* Cancel — close-button style */}
                                 <button
                                     type="button"
-                                    onClick={() => { setShowNewModal(false); setNewRestName(''); }}
-                                    style={{
-                                        flex: 1,
-                                        background: 'rgba(139, 90, 43, 0.08)',
-                                        border: '1px solid rgba(139, 90, 43, 0.2)',
-                                        borderRadius: '10px',
-                                        padding: '0.65rem',
-                                        color: '#8B5A2B',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                    }}
+                                    className="close-button"
+                                    onClick={() => { setShowModal(false); setNewName('') }}
+                                    style={{ ...animatedButtonStyles.closeButton, flex: 1, minWidth: 'unset' }}
                                 >
                                     Cancel
                                 </button>
-                                <button
+                                {/* Submit — AnimatedButton */}
+                                <AnimatedButton
                                     type="submit"
                                     disabled={creating}
-                                    style={{ ...primaryBtnStyle, flex: 1, opacity: creating ? 0.7 : 1 }}
+                                    style={{ flex: 1, opacity: creating ? 0.7 : 1, minWidth: 'unset', height: 40 }}
                                 >
                                     {creating ? 'Creating…' : 'Create'}
-                                </button>
+                                </AnimatedButton>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default SuperAdminDashboard;
+export default SuperAdminDashboard

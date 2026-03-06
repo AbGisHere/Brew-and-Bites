@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 // REMOVED: import { store } from '../store' 
 import { useAuth } from '../context/AuthContext'
 import ReceiptModal from './ReceiptModal'
+import PaymentModal from './PaymentModal'
 import QRCodeDisplay from './QRCodeDisplay'
 import WaiterDashboard from './WaiterDashboard'
 import EyeIcon from './icons/EyeIcon'
@@ -83,6 +84,12 @@ const mapId = (data) => {
 
 // --- HELPER: Convert backend data to your UI format ---
 const processMenuData = (items) => {
+  // Handle case where items is not an array (null, undefined, or error response)
+  if (!Array.isArray(items)) {
+    console.warn('processMenuData: items is not an array, returning empty object');
+    return {};
+  }
+  
   return items.reduce((acc, item) => {
     // Map MongoDB _id to the 'id' your UI expects
     const uiItem = { ...item, id: item._id };
@@ -2904,6 +2911,59 @@ export default function AdminDashboard({ onExit }) {
     endDate: ''
   });
   const [tableMap, setTableMap] = useState({});
+  const [paymentModal, setPaymentModal] = useState({ open: false, receipt: null })
+
+  // Payment handler functions
+  const handlePaymentComplete = async (paymentData) => {
+    try {
+      // Update receipt with payment information
+      const response = await fetch(`${API_URL}/api/orders/${paymentData.receiptId}/payment`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: paymentData.paymentMethod,
+          paymentId: paymentData.paymentId,
+          amount: paymentData.amount,
+          personName: paymentData.personName,
+          paymentType: paymentData.paymentType,
+          splitDetails: paymentData.splitDetails,
+          status: 'paid'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update payment status');
+      }
+
+      // Refresh data
+      loadAllData();
+      
+      // Show success message
+      if (paymentData.personName) {
+        toast.success(`Payment completed for ${paymentData.personName}: ₹${paymentData.amount.toFixed(2)}`);
+      } else {
+        toast.success(`Payment completed: ₹${paymentData.amount.toFixed(2)}`);
+      }
+    } catch (error) {
+      console.error('Payment completion error:', error);
+      toast.error('Failed to complete payment. Please try again.');
+    }
+  };
+
+  const handleTableClick = (table) => {
+    // Find active receipt for this table
+    const activeReceipt = receipts.find(r => 
+      r.tableId === table._id && r.status === 'open'
+    );
+    
+    if (activeReceipt) {
+      // Show payment modal for active bill
+      setPaymentModal({ open: true, receipt: activeReceipt });
+    } else {
+      // Show QR code for ordering
+      setQrModal({ open: true, table });
+    }
+  };
 
   // Get filtered and sorted receipts based on current filters and sort
   const getFilteredReceipts = useCallback(() => {
@@ -3236,11 +3296,26 @@ export default function AdminDashboard({ onExit }) {
     try {
       // 2. USE API_URL
       const [menuRes, tableRes, receiptRes, userRes, settingRes] = await Promise.all([
-         fetch(`${API_URL}/api/menu`),
-         fetch(`${API_URL}/api/tables`),
-         fetch(`${API_URL}/api/receipts?status=closed`),
-         fetch(`${API_URL}/api/users`),
-         fetch(`${API_URL}/api/settings`)
+         fetch(`${API_URL}/api/menu`).catch(err => {
+           console.warn('Backend server not running - menu API failed:', err.message);
+           return { ok: false, json: async () => [] };
+         }),
+         fetch(`${API_URL}/api/tables`).catch(err => {
+           console.warn('Backend server not running - tables API failed:', err.message);
+           return { ok: false, json: async () => [] };
+         }),
+         fetch(`${API_URL}/api/receipts?status=closed`).catch(err => {
+           console.warn('Backend server not running - receipts API failed:', err.message);
+           return { ok: false, json: async () => [] };
+         }),
+         fetch(`${API_URL}/api/users`).catch(err => {
+           console.warn('Backend server not running - users API failed:', err.message);
+           return { ok: false, json: async () => [] };
+         }),
+         fetch(`${API_URL}/api/settings`).catch(err => {
+           console.warn('Backend server not running - settings API failed:', err.message);
+           return { ok: false, json: async () => ({}) };
+         })
       ]);
 
       const menuData = await menuRes.json();
@@ -3413,12 +3488,24 @@ export default function AdminDashboard({ onExit }) {
   const addTable = async () => {
     const name = prompt('Table name')
     if (!name) return
-    await fetch(`${API_URL}/api/tables`, {
-       method: 'POST',
-       headers: {'Content-Type': 'application/json'},
-       body: JSON.stringify({ name })
-    });
-    loadAllData();
+    
+    try {
+      const response = await fetch(`${API_URL}/api/tables`, {
+         method: 'POST',
+         headers: {'Content-Type': 'application/json'},
+         body: JSON.stringify({ name })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Backend server not responding');
+      }
+      
+      loadAllData();
+      toast.success('Table added successfully!');
+    } catch (error) {
+      console.error('Failed to add table:', error);
+      toast.error('Failed to add table. Please ensure the backend server is running.');
+    }
   }
 
   // 5. DELETE TABLE (API)
@@ -4895,8 +4982,9 @@ export default function AdminDashboard({ onExit }) {
                       return (
                         <tr 
                           key={t.id || t._id} 
-                          className="border-b transition-all duration-200 hover:bg-amber-50/30"
+                          className="border-b transition-all duration-200 hover:bg-amber-50/30 cursor-pointer"
                           style={{ borderBottomColor: 'rgba(212, 167, 106, 0.1)' }}
+                          onClick={() => handleTableClick(t)}
                         >
                           <td className="p-4">
                             <div className="flex items-center justify-center">
@@ -5792,39 +5880,51 @@ export default function AdminDashboard({ onExit }) {
         <SettingsPanel onBack={() => setTab('menu')} />
       )}
 
-      {/* QR Code Modal */}
-      {qrModal.open && qrModal.table && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Table QR Code</h3>
-              <button
-                onClick={() => setQrModal({ open: false, table: null })}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <QRCodeDisplay 
-              url={qrModal.table.qrCode}
-              tableName={qrModal.table.name}
-              tableCode={qrModal.table.tableCode}
-            />
-            
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setQrModal({ open: false, table: null })}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
-              >
-                Close
-              </button>
+      <>
+        {/* QR Code Modal */}
+        {qrModal.open && qrModal.table && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Table QR Code</h3>
+                <button
+                  onClick={() => setQrModal({ open: false, table: null })}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <QRCodeDisplay 
+                url={qrModal.table.qrCode}
+                tableName={qrModal.table.name}
+                tableCode={qrModal.table.tableCode}
+              />
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setQrModal({ open: false, table: null })}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Payment Modal */}
+        <PaymentModal
+          open={paymentModal.open}
+          onClose={() => setPaymentModal({ open: false, receipt: null })}
+          receipt={paymentModal.receipt}
+          onPaymentComplete={handlePaymentComplete}
+          tableMap={tableMap}
+          onExit={() => setTab('menu')}
+        />
+      </>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import API_URL from '../config'
 import { colors, AnimatedButton, Section, statusBadgeStyles, deleteButtonStyles, quantityButtonStyles } from '../styles/shared'
 import TrashIcon from './icons/TrashIcon'
+import PaymentModal from './PaymentModal'
 
 // Access logging function
 const logAccess = async (pageType, userId, tableId, deviceId) => {
@@ -53,6 +54,10 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const [tableHasGuests, setTableHasGuests] = useState(false)
+
+  // --- Payment State ---
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
+  const [paymentReceipt, setPaymentReceipt] = useState(null)
 
   const navigate = useNavigate()
 
@@ -483,6 +488,34 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
     }
   }
 
+  // --- Payment Handler ---
+  const handlePaymentComplete = async (paymentData) => {
+    try {
+      // Here you would process the payment
+      // For now, we'll just close the modal and show a success message
+      setPaymentModalOpen(false)
+      setPaymentReceipt(null)
+      alert('Payment processed successfully! Thank you for your order.')
+    } catch (error) {
+      console.error('Payment error:', error)
+      alert('Payment failed. Please try again.')
+    }
+  }
+
+  const handlePaymentClick = () => {
+    console.log('Pay Now button clicked')
+    console.log('Current order:', currentOrder)
+    
+    if (currentOrder) {
+      console.log('Opening payment modal with order:', currentOrder)
+      setPaymentReceipt(currentOrder)
+      setPaymentModalOpen(true)
+    } else {
+      console.log('No current order found')
+      alert('No current order found!')
+    }
+  }
+
   // --- RENDERING ---
 
   if (loading) return (
@@ -706,6 +739,35 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
               <div className="flex justify-between items-center pt-4" style={{ borderTop: '1px solid rgba(212, 167, 106, 0.15)' }}>
                 <span style={{ color: '#5D4037' }}>Total</span>
                 <span className="text-xl font-bold" style={{ color: '#D4A76A' }}>₹{(currentOrder?.total || 0).toFixed(2)}</span>
+              </div>
+              
+              {/* Payment Button */}
+              <div className="mt-4 flex gap-2">
+                <button 
+                  onClick={handlePaymentClick}
+                  className="flex-1 py-3 px-4 rounded-lg font-semibold text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: 'linear-gradient(135deg, #D4A76A 0%, #3E2723 100%)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(212, 167, 106, 0.3)'
+                  }}
+                >
+                  Pay Now
+                </button>
+                <button 
+                  type="button" 
+                  className="py-3 px-4 rounded-lg font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: 'transparent',
+                    border: '2px solid rgba(212, 167, 106, 0.3)',
+                    color: '#8B5A2B',
+                    cursor: 'pointer'
+                  }}
+                  onClick={logoutCustomer}
+                >
+                  Start New
+                </button>
               </div>
             </div>
           </div>
@@ -994,6 +1056,61 @@ export default function CustomerOrdering({ tableId: propTableId, deviceId: propD
           {error}
         </div>
       )}
+
+      {/* Simple visual test - always show when paymentModalOpen is true */}
+      <div className="fixed top-20 right-4 bg-green-500 text-white p-4 z-50">
+        paymentModalOpen state: {paymentModalOpen.toString()}
+      </div>
+
+      {/* Debug: Show payment modal state */}
+      {paymentModalOpen && (
+        <div className="fixed top-4 left-4 bg-red-500 text-white p-4 z-50">
+          Payment Modal should be open! Receipt: {paymentReceipt ? 'exists' : 'null'}
+          <button 
+            onClick={() => { setPaymentModalOpen(false); setPaymentReceipt(null); }}
+            className="ml-2 bg-white text-red-500 px-2 py-1 rounded text-xs"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+
+      {/* Simple Test Modal */}
+      {paymentModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md">
+            <h2 className="text-xl font-bold mb-4">Test Payment Modal</h2>
+            <p className="mb-4">This is a test modal to check if modals work!</p>
+            <p className="mb-4">Order ID: {paymentReceipt?._id}</p>
+            <p className="mb-4">Total: ₹{paymentReceipt?.total || 0}</p>
+            <p className="mb-4">Items: {paymentReceipt?.items?.length || 0}</p>
+            <button 
+              onClick={() => { setPaymentModalOpen(false); setPaymentReceipt(null); }}
+              className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+            >
+              Close Test Modal
+            </button>
+            <button 
+              onClick={() => {
+                // Test the actual PaymentModal
+                console.log('Testing actual PaymentModal...')
+              }}
+              className="bg-green-500 text-white px-4 py-2 rounded"
+            >
+              Test PaymentModal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Temporarily comment out PaymentModal to test */}
+      {/* <PaymentModal
+        open={paymentModalOpen}
+        onClose={() => { setPaymentModalOpen(false); setPaymentReceipt(null); }}
+        receipt={paymentReceipt}
+        onPaymentComplete={handlePaymentComplete}
+        tableMap={{}} // Empty table map for customer view
+      /> */}
     </div>
   )
 }

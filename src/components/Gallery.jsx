@@ -3,12 +3,12 @@ import { useTheme } from '../context/ThemeContext'
 import { useInView } from '../hooks/useInView'
 
 const galleryImages = [
-  { id: 1, src: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80', alt: 'Warm café seating with cozy lighting', category: 'ambience' },
-  { id: 2, src: 'https://images.unsplash.com/photo-1495474475677-df52a37db44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80', alt: 'Barista crafting the perfect pour', category: 'coffee' },
-  { id: 3, src: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80', alt: 'Freshly made breakfast platter', category: 'bites' },
-  { id: 4, src: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1810&q=80', alt: 'Warm café corner with soft bokeh lighting', category: 'ambience' },
-  { id: 5, src: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80', alt: 'Single-origin beans up close', category: 'coffee' },
-  { id: 6, src: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=1752&q=80', alt: 'House-made pastry & dessert', category: 'bites' },
+  { id: 1, src: 'https://raw.githubusercontent.com/AbGisHere/Brew-and-Bites-Images/main/Cafe%20Interior.jpg', alt: 'Warm coffee shop interior with wooden accents', category: 'ambience' },
+  { id: 2, src: 'https://raw.githubusercontent.com/AbGisHere/Brew-and-Bites-Images/main/Coffee%20Art.jpg', alt: 'Artisan coffee being poured with latte art', category: 'coffee' },
+  { id: 3, src: 'https://raw.githubusercontent.com/AbGisHere/Brew-and-Bites-Images/main/Fries.jpg', alt: 'Fresh breakfast platter with coffee', category: 'bites' },
+  { id: 4, src: 'https://raw.githubusercontent.com/AbGisHere/Brew-and-Bites-Images/main/Cafe%20Interior%202.jpg', alt: 'Square brown wooden table', category: 'ambience' },
+  { id: 5, src: 'https://raw.githubusercontent.com/AbGisHere/Brew-and-Bites-Images/main/Black%20Coffee.jpg', alt: 'Coffee beans and brewing equipment', category: 'coffee' },
+  { id: 6, src: 'https://raw.githubusercontent.com/AbGisHere/Brew-and-Bites-Images/main/Pizza.jpg', alt: 'Pizza with berries', category: 'bites' },
 ];
 
 export default function Gallery() {

@@ -89,8 +89,8 @@ export default function About() {
           <div ref={imgRef} className={imgVisible ? 'anim-fade-right' : 'anim-hidden'} style={{ animationDelay: '0.15s' }}>
             <div className="rounded-2xl overflow-hidden relative" style={{ boxShadow: imgShadow, border: `1px solid ${imgBorder}` }}>
               <img
-                src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1400&q=80"
-                alt="Barista pouring latte art"
+                src="https://images.unsplash.com/photo-1541167760496-1628856ab772?ixlib=rb-4.0.3"
+                alt="Barista creating latte art"
                 className="w-full object-cover h-80 md:h-[440px]"
               />
               <div

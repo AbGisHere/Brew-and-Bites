@@ -5,20 +5,20 @@ import { useInView } from '../hooks/useInView'
 
 // Curated café images per category (Unsplash)
 const CATEGORY_IMAGES = {
-  coffee:    'https://images.unsplash.com/photo-1495474475677-df52a37db44d?auto=format&fit=crop&w=600&q=80',
-  espresso:  'https://images.unsplash.com/photo-1495474475677-df52a37db44d?auto=format&fit=crop&w=600&q=80',
-  brews:     'https://images.unsplash.com/photo-1495474475677-df52a37db44d?auto=format&fit=crop&w=600&q=80',
-  drinks:    'https://images.unsplash.com/photo-1495474475677-df52a37db44d?auto=format&fit=crop&w=600&q=80',
-  breakfast: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=600&q=80',
-  bites:     'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=600&q=80',
-  food:      'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=600&q=80',
-  pastry:    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=600&q=80',
-  pastries:  'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=600&q=80',
-  dessert:   'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=600&q=80',
-  desserts:  'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=600&q=80',
+  coffee:    'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?ixlib=rb-4.0.3',
+  espresso:  'https://images.unsplash.com/photo-1541167760496-1628856ab772?ixlib=rb-4.0.3',
+  brews:     'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?ixlib=rb-4.0.3',
+  drinks:    'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?ixlib=rb-4.0.3',
+  breakfast: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3',
+  bites:     'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3',
+  food:      'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3',
+  pastry:    'https://images.unsplash.com/photo-1505252585461-04db1eb84625?ixlib=rb-4.0.3',
+  pastries:  'https://images.unsplash.com/photo-1505252585461-04db1eb84625?ixlib=rb-4.0.3',
+  dessert:   'https://images.unsplash.com/photo-1505252585461-04db1eb84625?ixlib=rb-4.0.3',
+  desserts:  'https://images.unsplash.com/photo-1505252585461-04db1eb84625?ixlib=rb-4.0.3',
 }
 
-const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?ixlib=rb-4.0.3'
 
 function getCategoryImage(category = '') {
   return CATEGORY_IMAGES[category.toLowerCase()] ?? DEFAULT_IMAGE

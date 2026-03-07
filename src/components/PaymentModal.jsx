@@ -2,14 +2,9 @@ import { useState, useEffect } from 'react'
 import { FiCreditCard, FiUsers, FiDollarSign, FiPlus, FiMinus, FiCheck } from 'react-icons/fi'
 
 export default function PaymentModal({ open, onClose, receipt, onPaymentComplete, tableMap }) {
-  console.log('PaymentModal props:', { open, receipt: receipt ? 'exists' : 'null' })
-  
   if (!open || !receipt) {
-    console.log('PaymentModal not rendering:', { open, receipt: !!receipt })
     return null
   }
-
-  console.log('PaymentModal rendering with receipt:', receipt)
 
   const [paymentOption, setPaymentOption] = useState('full') // 'full' or 'split'
   const [splitType, setSplitType] = useState('items') // 'items' or 'custom'

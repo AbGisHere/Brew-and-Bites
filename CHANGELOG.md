@@ -29,6 +29,9 @@ All notable changes to Brew & Bites will be documented in this file.
 ### ⚡ Smart Caching, Lazy Loading & Performance
 - **Deep Code-Splitting**: Configured `manualChunks` in Vite Rollup to dynamically chunk heavy vendor libraries (`React`, `Three.js`, `Framer Motion`, `jsPDF`), eliminating >500kb bundle warnings.
 - **Circular Dependency Resolution**: Refined chunking logic to eliminate circular reference warnings in production builds.
+- **Deployment**: Resolved `EBADPLATFORM` error by removing platform-specific `@rollup/rollup-darwin-arm64` dependency from `package.json`, ensuring cross-platform stability (Linux/macOS).
+- **Multi-tenant Reliability**: Fixed a critical regression where the Admin Dashboard failed to inject the required `Authorization` headers during background data polling, which caused "Menu/Staff/Tables not loading" for some SuperAdmins.
+- **Glassmorphism V2**: Refined the standard glassmorphism UI package to properly handle mobile landscape orientations and high-DPI displays.
 - **Frontend Assets**: Optimized CSS delivery for animated glassmorphism buttons by removing redundant and duplicate properties.
 - **Service Worker Caching**: Integrated PWA-friendly Service Workers combined with a custom `useSmartCache` React Hook to proactively cache active dashboards.
 - **React Suspense Pipelines**: Route navigation now leverages seamless loading indicators during dynamic component imports.

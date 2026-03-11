@@ -10,6 +10,7 @@ import Footer from './Footer'
 import Loader from './Loader'
 import LoginModal from './LoginModal'
 import TableCodeEntry from './TableCodeEntry'
+import PastelPoetryLanding from './PastelPoetryLanding'
 import API_URL from '../config'
 
 const RestaurantLandingPageWrapper = () => {
@@ -83,7 +84,22 @@ const RestaurantLandingPageWrapper = () => {
         )
     }
 
-    // TODO: we should conditionally render different Home/About components depending on the restaurant.landingPage template
+    if (restaurant.landingPage === 'pastel-poetry') {
+        return (
+            <>
+                <PastelPoetryLanding restaurant={restaurant} />
+                <LoginModal
+                    open={loginOpen}
+                    onClose={() => setLoginOpen(false)}
+                    defaultRole={loginRole}
+                    onLoggedIn={handleLogin}
+                />
+                <TableCodeEntry open={orderOpen} onClose={() => setOrderOpen(false)} />
+            </>
+        )
+    }
+
+    // Default 'brew-bites' template structure
 
     return (
         <>

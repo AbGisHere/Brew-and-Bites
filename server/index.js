@@ -479,7 +479,7 @@ app.get('/api/restaurants', async (req, res) => {
 // Add a new restaurant
 app.post('/api/superadmin/restaurants', verifySuperAdmin, async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, landingPage, domain } = req.body;
         if (!name) return res.status(400).json({ error: 'Name is required' });
 
         // Generate slug from name
@@ -487,7 +487,12 @@ app.post('/api/superadmin/restaurants', verifySuperAdmin, async (req, res) => {
 
         const centralDB = getDatabase();
         const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
-        const newRest = await Restaurant.create({ name, slug });
+        const newRest = await Restaurant.create({
+            name,
+            slug,
+            landingPage: landingPage || 'brew-bites',
+            domain: domain || null
+        });
         res.json(newRest);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -538,15 +543,16 @@ app.put('/api/superadmin/restaurants/:id', verifySuperAdmin, async (req, res) =>
 
         if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
 
-        // Update fields
-        if (name) restaurant.name = name;
-        if (landingPage) restaurant.landingPage = landingPage;
-        if (domain !== undefined) restaurant.domain = domain;
-
-        // Update slug if name changed
+        // Update name - only modify slug if explicitly requested or if it's considered safe
+        // For now, we keep the existing behavior: if name changes, slug changes. 
         if (name && name !== restaurant.name) {
+            restaurant.name = name;
             restaurant.slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         }
+
+        // Update template fields
+        if (landingPage) restaurant.landingPage = landingPage;
+        if (domain !== undefined) restaurant.domain = domain;
 
         await restaurant.save();
         res.json(restaurant);

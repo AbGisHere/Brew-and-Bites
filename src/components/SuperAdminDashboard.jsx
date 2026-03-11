@@ -55,6 +55,8 @@ const SuperAdminDashboard = ({ onExit }) => {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [newName, setNewName] = useState('')
+    const [newLandingPage, setNewLandingPage] = useState('brew-bites')
+    const [newDomain, setNewDomain] = useState('')
     const [creating, setCreating] = useState(false)
     const [editingRestaurant, setEditingRestaurant] = useState(null)
     const [showEditModal, setShowEditModal] = useState(false)
@@ -91,14 +93,29 @@ const SuperAdminDashboard = ({ onExit }) => {
         if (!newName.trim()) return
         setCreating(true)
         try {
-            await fetch(`${API_URL}/api/superadmin/restaurants`, {
+            const res = await fetch(`${API_URL}/api/superadmin/restaurants`, {
                 method: 'POST',
                 headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName.trim() }),
+                body: JSON.stringify({
+                    name: newName.trim(),
+                    landingPage: newLandingPage,
+                    domain: newDomain
+                })
             })
-            setNewName(''); setShowModal(false); fetchData()
-        } catch (e) { console.error(e) }
-        finally { setCreating(false) }
+            if (res.ok) {
+                setNewName('')
+                setNewLandingPage('brew-bites')
+                setNewDomain('')
+                setShowModal(false)
+                fetchData()
+            } else {
+                console.error('Failed to create restaurant:', res.status, res.statusText);
+            }
+        } catch (e) {
+            console.error('Error creating restaurant:', e)
+        } finally {
+            setCreating(false)
+        }
     }
 
     const handleManage = (rest) => {
@@ -332,12 +349,44 @@ const SuperAdminDashboard = ({ onExit }) => {
                                 placeholder="e.g. Pizza Palace"
                                 style={{ marginBottom: 20 }}
                             />
+
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.brown, marginBottom: 6 }}>
+                                Landing Page
+                            </label>
+                            <select
+                                className="input"
+                                value={newLandingPage}
+                                onChange={e => setNewLandingPage(e.target.value)}
+                                style={{ marginBottom: 20 }}
+                            >
+                                <option value="brew-bites">☕ Brew & Bites Style</option>
+                                <option value="pastel-poetry">🎨 Pastel Poetry Style</option>
+                                <option value="custom">🎨 Custom Template</option>
+                            </select>
+
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.brown, marginBottom: 6 }}>
+                                Custom Domain (optional)
+                            </label>
+                            <input
+                                className="input"
+                                type="text"
+                                value={newDomain}
+                                onChange={e => setNewDomain(e.target.value)}
+                                placeholder="restaurant-name.com"
+                                style={{ marginBottom: 20 }}
+                            />
+
                             <div style={{ display: 'flex', gap: 12 }}>
                                 {/* Cancel — close-button style */}
                                 <button
                                     type="button"
                                     className="close-button"
-                                    onClick={() => { setShowModal(false); setNewName('') }}
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        setNewName('');
+                                        setNewLandingPage('brew-bites');
+                                        setNewDomain('');
+                                    }}
                                     style={{ ...animatedButtonStyles.closeButton, flex: 1, minWidth: 'unset' }}
                                 >
                                     Cancel

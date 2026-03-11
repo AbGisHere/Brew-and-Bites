@@ -1,24 +1,53 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { animatedButtonStyles, colors } from './styles/shared/SharedButtonStyles'
 import { cardStyles } from './styles/shared/CardStyles'
-import Navbar from './components/Navbar'
-import Hero from './components/Hero'
-import Specialties from './components/Specialties'
-import About from './components/About'
-import FeaturedItems from './components/FeaturedItems'
-import Gallery from './components/Gallery'
-import Contact from './components/Contact'
-import Footer from './components/Footer'
-import Loader from './components/Loader'
-import LoginModal from './components/LoginModal'
-import AdminDashboard from './components/AdminDashboard'
-import SuperAdminDashboard from './components/SuperAdminDashboard'
-import WaiterDashboard from './components/WaiterDashboard'
-import ChefDashboard from './components/ChefDashboard'
-import TableCodeEntry from './components/TableCodeEntry'
-import CustomerOrdering from './components/CustomerOrdering'
 import { useAuth } from './context/AuthContext'
+import { useSmartCache, useLazyLoad } from './hooks/useSmartCache'
+import { registerServiceWorker } from './utils/serviceWorker'
+
+// Smart lazy loading with caching
+const createLazyComponent = (importPath, componentName) => {
+  return lazy(() => 
+    import(`./components/${importPath}.jsx`).then(module => {
+      // Cache the component for future use
+      if ('caches' in window) {
+        caches.open('brew-bites-admin').then(cache => {
+          cache.put(`/${componentName.toLowerCase()}`, new Response(JSON.stringify({ 
+            cached: true, 
+            timestamp: Date.now(),
+            component: componentName 
+          })))
+        })
+      }
+      console.log(`✅ Loaded ${componentName}`)
+      return module
+    }).catch(error => {
+      console.error(`❌ Failed to load ${componentName}:`, error)
+      // Return a fallback component
+      return { default: () => <div>Error loading {componentName}</div> }
+    })
+  )
+}
+
+// Lazy load admin components with smart caching
+const AdminDashboard = createLazyComponent('AdminDashboard', 'AdminDashboard')
+const SuperAdminDashboard = createLazyComponent('SuperAdminDashboard', 'SuperAdminDashboard')
+const WaiterDashboard = createLazyComponent('WaiterDashboard', 'WaiterDashboard')
+const ChefDashboard = createLazyComponent('ChefDashboard', 'ChefDashboard')
+
+// Lazy load landing page components
+const Navbar = createLazyComponent('Navbar', 'Navbar')
+const Hero = createLazyComponent('Hero', 'Hero')
+const Specialties = createLazyComponent('Specialties', 'Specialties')
+const About = createLazyComponent('About', 'About')
+const Gallery = createLazyComponent('Gallery', 'Gallery')
+const Contact = createLazyComponent('Contact', 'Contact')
+const Footer = createLazyComponent('Footer', 'Footer')
+const Loader = createLazyComponent('Loader', 'Loader')
+const LoginModal = createLazyComponent('LoginModal', 'LoginModal')
+const TableCodeEntry = createLazyComponent('TableCodeEntry', 'TableCodeEntry')
+const CustomerOrdering = createLazyComponent('CustomerOrdering', 'CustomerOrdering')
 
 const ProtectedRoute = ({ children, role }) => {
   const { user } = useAuth()
@@ -79,7 +108,16 @@ const AdminPage = () => {
           </button>
         </div>
       )}
-      <AdminDashboard onExit={handleExit} />
+      <Suspense fallback={
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(180deg, #0d0806 0%, #0a0605 100%)' }}>
+          <div style={{ textAlign: 'center' }}>
+            <Loader />
+            <p style={{ color: '#D4A76A', marginTop: '20px', fontFamily: 'serif' }}>Loading Admin Dashboard...</p>
+          </div>
+        </div>
+      }>
+        <AdminDashboard onExit={handleExit} />
+      </Suspense>
     </>
   )
 }
@@ -88,21 +126,54 @@ const SuperAdminPage = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   // SuperAdmin gets its own dashboard
-  return <SuperAdminDashboard onExit={() => { logout(); navigate('/') }} />
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(180deg, #0d0806 0%, #0a0605 100%)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Loader />
+          <p style={{ color: '#D4A76A', marginTop: '20px', fontFamily: 'serif' }}>Loading Super Admin Dashboard...</p>
+        </div>
+      </div>
+    }>
+      <SuperAdminDashboard onExit={() => { logout(); navigate('/') }} />
+    </Suspense>
+  )
 }
 
 const WaiterPage = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   useEffect(() => { logAccess('Waiter', user?.id, null, null) }, [])
-  return <WaiterDashboard onExit={() => { logout(); navigate('/') }} />
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(180deg, #0d0806 0%, #0a0605 100%)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Loader />
+          <p style={{ color: '#D4A76A', marginTop: '20px', fontFamily: 'serif' }}>Loading Waiter Dashboard...</p>
+        </div>
+      </div>
+    }>
+      <WaiterDashboard onExit={() => { logout(); navigate('/') }} />
+    </Suspense>
+  )
 }
 
 const ChefPage = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   useEffect(() => { logAccess('Chef', user?.id, null, null) }, [])
-  return <ChefDashboard onExit={() => { logout(); navigate('/') }} />
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(180deg, #0d0806 0%, #0a0605 100%)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Loader />
+          <p style={{ color: '#D4A76A', marginTop: '20px', fontFamily: 'serif' }}>Loading Chef Dashboard...</p>
+        </div>
+      </div>
+    }>
+      <ChefDashboard onExit={() => { logout(); navigate('/') }} />
+    </Suspense>
+  )
 }
 
 const TableDevicePage = () => {
@@ -144,6 +215,9 @@ function App() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  
+  // Smart caching for staff users
+  const { cacheStatus, clearCache, getCacheStats, isStaff } = useSmartCache()
 
   // Restore the dashboard background (conic gradient + glassmorphism) on
   // non-landing routes, so dashboards look exactly as they did before the
@@ -158,6 +232,30 @@ function App() {
     const timer = setTimeout(() => setLoading(false), 1200)
     return () => clearTimeout(timer)
   }, [])
+
+  // Log cache status in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && user) {
+      console.log(`👤 User: ${user.role} | 📦 Cache Status:`, cacheStatus)
+    }
+  }, [user, cacheStatus])
+
+  // Register service worker and handle staff caching
+  useEffect(() => {
+    const registerSW = async () => {
+      try {
+        const success = await registerServiceWorker(user?.role)
+        if (success && user) {
+          console.log(`🚀 Service Worker ready for ${user.role}`)
+        }
+      } catch (error) {
+        console.warn('Service Worker registration failed:', error)
+      }
+    }
+
+    // Register SW after component mounts
+    registerSW()
+  }, [user])
 
   const handleLogin = (loggedInUser) => {
     if (loggedInUser.username.toLowerCase() === 'abg') navigate('/superadmin')
@@ -179,29 +277,38 @@ function App() {
         <Routes>
           {/* LANDING PAGE */}
           <Route path="/" element={
-            <>
-              <Navbar
-                isMenuOpen={isMenuOpen}
-                setIsMenuOpen={setIsMenuOpen}
-                onAdminLogin={openAdminLogin}
-                onWaiterLogin={openStaffLogin}
-              />
-              <main className="flex-grow">
-                <Hero onAdminLogin={openAdminLogin} onWaiterLogin={openStaffLogin} onOrderNow={() => setOrderOpen(true)} />
-                <Specialties />
-                <About />
-                <Gallery />
-                <Contact />
-              </main>
-              <Footer />
-              <LoginModal
-                open={loginOpen}
-                onClose={() => setLoginOpen(false)}
-                defaultRole={loginRole}
-                onLoggedIn={handleLogin}
-              />
-              <TableCodeEntry open={orderOpen} onClose={() => setOrderOpen(false)} />
-            </>
+            <Suspense fallback={
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(180deg, #0d0806 0%, #0a0605 100%)' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ width: 40, height: 40, border: '4px solid #D4A76A', borderTop: '4px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                  <p style={{ color: '#D4A76A', marginTop: '20px', fontFamily: 'serif' }}>Loading...</p>
+                </div>
+              </div>
+            }>
+              <>
+                <Navbar
+                  isMenuOpen={isMenuOpen}
+                  setIsMenuOpen={setIsMenuOpen}
+                  onAdminLogin={openAdminLogin}
+                  onWaiterLogin={openStaffLogin}
+                />
+                <main className="flex-grow">
+                  <Hero onAdminLogin={openAdminLogin} onWaiterLogin={openStaffLogin} onOrderNow={() => setOrderOpen(true)} />
+                  <Specialties />
+                  <About />
+                  <Gallery />
+                  <Contact />
+                </main>
+                <Footer />
+                <LoginModal
+                  open={loginOpen}
+                  onClose={() => setLoginOpen(false)}
+                  defaultRole={loginRole}
+                  onLoggedIn={handleLogin}
+                />
+                <TableCodeEntry open={orderOpen} onClose={() => setOrderOpen(false)} />
+              </>
+            </Suspense>
           } />
 
           <Route path="/superadmin" element={<ProtectedRoute role="admin"><SuperAdminPage /></ProtectedRoute>} />

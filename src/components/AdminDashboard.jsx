@@ -2795,6 +2795,110 @@ function SettingsPanel({ onBack }) {
   )
 }
 
+// --- Payment Modal Component ---
+const PaymentModal = ({ open, onClose, receipt, onPaymentComplete, tableMap, onExit }) => {
+  const [method, setMethod] = useState('');
+  const [processing, setProcessing] = useState(false);
+
+  if (!open || !receipt) return null;
+
+  const handlePay = async () => {
+    if (!method) {
+      toast.error('Please select a payment method');
+      return;
+    }
+    setProcessing(true);
+    try {
+      await onPaymentComplete(receipt._id, method);
+      onClose();
+    } catch (e) {
+      console.error(e);
+      toast.error('Payment failed');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const tableCode = tableMap[receipt.tableId]?.tableCode || receipt.tableId;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      <div className="bg-[#FFF9F2] rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="bg-[#8B5A2B] text-white p-6 relative">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+          >
+            ✕
+          </button>
+          <h2 className="text-2xl font-serif font-bold m-0">Complete Payment</h2>
+          <p className="text-white/80 text-sm mt-1 mb-0">Order for Table {tableCode}</p>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto">
+          {/* Summary Card */}
+          <div className="bg-white rounded-xl shadow-sm border border-[#D4A76A]/30 p-5 mb-6">
+            <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+              <span className="text-gray-600 font-medium">Subtotal</span>
+              <span className="text-gray-800 font-semibold">₹{(receipt.total / (1 + (receipt.taxes?.rate || 0) / 100)).toFixed(2)}</span>
+            </div>
+            {receipt.taxes?.enabled && (
+              <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100 text-sm">
+                <span className="text-gray-500">Taxes ({receipt.taxes.rate}%)</span>
+                <span className="text-gray-700">₹{(receipt.total - (receipt.total / (1 + (receipt.taxes.rate / 100)))).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center text-lg">
+              <span className="text-[#8B5A2B] font-bold">Total Amount</span>
+              <span className="text-[#8B5A2B] font-bold text-2xl">₹{receipt.total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Select Payment Method</h3>
+
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {['CASH', 'UPI', 'CARD', 'OTHER'].map(m => (
+              <button
+                key={m}
+                onClick={() => setMethod(m)}
+                className={`py-3 px-4 rounded-xl border-2 font-medium transition-all ${method === m
+                    ? 'border-[#8B5A2B] bg-[#8B5A2B]/10 text-[#8B5A2B]'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-[#D4A76A]/50'
+                  }`}
+              >
+                {m === 'CASH' ? '💵 ' : m === 'UPI' ? '📱 ' : m === 'CARD' ? '💳 ' : '📋 '}
+                {m}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 px-4 rounded-xl font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePay}
+              disabled={processing || !method}
+              className={`flex-1 py-3 px-4 rounded-xl font-bold text-white transition-all ${processing || !method
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-[#8B5A2B] hover:bg-[#6b4226] shadow-lg shadow-[#8B5A2B]/30'
+                }`}
+            >
+              {processing ? 'Processing...' : 'Confirm Payment'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main AdminDashboard Component ---
 export default function AdminDashboard({ onExit }) {
   const [orderingTableId, setOrderingTableId] = useState(null);
   const isUpdating = useRef(false);

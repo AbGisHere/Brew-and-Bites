@@ -6003,6 +6003,6 @@ export default function AdminDashboard({ onExit }) {
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

@@ -6,17 +6,30 @@ All notable changes to Brew & Bites will be documented in this file.
 
 ## [v2.0.0] - Upcoming (Develop Branch)
 
-### 🎨 Premium Glassmorphism Design System
+### 🌍 Multi-Tenant Super Admin Architecture
+- **Central Hub Portal**: A stunning, public-facing portal allowing businesses to browse and join the Brew & Bites ecosystem.
+- **Super Admin Dashboard**: Full CRUD management of individual cafe franchises (Add, Edit, Suspend, Delete) accessible only to the owner (`AbG`).
+- **Dynamic Database Routing**: The backend intelligently serves distinct MongoDB connections per restaurant tenant based on URL routing (`/brew-and-bites/admin`) and secure interceptor API headers.
+- **Custom Landing Pages**: Each cafe can configure custom domains and unique landing page aesthetic templates (*Pastel Poetry* vs *Brew & Bites* standard).
+
+### 📱 Customer Mobile Self-Service
+- **Secure Authentication**: Customers can now log into their specific table session using a dynamically generated, unique 6-digit pin code and QR Code.
+- **Live Interactive Menus**: A fully responsive mobile portal where customers can browse categories, add items to a cart, order across multiple devices simultaneously, and track real-time kitchen status.
+- **Merge Ordering**: The system automatically aggregates orders from multiple guests sitting at the same table into a single unified receipt.
+
+### 🎨 Premium Glassmorphism Design System 
+- **Shared Component Library**: UI components (buttons, badges, modals) have been unified under a shared `SharedButtonStyles.js` glassmorphism system.
 - **Waiter Dashboard Glass Effects**: Applied beautiful frosted glass effect to all UI elements
-  - **Menu Items**: Glassy backgrounds with amber theme and smooth hover animations
-  - **Current Order Items**: Individual item boxes with faint amber glassy effect
-  - **Status Tags**: Color-coded glassy tags (amber/green/blue) for preparing/ready/served items
-  - **Interactive Buttons**: Delete, plus/minus, and status toggle buttons with glassy styling
-  - **Container Backgrounds**: Frosted glass effect on section containers for premium feel
-- **Enhanced Visual Hierarchy**: Glass morphism creates depth and modern aesthetic throughout interface
-- **Consistent Theme**: All glassy elements use website's warm amber color palette
-- **Smooth Animations**: Premium transitions and hover states with glassy effects
-- **Click Border Elimination**: Clean interaction without unwanted browser default borders
+  - **Menu Items**: Glassy backgrounds with amber theme and smooth hover animations.
+  - **Current Order Items**: Individual item boxes with faint amber glassy effect.
+  - **Status Tags**: Color-coded glassy tags (amber/green/blue) for preparing/ready/served items.
+  - **Container Backgrounds**: Frosted glass effect on section containers for premium feel.
+- **UX Enhancements**: Non-clickable items utilize sleek transparency gradients, while primary buttons scale with satisfying transitions.
+
+### ⚡ Smart Caching, Lazy Loading & Performance
+- **Deep Code-Splitting**: Configured `manualChunks` in Vite Rollup to dynamically chunk heavy vendor libraries (`React`, `Three.js`, `Framer Motion`, `jsPDF`), eliminating >500kb bundle warnings.
+- **Service Worker Caching**: Integrated PWA-friendly Service Workers combined with a custom `useSmartCache` React Hook to proactively cache active dashboards.
+- **React Suspense Pipelines**: Route navigation now leverages seamless loading indicators during dynamic component imports.
 
 ---
 

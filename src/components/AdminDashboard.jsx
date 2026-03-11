@@ -2864,8 +2864,8 @@ const PaymentModal = ({ open, onClose, receipt, onPaymentComplete, tableMap, onE
                 key={m}
                 onClick={() => setMethod(m)}
                 className={`py-3 px-4 rounded-xl border-2 font-medium transition-all ${method === m
-                    ? 'border-[#8B5A2B] bg-[#8B5A2B]/10 text-[#8B5A2B]'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-[#D4A76A]/50'
+                  ? 'border-[#8B5A2B] bg-[#8B5A2B]/10 text-[#8B5A2B]'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-[#D4A76A]/50'
                   }`}
               >
                 {m === 'CASH' ? '💵 ' : m === 'UPI' ? '📱 ' : m === 'CARD' ? '💳 ' : '📋 '}
@@ -2885,8 +2885,8 @@ const PaymentModal = ({ open, onClose, receipt, onPaymentComplete, tableMap, onE
               onClick={handlePay}
               disabled={processing || !method}
               className={`flex-1 py-3 px-4 rounded-xl font-bold text-white transition-all ${processing || !method
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-[#8B5A2B] hover:bg-[#6b4226] shadow-lg shadow-[#8B5A2B]/30'
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-[#8B5A2B] hover:bg-[#6b4226] shadow-lg shadow-[#8B5A2B]/30'
                 }`}
             >
               {processing ? 'Processing...' : 'Confirm Payment'}
@@ -3065,6 +3065,7 @@ export default function AdminDashboard({ onExit }) {
     endDate: ''
   });
   const [tableMap, setTableMap] = useState({});
+  const [paymentModal, setPaymentModal] = useState({ open: false, receipt: null });
 
   // Get filtered and sorted receipts based on current filters and sort
   const getFilteredReceipts = useCallback(() => {
@@ -3395,13 +3396,15 @@ export default function AdminDashboard({ onExit }) {
     // Prevent UI glitches if user is interacting
     if (isUpdating.current) return;
     try {
-      // 2. USE API_URL
+      // 2. USE API_URL with Auth Headers
+      const userId = user.id || user._id;
+      const headers = { 'Authorization': `Bearer ${userId}` };
       const [menuRes, tableRes, receiptRes, userRes, settingRes] = await Promise.all([
-        fetch(`${API_URL}/api/menu`),
-        fetch(`${API_URL}/api/tables`),
-        fetch(`${API_URL}/api/receipts?status=closed`),
-        fetch(`${API_URL}/api/users`),
-        fetch(`${API_URL}/api/settings`)
+        fetch(`${API_URL}/api/menu`, { headers }),
+        fetch(`${API_URL}/api/tables`, { headers }),
+        fetch(`${API_URL}/api/receipts?status=closed`, { headers }),
+        fetch(`${API_URL}/api/users`, { headers }),
+        fetch(`${API_URL}/api/settings`, { headers })
       ]);
 
       const menuData = await menuRes.json();
@@ -3431,6 +3434,25 @@ export default function AdminDashboard({ onExit }) {
 
     } catch (err) { console.error("Load error:", err); }
   }, []);
+
+  const handlePaymentComplete = async (receiptId, method) => {
+    try {
+      const response = await fetch(`${API_URL}/api/receipts/${receiptId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'paid', paymentMethod: method })
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to update receipt');
+      }
+      toast.success('Payment completed successfully');
+      loadAllData(); // Refresh the list
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error(error.message || 'Failed to complete payment');
+    }
+  };
 
   useEffect(() => {
     loadAllData(); // Initial load

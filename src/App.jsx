@@ -4,7 +4,7 @@ import { animatedButtonStyles, colors } from './styles/shared/SharedButtonStyles
 import { cardStyles } from './styles/shared/CardStyles'
 import { useAuth } from './context/AuthContext'
 import { useSmartCache, useLazyLoad } from './hooks/useSmartCache'
-import { registerServiceWorker } from './utils/serviceWorker'
+// import { registerServiceWorker } from './utils/serviceWorker' // Missing in v2.0.0 tree
 
 // Smart lazy loading with caching
 const createLazyComponent = (importPath, componentName) => {
@@ -240,6 +240,7 @@ function App() {
   }, [user, cacheStatus])
 
   // Register service worker and handle staff caching
+  /*
   useEffect(() => {
     const registerSW = async () => {
       try {
@@ -255,7 +256,7 @@ function App() {
     // Register SW after component mounts
     registerSW()
   }, [user])
-
+  */
 
   return (
     <div className="min-h-screen flex flex-col">

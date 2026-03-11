@@ -28,8 +28,15 @@ All notable changes to Brew & Bites will be documented in this file.
 
 ### ⚡ Smart Caching, Lazy Loading & Performance
 - **Deep Code-Splitting**: Configured `manualChunks` in Vite Rollup to dynamically chunk heavy vendor libraries (`React`, `Three.js`, `Framer Motion`, `jsPDF`), eliminating >500kb bundle warnings.
+- **Circular Dependency Resolution**: Refined chunking logic to eliminate circular reference warnings in production builds.
+- **Frontend Assets**: Optimized CSS delivery for animated glassmorphism buttons by removing redundant and duplicate properties.
 - **Service Worker Caching**: Integrated PWA-friendly Service Workers combined with a custom `useSmartCache` React Hook to proactively cache active dashboards.
 - **React Suspense Pipelines**: Route navigation now leverages seamless loading indicators during dynamic component imports.
+
+### 🛠️ Stability & Maintenance
+- **Payment Lifecycle Fix**: Resolved a critical `ReferenceError` where the `PaymentModal` component was missing during the checkout flow in the Admin Dashboard.
+- **Multi-Tenant Schema Reliability**: Fixed `MissingSchemaError` in the server by ensuring dynamic model registration for all schema types across sub-databases.
+- **Connection Management**: Improved MongoDB connection pool reliability and URI parsing for multi-tenant environments.
 
 ---
 

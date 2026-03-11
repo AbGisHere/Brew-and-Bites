@@ -29,7 +29,8 @@ export default defineConfig({
             if (id.includes('node_modules/jspdf/')) {
               return 'vendor-pdf';
             }
-            return 'vendor';
+            // By not returning a catch-all 'vendor', we let Rollup handle the rest naturally, 
+            // avoiding 'Circular chunk' warnings.
           }
         }
       }

@@ -86,12 +86,12 @@ const processMenuData = (items) => {
   return items.reduce((acc, item) => {
     // Map MongoDB _id to the 'id' your UI expects
     const uiItem = { ...item, id: item._id };
-    
+
     // Add availability field if it doesn't exist (default to true)
     if (uiItem.available === undefined) {
       uiItem.available = true;
     }
-    
+
     // Group by category
     const category = uiItem.category || 'uncategorized';
     if (!acc[category]) acc[category] = [];
@@ -126,7 +126,7 @@ function FeaturedDishesManager() {
     try {
       // Find the item to get current status
       const item = menu[category].find(i => i.id === itemId);
-      if(!item) return;
+      if (!item) return;
 
       await fetch(`${API_URL}/api/menu/${itemId}`, {
         method: 'PUT',
@@ -139,7 +139,7 @@ function FeaturedDishesManager() {
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return menu[activeCategory] || []
-    return (menu[activeCategory] || []).filter(item => 
+    return (menu[activeCategory] || []).filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -163,7 +163,7 @@ function FeaturedDishesManager() {
         <p className="text-gray-600 mb-4">
           Select which dishes appear on the homepage. Toggle the star to feature/unfeature items.
         </p>
-        
+
         {/* Search and filter */}
         <div className="mb-6">
           <div className="relative">
@@ -179,7 +179,7 @@ function FeaturedDishesManager() {
             </svg>
           </div>
         </div>
-        
+
         {/* Category tabs */}
         <div className="relative">
           <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
@@ -187,17 +187,16 @@ function FeaturedDishesManager() {
               const isActive = activeCategory === category;
               const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
               const hoverColor = '#3E2723';
-              
+
               return (
                 <button
                   key={category}
                   onClick={() => {
                     setActiveCategory(category)
-                    setSearchTerm('') 
+                    setSearchTerm('')
                   }}
-                  className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
-                    isActive ? 'active' : ''
-                  }`}
+                  className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${isActive ? 'active' : ''
+                    }`}
                   style={{
                     '--color': buttonColor,
                     '--hover-color': hoverColor,
@@ -224,8 +223,8 @@ function FeaturedDishesManager() {
                     boxShadow: `0 0 0 2px ${buttonColor}`,
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
-                    background: isActive 
-                      ? hoverColor 
+                    background: isActive
+                      ? hoverColor
                       : 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
                     border: `1px solid rgba(212, 167, 106, 0.3)`,
                     boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`
@@ -279,11 +278,10 @@ function FeaturedDishesManager() {
         <div className="space-y-3">
           {filteredItems.length > 0 ? (
             filteredItems.map(item => (
-              <div 
-                key={item.id} 
-                className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
-                  item.featured !== false ? 'border-yellow-200 bg-yellow-50' : 'hover:bg-gray-50'
-                }`}
+              <div
+                key={item.id}
+                className={`flex items-center justify-between p-4 border rounded-lg transition-all ${item.featured !== false ? 'border-yellow-200 bg-yellow-50' : 'hover:bg-gray-50'
+                  }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -307,8 +305,8 @@ function FeaturedDishesManager() {
                   }}
                   title={item.featured !== false ? 'Remove from featured' : 'Add to featured'}
                 >
-                  <FiStar 
-                    className={`w-5 h-5 ${item.featured !== false ? 'fill-current' : ''}`} 
+                  <FiStar
+                    className={`w-5 h-5 ${item.featured !== false ? 'fill-current' : ''}`}
                   />
                 </button>
               </div>
@@ -324,7 +322,7 @@ function FeaturedDishesManager() {
                 {searchTerm ? 'No matching dishes found. Try a different search term.' : 'No items in this category.'}
               </p>
               {searchTerm && (
-                <button 
+                <button
                   onClick={() => setSearchTerm('')}
                   className="animated-button text-sm"
                   style={{
@@ -363,10 +361,10 @@ function FeaturedDishesManager() {
 
 function CouponManager() {
   const [coupons, setCoupons] = useState([])
-  const [form, setForm] = useState({ 
-    code: '', 
-    type: 'percentage', 
-    value: '', 
+  const [form, setForm] = useState({
+    code: '',
+    type: 'percentage',
+    value: '',
     maxUses: null,
     minOrderValue: null,
     allowedDays: [],
@@ -400,7 +398,7 @@ function CouponManager() {
   const create = async (e) => {
     e.preventDefault();
     if (!form.code.trim()) return;
-    
+
     try {
       setIsLoading(true);
       const response = await fetch(`${API_URL}/api/coupons`, {
@@ -411,12 +409,12 @@ function CouponManager() {
           code: form.code.trim().toUpperCase()
         })
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to create coupon');
       }
-      
+
       await loadCoupons();
       setForm({ code: '', type: 'percentage', value: 10, maxUses: null, minOrderValue: null, allowedDays: [], allowedHours: { start: '00:00', end: '23:59' }, validFrom: '', validTo: '' });
     } catch (error) {
@@ -430,18 +428,18 @@ function CouponManager() {
   // 3. Delete Coupon
   const del = async (code) => {
     if (!window.confirm(`Are you sure you want to delete coupon ${code}?`)) return;
-    
+
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_URL}/api/coupons/${code}`, { 
-        method: 'DELETE' 
+      const response = await fetch(`${API_URL}/api/coupons/${code}`, {
+        method: 'DELETE'
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to delete coupon');
       }
-      
+
       await loadCoupons();
     } catch (error) {
       console.error('Error:', error);
@@ -471,10 +469,10 @@ function CouponManager() {
   const updateCoupon = async (e) => {
     e.preventDefault();
     if (!form.code.trim()) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       const response = await fetch(`${API_URL}/api/coupons/${editingCoupon.code}`, {
         method: 'PUT',
         headers: {
@@ -491,12 +489,12 @@ function CouponManager() {
           validTo: form.validTo ? new Date(form.validTo) : null
         })
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to update coupon');
       }
-      
+
       await loadCoupons();
       resetForm();
       alert('Coupon updated successfully');
@@ -509,10 +507,10 @@ function CouponManager() {
   };
 
   const resetForm = () => {
-    setForm({ 
-      code: '', 
-      type: 'percentage', 
-      value: '', 
+    setForm({
+      code: '',
+      type: 'percentage',
+      value: '',
       maxUses: null,
       minOrderValue: null,
       allowedDays: [],
@@ -527,8 +525,8 @@ function CouponManager() {
   return (
     <>
       <Section title={isEditMode ? "Edit Coupon" : "Create New Coupon"}>
-          <div className="max-h-[70vh] overflow-y-auto pr-2">
-            <form onSubmit={isEditMode ? updateCoupon : create} className="space-y-6">
+        <div className="max-h-[70vh] overflow-y-auto pr-2">
+          <form onSubmit={isEditMode ? updateCoupon : create} className="space-y-6">
             {/* Basic Info Section */}
             <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
               <h3 className="text-lg font-semibold mb-4 text-amber-900 flex items-center gap-2">
@@ -537,14 +535,14 @@ function CouponManager() {
                 </svg>
                 Basic Information
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-amber-800">Coupon Code</label>
                   <input
                     className="w-full px-4 py-3 transition-all duration-200"
                     value={form.code}
-                    onChange={e => setForm(f => ({...f, code: e.target.value.toUpperCase()}))}
+                    onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
                     placeholder="e.g. WELCOME10"
                     required
                     maxLength="20"
@@ -573,8 +571,8 @@ function CouponManager() {
                     }}
                   />
                 </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2 text-amber-800">Discount Type</label>
                     <div className="relative">
@@ -607,8 +605,8 @@ function CouponManager() {
                         }}
                       />
                       {showDiscountDropdown && (
-                        <div className="absolute z-50 w-full rounded-lg mt-2" style={{ 
-                          maxHeight: '200px', 
+                        <div className="absolute z-50 w-full rounded-lg mt-2" style={{
+                          maxHeight: '200px',
                           overflowY: 'auto',
                           backdropFilter: 'blur(40px) saturate(150%)',
                           WebkitBackdropFilter: 'blur(40px) saturate(150%)',
@@ -621,12 +619,12 @@ function CouponManager() {
                           <div
                             className="px-4 py-3 cursor-pointer transition-all duration-200 rounded-lg"
                             onMouseDown={() => {
-                              setForm(f => ({...f, type: 'percentage'}));
+                              setForm(f => ({ ...f, type: 'percentage' }));
                               setShowDiscountDropdown(false);
                             }}
-                            style={{ 
+                            style={{
                               color: '#3E2723',
-                              fontSize: '15px', 
+                              fontSize: '15px',
                               fontWeight: '500',
                               backdropFilter: 'blur(10px) saturate(120%)',
                               WebkitBackdropFilter: 'blur(10px) saturate(120%)',
@@ -648,12 +646,12 @@ function CouponManager() {
                           <div
                             className="px-4 py-3 cursor-pointer transition-all duration-200 rounded-lg"
                             onMouseDown={() => {
-                              setForm(f => ({...f, type: 'fixed'}));
+                              setForm(f => ({ ...f, type: 'fixed' }));
                               setShowDiscountDropdown(false);
                             }}
-                            style={{ 
+                            style={{
                               color: '#3E2723',
-                              fontSize: '15px', 
+                              fontSize: '15px',
                               fontWeight: '500',
                               backdropFilter: 'blur(10px) saturate(120%)',
                               WebkitBackdropFilter: 'blur(10px) saturate(120%)',
@@ -676,11 +674,11 @@ function CouponManager() {
                       )}
                     </div>
                   </div>
-                
-                <div>
+
+                  <div>
                     <label className="block text-sm font-medium mb-2 text-amber-800">
-                      {form.type === 'percentage' 
-                        ? 'Discount %' 
+                      {form.type === 'percentage'
+                        ? 'Discount %'
                         : 'Amount (₹)'}
                     </label>
                     <div className="relative rounded-md shadow-sm">
@@ -691,7 +689,7 @@ function CouponManager() {
                         max={form.type === 'percentage' ? "100" : ""}
                         className="w-full px-4 py-3 transition-all duration-200"
                         value={form.value}
-                        onChange={e => setForm(f => ({...f, value: parseFloat(e.target.value) || 0}))}
+                        onChange={e => setForm(f => ({ ...f, value: parseFloat(e.target.value) || 0 }))}
                         required
                         disabled={isLoading}
                         style={{
@@ -722,8 +720,8 @@ function CouponManager() {
                 </div>
               </div>
             </div>
-                
-                {/* Restrictions Section */}
+
+            {/* Restrictions Section */}
             <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
               <h3 className="text-lg font-semibold mb-4 text-amber-900 flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -731,7 +729,7 @@ function CouponManager() {
                 </svg>
                 Usage Restrictions
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-amber-800">
@@ -742,7 +740,7 @@ function CouponManager() {
                     min="1"
                     className="w-full px-4 py-3 transition-all duration-200"
                     value={form.maxUses || ''}
-                    onChange={e => setForm(f => ({...f, maxUses: e.target.value ? parseInt(e.target.value) : null}))}
+                    onChange={e => setForm(f => ({ ...f, maxUses: e.target.value ? parseInt(e.target.value) : null }))}
                     placeholder="No limit"
                     disabled={isLoading}
                     style={{
@@ -769,7 +767,7 @@ function CouponManager() {
                     }}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2 text-amber-800">
                     Minimum Order Value (Optional)
@@ -780,7 +778,7 @@ function CouponManager() {
                     step="0.01"
                     className="w-full px-4 py-3 transition-all duration-200"
                     value={form.minOrderValue || ''}
-                    onChange={e => setForm(f => ({...f, minOrderValue: e.target.value ? parseFloat(e.target.value) : null}))}
+                    onChange={e => setForm(f => ({ ...f, minOrderValue: e.target.value ? parseFloat(e.target.value) : null }))}
                     placeholder="No minimum"
                     disabled={isLoading}
                     style={{
@@ -810,7 +808,7 @@ function CouponManager() {
               </div>
             </div>
 
-                {/* Schedule Section */}
+            {/* Schedule Section */}
             <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
               <h3 className="text-lg font-semibold mb-4 text-amber-900 flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -818,7 +816,7 @@ function CouponManager() {
                 </svg>
                 Schedule (Optional)
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-3 text-amber-800">
@@ -831,10 +829,10 @@ function CouponManager() {
                           type="checkbox"
                           checked={form.allowedDays.includes(index)}
                           onChange={e => {
-                            const newDays = e.target.checked 
+                            const newDays = e.target.checked
                               ? [...form.allowedDays, index]
                               : form.allowedDays.filter(d => d !== index);
-                            setForm(f => ({...f, allowedDays: newDays}));
+                            setForm(f => ({ ...f, allowedDays: newDays }));
                           }}
                           disabled={isLoading}
                           className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
@@ -866,7 +864,7 @@ function CouponManager() {
                         type="time"
                         className="w-full px-4 py-3 transition-all duration-200"
                         value={form.allowedHours.start}
-                        onChange={e => setForm(f => ({...f, allowedHours: {...f.allowedHours, start: e.target.value}}))}
+                        onChange={e => setForm(f => ({ ...f, allowedHours: { ...f.allowedHours, start: e.target.value } }))}
                         disabled={isLoading}
                         style={{
                           backdropFilter: 'blur(20px) saturate(150%)',
@@ -898,7 +896,7 @@ function CouponManager() {
                         type="time"
                         className="w-full px-4 py-3 transition-all duration-200"
                         value={form.allowedHours.end}
-                        onChange={e => setForm(f => ({...f, allowedHours: {...f.allowedHours, end: e.target.value}}))}
+                        onChange={e => setForm(f => ({ ...f, allowedHours: { ...f.allowedHours, end: e.target.value } }))}
                         disabled={isLoading}
                         style={{
                           backdropFilter: 'blur(20px) saturate(150%)',
@@ -925,363 +923,363 @@ function CouponManager() {
                       />
                     </div>
                   </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-amber-800">
-                      Valid From (Optional)
-                    </label>
-                    <input
-                      type="date"
-                      className="w-full px-4 py-3 transition-all duration-200"
-                      value={form.validFrom}
-                      onChange={e => setForm(f => ({...f, validFrom: e.target.value}))}
-                      disabled={isLoading}
-                      style={{
-                        backdropFilter: 'blur(20px) saturate(150%)',
-                        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                        background: 'rgba(253, 249, 243, 0.8)',
-                        border: '1px solid rgba(212, 167, 106, 0.3)',
-                        borderRadius: '16px',
-                        boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                        color: '#3E2723',
-                        fontSize: '15px',
-                        fontWeight: '500',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                        e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                        e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-amber-800">
-                      Valid To (Optional)
-                    </label>
-                    <input
-                      type="date"
-                      className="w-full px-4 py-3 transition-all duration-200"
-                      value={form.validTo}
-                      onChange={e => setForm(f => ({...f, validTo: e.target.value}))}
-                      disabled={isLoading}
-                      style={{
-                        backdropFilter: 'blur(20px) saturate(150%)',
-                        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                        background: 'rgba(253, 249, 243, 0.8)',
-                        border: '1px solid rgba(212, 167, 106, 0.3)',
-                        borderRadius: '16px',
-                        boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                        color: '#3E2723',
-                        fontSize: '15px',
-                        fontWeight: '500',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                        e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                        e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                      }}
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-amber-800">
+                        Valid From (Optional)
+                      </label>
+                      <input
+                        type="date"
+                        className="w-full px-4 py-3 transition-all duration-200"
+                        value={form.validFrom}
+                        onChange={e => setForm(f => ({ ...f, validFrom: e.target.value }))}
+                        disabled={isLoading}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-amber-800">
+                        Valid To (Optional)
+                      </label>
+                      <input
+                        type="date"
+                        className="w-full px-4 py-3 transition-all duration-200"
+                        value={form.validTo}
+                        onChange={e => setForm(f => ({ ...f, validTo: e.target.value }))}
+                        disabled={isLoading}
+                        style={{
+                          backdropFilter: 'blur(20px) saturate(150%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                          background: 'rgba(253, 249, 243, 0.8)',
+                          border: '1px solid rgba(212, 167, 106, 0.3)',
+                          borderRadius: '16px',
+                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                          color: '#3E2723',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
+                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-            </div>
 
-            {/* Submit Section */}
-            <div className="flex justify-between items-center bg-gradient-to-r from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
-              {isEditMode && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  disabled={isLoading}
-                  className="px-6 py-3 border-2 border-gray-200 rounded-xl bg-white hover:bg-gray-50 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
-                  style={{
-                    ...tableButtonStyles.base,
-                    ...tableButtonStyles.hover
-                  }}
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="view-button"
-                style={{
-                  ...animatedButtonStyles.viewButton,
-                  background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.3) 100%)',
-                  border: '1px solid rgba(212, 167, 106, 0.5)',
-                  color: '#3E2723',
-                  padding: '16px 32px',
-                  fontSize: '16px',
-                  minHeight: '56px',
-                  minWidth: '180px',
-                  opacity: isLoading ? 0.7 : 1,
-                  pointerEvents: isLoading ? 'none' : 'auto',
-                  borderRadius: '20px',
-                  fontWeight: '600'
-                }}
-              >
-                <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                </svg>
-                <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  {isLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Coupon' : 'Create Coupon')}
-                </span>
-                <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '24px', height: '24px', backgroundColor: '#3E2723', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '18px', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                  <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                </svg>
-              </button>
-            </div>
-            </div>
-            </div>
-          </form>
-          </div>
-        </Section>
-
-      <Section title="Existing Coupons">
-          {isLoading && coupons.length === 0 ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-            </div>
-          ) : (
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-              <div className="overflow-x-auto w-full">
-                <table className="min-w-full divide-y divide-gray-200 w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Code
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Value
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Max Uses
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Min Order
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Valid Days
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Valid Hours
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Valid From
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Valid To
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Used
-                      </th>
-                      <th scope="col" className="relative px-4 py-3">
-                        <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {coupons.length === 0 ? (
-                      <tr>
-                        <td colSpan="11" className="px-6 py-4 text-center text-sm text-gray-500">
-                          No coupons found. Create your first coupon.
-                        </td>
-                      </tr>
-                    ) : (
-                      coupons.map((coupon) => (
-                        <tr key={coupon.code} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0">
-                                <span 
-                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200"
-                                  style={{
-                                    ...statusBadgeStyles.default,
-                                    borderRadius: '9999px', // Make it pill-shaped like Table Code
-                                    fontFamily: 'monospace',
-                                    fontSize: '11px',
-                                    fontWeight: '700',
-                                    letterSpacing: '0.05em'
-                                  }}
-                                >
-                                  {coupon.code}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
-                            {coupon.type === 'percentage' 
-                              ? `${coupon.value}% off` 
-                              : `₹${parseFloat(coupon.value).toFixed(2)} off`}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.maxUses || '∞'}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.minOrderValue ? `₹${coupon.minOrderValue}` : 'None'}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.allowedDays && coupon.allowedDays.length > 0 
-                              ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                                  .filter((_, index) => coupon.allowedDays.includes(index))
-                                  .join(', ')
-                              : 'All days'}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.allowedHours 
-                              ? `${coupon.allowedHours.start} - ${coupon.allowedHours.end}`
-                              : 'All day'}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.validFrom 
-                              ? new Date(coupon.validFrom).toLocaleDateString()
-                              : 'No limit'}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.validTo 
-                              ? new Date(coupon.validTo).toLocaleDateString()
-                              : 'No limit'}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span 
-                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200"
-                              style={{
-                                ...statusBadgeStyles.available,
-                                fontSize: '11px',
-                                fontWeight: '600',
-                                letterSpacing: '0.025em',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Active
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {coupon.usedCount || 0} / {coupon.maxUses || '∞'}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
-                              <div 
-                                onClick={() => handleEditCoupon(coupon)}
-                                className="w-8 h-8 flex items-center justify-center cursor-pointer edit-btn"
-                                style={{
-                                  backdropFilter: 'blur(20px) saturate(150%)',
-                                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                                  background: 'rgba(59, 130, 246, 0.25)', // More visible for glassmorphism
-                                  borderRadius: '50%',
-                                  border: '1px solid rgba(59, 130, 246, 0.4)',
-                                  color: '#2563eb',
-                                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
-                                  padding: '4px 8px',
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  outline: 'none' // Remove default focus outline
-                                }}
-                                onFocus={(e) => {
-                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)';
-                                  e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
-                                  e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
-                                }}
-                                onBlur={(e) => {
-                                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
-                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
-                                  e.target.style.boxShadow = 'none';
-                                }}
-                                title="Edit"
-                                onMouseEnter={(e) => {
-                                  e.target.style.background = 'rgba(59, 130, 246, 0.35)';
-                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
-                                  e.target.style.color = '#1d4ed8';
-                                  e.target.style.transform = 'scale(1.02)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match new base color
-                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match new base color
-                                  e.target.style.color = '#2563eb';
-                                  e.target.style.transform = 'scale(1)';
-                                }}
-                              >
-                                <PenIcon 
-                                  size={16}
-                                  color="#1e40af"
-                                  strokeWidth={2}
-                                />
-                              </div>
-                              <div 
-                                onClick={() => del(coupon.code)}
-                                className="w-8 h-8 flex items-center justify-center cursor-pointer delete-btn"
-                                style={{
-                                  ...deleteButtonStyles.base,
-                                  outline: 'none' // Remove default focus outline
-                                }}
-                                onFocus={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
-                                  e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
-                                  e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
-                                }}
-                                onBlur={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
-                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
-                                }}
-                                title="Delete"
-                                onMouseEnter={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
-                                  e.target.style.color = '#b91c1c';
-                                  e.target.style.transform = 'scale(1.02)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
-                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
-                                  e.target.style.color = '#dc2626';
-                                  e.target.style.transform = 'scale(1)';
-                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
-                                }}
-                              >
-                                <TrashIcon 
-                                  size={16}
-                                  color="#dc2626"
-                                  strokeWidth={2}
-                                  dangerHover={true}
-                                  shakeOnClick={true}
-                                />
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                {/* Submit Section */}
+                <div className="flex justify-between items-center bg-gradient-to-r from-amber-50/30 to-orange-50/20 rounded-2xl p-6 backdrop-blur-sm border border-amber-200/20">
+                  {isEditMode && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      disabled={isLoading}
+                      className="px-6 py-3 border-2 border-gray-200 rounded-xl bg-white hover:bg-gray-50 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
+                      style={{
+                        ...tableButtonStyles.base,
+                        ...tableButtonStyles.hover
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="view-button"
+                    style={{
+                      ...animatedButtonStyles.viewButton,
+                      background: 'linear-gradient(135deg, rgba(212, 167, 106, 0.4) 0%, rgba(212, 167, 106, 0.3) 100%)',
+                      border: '1px solid rgba(212, 167, 106, 0.5)',
+                      color: '#3E2723',
+                      padding: '16px 32px',
+                      fontSize: '16px',
+                      minHeight: '56px',
+                      minWidth: '180px',
+                      opacity: isLoading ? 0.7 : 1,
+                      pointerEvents: isLoading ? 'none' : 'auto',
+                      borderRadius: '20px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                    <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      {isLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Coupon' : 'Create Coupon')}
+                    </span>
+                    <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '24px', height: '24px', backgroundColor: '#3E2723', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                    <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '18px', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
-          )}
+          </form>
+        </div>
+      </Section>
+
+      <Section title="Existing Coupons">
+        {isLoading && coupons.length === 0 ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+          </div>
+        ) : (
+          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-gray-200 w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Code
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Value
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Max Uses
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Min Order
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Valid Days
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Valid Hours
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Valid From
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Valid To
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Used
+                    </th>
+                    <th scope="col" className="relative px-4 py-3">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {coupons.length === 0 ? (
+                    <tr>
+                      <td colSpan="11" className="px-6 py-4 text-center text-sm text-gray-500">
+                        No coupons found. Create your first coupon.
+                      </td>
+                    </tr>
+                  ) : (
+                    coupons.map((coupon) => (
+                      <tr key={coupon.code} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                              <span
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200"
+                                style={{
+                                  ...statusBadgeStyles.default,
+                                  borderRadius: '9999px', // Make it pill-shaped like Table Code
+                                  fontFamily: 'monospace',
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  letterSpacing: '0.05em'
+                                }}
+                              >
+                                {coupon.code}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {coupon.type === 'percentage'
+                            ? `${coupon.value}% off`
+                            : `₹${parseFloat(coupon.value).toFixed(2)} off`}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {coupon.maxUses || '∞'}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {coupon.minOrderValue ? `₹${coupon.minOrderValue}` : 'None'}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {coupon.allowedDays && coupon.allowedDays.length > 0
+                            ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                              .filter((_, index) => coupon.allowedDays.includes(index))
+                              .join(', ')
+                            : 'All days'}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {coupon.allowedHours
+                            ? `${coupon.allowedHours.start} - ${coupon.allowedHours.end}`
+                            : 'All day'}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {coupon.validFrom
+                            ? new Date(coupon.validFrom).toLocaleDateString()
+                            : 'No limit'}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {coupon.validTo
+                            ? new Date(coupon.validTo).toLocaleDateString()
+                            : 'No limit'}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200"
+                            style={{
+                              ...statusBadgeStyles.available,
+                              fontSize: '11px',
+                              fontWeight: '600',
+                              letterSpacing: '0.025em',
+                              textTransform: 'uppercase'
+                            }}
+                          >
+                            Active
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {coupon.usedCount || 0} / {coupon.maxUses || '∞'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-2">
+                            <div
+                              onClick={() => handleEditCoupon(coupon)}
+                              className="w-8 h-8 flex items-center justify-center cursor-pointer edit-btn"
+                              style={{
+                                backdropFilter: 'blur(20px) saturate(150%)',
+                                WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                background: 'rgba(59, 130, 246, 0.25)', // More visible for glassmorphism
+                                borderRadius: '50%',
+                                border: '1px solid rgba(59, 130, 246, 0.4)',
+                                color: '#2563eb',
+                                boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                outline: 'none' // Remove default focus outline
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.background = 'rgba(59, 130, 246, 0.25)';
+                                e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
+                                e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                                e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                              }}
+                              title="Edit"
+                              onMouseEnter={(e) => {
+                                e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                                e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
+                                e.target.style.color = '#1d4ed8';
+                                e.target.style.transform = 'scale(1.02)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match new base color
+                                e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match new base color
+                                e.target.style.color = '#2563eb';
+                                e.target.style.transform = 'scale(1)';
+                              }}
+                            >
+                              <PenIcon
+                                size={16}
+                                color="#1e40af"
+                                strokeWidth={2}
+                              />
+                            </div>
+                            <div
+                              onClick={() => del(coupon.code)}
+                              className="w-8 h-8 flex items-center justify-center cursor-pointer delete-btn"
+                              style={{
+                                ...deleteButtonStyles.base,
+                                outline: 'none' // Remove default focus outline
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                                e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
+                                e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                                e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
+                              }}
+                              title="Delete"
+                              onMouseEnter={(e) => {
+                                e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                                e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
+                                e.target.style.color = '#b91c1c';
+                                e.target.style.transform = 'scale(1.02)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                                e.target.style.color = '#dc2626';
+                                e.target.style.transform = 'scale(1)';
+                                e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
+                              }}
+                            >
+                              <TrashIcon
+                                size={16}
+                                color="#dc2626"
+                                strokeWidth={2}
+                                dangerHover={true}
+                                shakeOnClick={true}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </Section>
     </>
   )
 }
 
 function SettingsPanel({ onBack }) {
-  const [settings, setSettings] = useState({ 
+  const [settings, setSettings] = useState({
     autoSubmitToChef: true,
     showOrderTime: true,
     showOrderDate: true,
@@ -1302,30 +1300,75 @@ function SettingsPanel({ onBack }) {
   }, []);
 
   // In AdminDashboard.jsx, update the handleSave function:
-const handleSave = async () => {
-  try {
-    setIsSaving(true)
-    setSaveStatus('Saving...')
-    
-    const token = localStorage.getItem('cafe_auth_user');
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-    const user = JSON.parse(token);
-    
-    // Check if payload might be too large due to logo
-    let settingsToSave = { ...settings };
-    const payloadSize = JSON.stringify(settingsToSave).length;
-    
-    // If payload is larger than 1MB, temporarily exclude logo and save it separately
-    if (payloadSize > 1024 * 1024 && settingsToSave.restaurantLogo) {
-      const logoToSave = settingsToSave.restaurantLogo;
-      delete settingsToSave.restaurantLogo;
-      
-      // Save settings without logo first
+  const handleSave = async () => {
+    try {
+      setIsSaving(true)
+      setSaveStatus('Saving...')
+
+      const token = localStorage.getItem('cafe_auth_user');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+      const user = JSON.parse(token);
+
+      // Check if payload might be too large due to logo
+      let settingsToSave = { ...settings };
+      const payloadSize = JSON.stringify(settingsToSave).length;
+
+      // If payload is larger than 1MB, temporarily exclude logo and save it separately
+      if (payloadSize > 1024 * 1024 && settingsToSave.restaurantLogo) {
+        const logoToSave = settingsToSave.restaurantLogo;
+        delete settingsToSave.restaurantLogo;
+
+        // Save settings without logo first
+        const response = await fetch(`${API_URL}/api/settings`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.id}`
+          },
+          body: JSON.stringify(settingsToSave)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save settings');
+        }
+
+        const updatedSettings = await response.json();
+
+        // Then save logo separately
+        setTimeout(async () => {
+          try {
+            const logoResponse = await fetch(`${API_URL}/api/settings`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.id}`
+              },
+              body: JSON.stringify({ restaurantLogo: logoToSave })
+            });
+
+            if (logoResponse.ok) {
+              const logoUpdatedSettings = await logoResponse.json();
+              setSettings({ ...updatedSettings, restaurantLogo: logoUpdatedSettings.restaurantLogo });
+              setSaveStatus('Settings saved successfully!');
+            } else {
+              setSaveStatus('Settings saved, but logo failed to update');
+            }
+          } catch (logoError) {
+            setSaveStatus('Settings saved, but logo failed to update');
+          }
+        }, 1000);
+
+        setSettings(updatedSettings);
+        setTimeout(() => setSaveStatus(''), 3000);
+        return;
+      }
+
+      // Normal save for smaller payloads
       const response = await fetch(`${API_URL}/api/settings`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.id}`
         },
@@ -1337,61 +1380,16 @@ const handleSave = async () => {
       }
 
       const updatedSettings = await response.json();
-      
-      // Then save logo separately
-      setTimeout(async () => {
-        try {
-          const logoResponse = await fetch(`${API_URL}/api/settings`, {
-            method: 'PUT',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${user.id}`
-            },
-            body: JSON.stringify({ restaurantLogo: logoToSave })
-          });
-
-          if (logoResponse.ok) {
-            const logoUpdatedSettings = await logoResponse.json();
-            setSettings({ ...updatedSettings, restaurantLogo: logoUpdatedSettings.restaurantLogo });
-            setSaveStatus('Settings saved successfully!');
-          } else {
-            setSaveStatus('Settings saved, but logo failed to update');
-          }
-        } catch (logoError) {
-          setSaveStatus('Settings saved, but logo failed to update');
-        }
-      }, 1000);
-      
       setSettings(updatedSettings);
+      setSaveStatus('Settings saved successfully!');
       setTimeout(() => setSaveStatus(''), 3000);
-      return;
+    } catch (error) {
+      setSaveStatus(error.message || 'Failed to save settings');
+      setTimeout(() => setSaveStatus(''), 5000);
+    } finally {
+      setIsSaving(false)
     }
-    
-    // Normal save for smaller payloads
-    const response = await fetch(`${API_URL}/api/settings`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user.id}`
-      },
-      body: JSON.stringify(settingsToSave)
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to save settings');
-    }
-
-    const updatedSettings = await response.json();
-    setSettings(updatedSettings);
-    setSaveStatus('Settings saved successfully!');
-    setTimeout(() => setSaveStatus(''), 3000);
-  } catch (error) {
-    setSaveStatus(error.message || 'Failed to save settings');
-    setTimeout(() => setSaveStatus(''), 5000);
-  } finally {
-    setIsSaving(false)
   }
-}
 
   const handleToggleAutoSubmit = (e) => {
     const newSettings = { ...settings, autoSubmitToChef: e.target.checked }
@@ -1404,8 +1402,8 @@ const handleSave = async () => {
   }
 
   const handleToggleTax = (e) => {
-    const newSettings = { 
-      ...settings, 
+    const newSettings = {
+      ...settings,
       taxEnabled: e.target.checked,
       // Reset tax rate to 0 if disabling tax
       taxRate: e.target.checked ? (settings.taxRate || 0) : 0
@@ -1451,12 +1449,12 @@ const handleSave = async () => {
         // Create canvas to compress the image
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
-        
+
         // Calculate new dimensions (max 300px width, maintain aspect ratio)
         const maxWidth = 300
         const maxHeight = 150
         let { width, height } = img
-        
+
         if (width > maxWidth) {
           height = (maxWidth / width) * height
           width = maxWidth
@@ -1465,13 +1463,13 @@ const handleSave = async () => {
           width = (maxHeight / height) * width
           height = maxHeight
         }
-        
+
         canvas.width = width
         canvas.height = height
-        
+
         // Draw and compress the image
         ctx.drawImage(img, 0, 0, width, height)
-        
+
         // Convert to compressed Base64 (JPEG at 0.7 quality)
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7)
         setSettings({ ...settings, restaurantLogo: compressedBase64 })
@@ -1483,8 +1481,8 @@ const handleSave = async () => {
 
   const handleTaxRateChange = (e) => {
     const value = parseFloat(e.target.value) || 0;
-    const newSettings = { 
-      ...settings, 
+    const newSettings = {
+      ...settings,
       taxRate: Math.min(100, Math.max(0, value)) // Keep between 0-100
     }
     setSettings(newSettings)
@@ -1502,14 +1500,13 @@ const handleSave = async () => {
           const isActive = settingsTab === t.id;
           const buttonColor = '#D4A76A';
           const hoverColor = '#3E2723';
-          
+
           return (
             <button
               key={t.id}
               onClick={() => setSettingsTab(t.id)}
-              className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
-                isActive ? 'active' : ''
-              }`}
+              className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${isActive ? 'active' : ''
+                }`}
               style={{
                 '--color': buttonColor,
                 '--hover-color': hoverColor,
@@ -1535,8 +1532,8 @@ const handleSave = async () => {
                 boxShadow: `0 0 0 2px ${buttonColor}`,
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                background: isActive 
-                  ? hoverColor 
+                background: isActive
+                  ? hoverColor
                   : 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
                 border: `1px solid rgba(212, 167, 106, 0.3)`,
                 boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`
@@ -1612,36 +1609,36 @@ const handleSave = async () => {
               <div className="flex-1">
                 <h5 className="font-medium text-sm">Order Submission (Waiter)</h5>
                 <p className="text-xs text-gray-600">
-                  {settings.autoSubmitToChef 
+                  {settings.autoSubmitToChef
                     ? 'Orders taken by Waiters are automatically sent to the kitchen when items are added.'
                     : 'Orders taken by Waiters require manual submission to the kitchen.'}
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer ml-4">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
                   checked={settings.autoSubmitToChef}
                   onChange={handleToggleAutoSubmit}
                 />
-                <div 
+                <div
                   className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                   style={{
                     backdropFilter: 'blur(20px) saturate(150%)',
                     WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                    background: settings.autoSubmitToChef 
-                      ? 'rgba(212, 167, 106, 0.25)' 
+                    background: settings.autoSubmitToChef
+                      ? 'rgba(212, 167, 106, 0.25)'
                       : 'rgba(139, 90, 43, 0.15)',
                     border: '1px solid',
-                    borderColor: settings.autoSubmitToChef 
-                      ? 'rgba(212, 167, 106, 0.3)' 
+                    borderColor: settings.autoSubmitToChef
+                      ? 'rgba(212, 167, 106, 0.3)'
                       : 'rgba(139, 90, 43, 0.25)',
                     boxShadow: settings.autoSubmitToChef
                       ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                       : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                   }}
                 >
-                  <div 
+                  <div
                     className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                     style={{
                       width: '20px',
@@ -1669,36 +1666,36 @@ const handleSave = async () => {
                 <div>
                   <h4 className="font-medium" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Website Status</h4>
                   <p className="text-sm" style={{ color: '#8B5A2B', lineHeight: '1.5' }}>
-                    {settings.siteClosed 
+                    {settings.siteClosed
                       ? 'Website is currently CLOSED. Only super admin can log in.'
                       : 'Website is OPEN for all users to log in.'}
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.siteClosed || false}
                     onChange={handleToggleSiteStatus}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.siteClosed 
-                        ? 'rgba(239, 68, 68, 0.25)' 
+                      background: settings.siteClosed
+                        ? 'rgba(239, 68, 68, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.siteClosed 
-                        ? 'rgba(239, 68, 68, 0.3)' 
+                      borderColor: settings.siteClosed
+                        ? 'rgba(239, 68, 68, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.siteClosed
                         ? '0 2px 12px -1px rgba(239, 68, 68, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -1733,7 +1730,7 @@ const handleSave = async () => {
               <p className="mb-4" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
                 Configure restaurant details that appear on invoices.
               </p>
-              
+
               {/* Restaurant Logo */}
               <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -1747,9 +1744,9 @@ const handleSave = async () => {
                   </p>
                   {settings.restaurantLogo && (
                     <div className="mt-3">
-                      <img 
-                        src={settings.restaurantLogo} 
-                        alt="Restaurant Logo" 
+                      <img
+                        src={settings.restaurantLogo}
+                        alt="Restaurant Logo"
                         className="h-16 w-auto max-w-32 object-contain border rounded"
                       />
                     </div>
@@ -1764,30 +1761,30 @@ const handleSave = async () => {
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showRestaurantLogo || false}
-                    onChange={(e) => setSettings({...settings, showRestaurantLogo: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showRestaurantLogo: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantLogo 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showRestaurantLogo
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showRestaurantLogo 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showRestaurantLogo
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showRestaurantLogo
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -1803,7 +1800,7 @@ const handleSave = async () => {
                   </span>
                 </label>
               </div>
-              
+
               {/* Restaurant Name */}
               <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -1813,7 +1810,7 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Name</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showRestaurantName 
+                    {settings.showRestaurantName
                       ? 'Restaurant name will be displayed on invoices.'
                       : 'Restaurant name will not be displayed on invoices.'}
                   </p>
@@ -1824,7 +1821,7 @@ const handleSave = async () => {
                         className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="Your Restaurant Name"
                         value={settings.restaurantName || ''}
-                        onChange={(e) => setSettings({...settings, restaurantName: e.target.value})}
+                        onChange={(e) => setSettings({ ...settings, restaurantName: e.target.value })}
                         style={{
                           backdropFilter: 'blur(20px) saturate(150%)',
                           WebkitBackdropFilter: 'blur(20px) saturate(150%)',
@@ -1852,30 +1849,30 @@ const handleSave = async () => {
                   )}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showRestaurantName || false}
-                    onChange={(e) => setSettings({...settings, showRestaurantName: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showRestaurantName: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantName 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showRestaurantName
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showRestaurantName 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showRestaurantName
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showRestaurantName
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -1901,7 +1898,7 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Address</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showRestaurantAddress 
+                    {settings.showRestaurantAddress
                       ? 'Restaurant address will be displayed on invoices.'
                       : 'Restaurant address will not be displayed on invoices.'}
                   </p>
@@ -1912,7 +1909,7 @@ const handleSave = async () => {
                         rows={3}
                         placeholder="Your restaurant address"
                         value={settings.restaurantAddress || ''}
-                        onChange={(e) => setSettings({...settings, restaurantAddress: e.target.value})}
+                        onChange={(e) => setSettings({ ...settings, restaurantAddress: e.target.value })}
                         style={{
                           backdropFilter: 'blur(20px) saturate(150%)',
                           WebkitBackdropFilter: 'blur(20px) saturate(150%)',
@@ -1940,30 +1937,30 @@ const handleSave = async () => {
                   )}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showRestaurantAddress || false}
-                    onChange={(e) => setSettings({...settings, showRestaurantAddress: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showRestaurantAddress: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showRestaurantAddress
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -1989,7 +1986,7 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Contact Number</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showContactNumber 
+                    {settings.showContactNumber
                       ? 'Phone number will be displayed on invoices.'
                       : 'Phone number will not be displayed on invoices.'}
                   </p>
@@ -1998,7 +1995,7 @@ const handleSave = async () => {
                       <input
                         type="text"
                         value={settings.contactNumber}
-                        onChange={(e) => setSettings({...settings, contactNumber: e.target.value})}
+                        onChange={(e) => setSettings({ ...settings, contactNumber: e.target.value })}
                         className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="+91 98765 43210"
                         style={{
@@ -2028,30 +2025,30 @@ const handleSave = async () => {
                   )}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showContactNumber || false}
-                    onChange={(e) => setSettings({...settings, showContactNumber: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showContactNumber: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showContactNumber 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showContactNumber
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showContactNumber 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showContactNumber
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showContactNumber
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2077,7 +2074,7 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Email</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showEmail 
+                    {settings.showEmail
                       ? 'Email will be displayed on invoices.'
                       : 'Email will not be displayed on invoices.'}
                   </p>
@@ -2088,7 +2085,7 @@ const handleSave = async () => {
                         className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="billing@example.com"
                         value={settings.email || ''}
-                        onChange={(e) => setSettings({...settings, email: e.target.value})}
+                        onChange={(e) => setSettings({ ...settings, email: e.target.value })}
                         style={{
                           backdropFilter: 'blur(20px) saturate(150%)',
                           WebkitBackdropFilter: 'blur(20px) saturate(150%)',
@@ -2116,30 +2113,30 @@ const handleSave = async () => {
                   )}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showEmail || false}
-                    onChange={(e) => setSettings({...settings, showEmail: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showEmail: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showEmail 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showEmail
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showEmail 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showEmail
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showEmail
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2177,36 +2174,36 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order Time</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showOrderTime 
+                    {settings.showOrderTime
                       ? 'Order time will be displayed on receipts.'
                       : 'Order time will not be displayed on receipts.'}
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showOrderTime || false}
-                    onChange={(e) => setSettings({...settings, showOrderTime: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showOrderTime: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showOrderTime 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showOrderTime
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showOrderTime 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showOrderTime
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showOrderTime
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2232,36 +2229,36 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order Date</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showOrderDate 
+                    {settings.showOrderDate
                       ? 'Order date will be displayed on receipts.'
                       : 'Order date will not be displayed on receipts.'}
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showOrderDate || false}
-                    onChange={(e) => setSettings({...settings, showOrderDate: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showOrderDate: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showOrderDate 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showOrderDate
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showOrderDate 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showOrderDate
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showOrderDate
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2287,36 +2284,36 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order ID</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showOrderID 
+                    {settings.showOrderID
                       ? 'Sequential Order ID will be displayed on receipts.'
                       : 'Order ID will not be displayed on receipts.'}
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showOrderID || false}
                     onChange={handleToggleOrderID}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showOrderID 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showOrderID
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showOrderID 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showOrderID
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showOrderID
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2354,7 +2351,7 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Tax Settings</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.taxEnabled 
+                    {settings.taxEnabled
                       ? `Tax is ENABLED at ${settings.taxRate || 0}%`
                       : 'Tax is currently DISABLED'}
                   </p>
@@ -2398,30 +2395,30 @@ const handleSave = async () => {
                   )}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.taxEnabled || false}
                     onChange={handleToggleTax}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showRestaurantAddress
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2447,7 +2444,7 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>GST Number</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showGSTNumber 
+                    {settings.showGSTNumber
                       ? 'GST number will be displayed on invoices.'
                       : 'GST number will not be displayed on invoices.'}
                   </p>
@@ -2458,7 +2455,7 @@ const handleSave = async () => {
                         className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="GSTIN Number (e.g., 07AAAPL1234C1ZV)"
                         value={settings.gstNumber || ''}
-                        onChange={(e) => setSettings({...settings, gstNumber: e.target.value.toUpperCase()})}
+                        onChange={(e) => setSettings({ ...settings, gstNumber: e.target.value.toUpperCase() })}
                         style={{
                           backdropFilter: 'blur(20px) saturate(150%)',
                           WebkitBackdropFilter: 'blur(20px) saturate(150%)',
@@ -2486,30 +2483,30 @@ const handleSave = async () => {
                   )}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showGSTNumber || false}
-                    onChange={(e) => setSettings({...settings, showGSTNumber: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showGSTNumber: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showRestaurantAddress
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2535,7 +2532,7 @@ const handleSave = async () => {
                 <div className="flex-1">
                   <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>FSSAI Number</h5>
                   <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showFSSAINumber 
+                    {settings.showFSSAINumber
                       ? 'FSSAI license number will be displayed on invoices.'
                       : 'FSSAI license number will not be displayed on invoices.'}
                   </p>
@@ -2546,7 +2543,7 @@ const handleSave = async () => {
                         className="w-full px-4 py-3 transition-all duration-200"
                         placeholder="FSSAI License Number (e.g., 12345678901234)"
                         value={settings.fssaiNumber || ''}
-                        onChange={(e) => setSettings({...settings, fssaiNumber: e.target.value})}
+                        onChange={(e) => setSettings({ ...settings, fssaiNumber: e.target.value })}
                         style={{
                           backdropFilter: 'blur(20px) saturate(150%)',
                           WebkitBackdropFilter: 'blur(20px) saturate(150%)',
@@ -2574,30 +2571,30 @@ const handleSave = async () => {
                   )}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
                     checked={settings.showFSSAINumber || false}
-                    onChange={(e) => setSettings({...settings, showFSSAINumber: e.target.checked})}
+                    onChange={(e) => setSettings({ ...settings, showFSSAINumber: e.target.checked })}
                   />
-                  <div 
+                  <div
                     className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.25)' 
+                      background: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.25)'
                         : 'rgba(139, 90, 43, 0.15)',
                       border: '1px solid',
-                      borderColor: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.3)' 
+                      borderColor: settings.showRestaurantAddress
+                        ? 'rgba(212, 167, 106, 0.3)'
                         : 'rgba(139, 90, 43, 0.25)',
                       boxShadow: settings.showRestaurantAddress
                         ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
                         : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
                     }}
                   >
-                    <div 
+                    <div
                       className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                       style={{
                         width: '20px',
@@ -2615,7 +2612,7 @@ const handleSave = async () => {
               </div>
             </div>
 
-            
+
             {/* Additional Options */}
             <div className="flex items-center justify-between p-4 rounded-lg" style={{
               background: 'rgba(255, 255, 255, 0.8)',
@@ -2625,46 +2622,46 @@ const handleSave = async () => {
               <div>
                 <h4 className="font-medium" style={{ color: '#3E2723', fontWeight: '600' }}>Include QR Code in Invoice</h4>
                 <p className="text-sm" style={{ color: '#8B5A2B' }}>
-                  {settings.includeQRInInvoice 
+                  {settings.includeQRInInvoice
                     ? 'QR code will be included in printed invoices for easy payment.'
                     : 'QR code will not be included in printed invoices.'}
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
                   checked={settings.includeQRInInvoice || false}
-                  onChange={(e) => setSettings({...settings, includeQRInInvoice: e.target.checked})}
+                  onChange={(e) => setSettings({ ...settings, includeQRInInvoice: e.target.checked })}
                 />
-                <div 
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                <div
+                  className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+                  style={{
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                    background: settings.showRestaurantAddress
+                      ? 'rgba(212, 167, 106, 0.25)'
+                      : 'rgba(139, 90, 43, 0.15)',
+                    border: '1px solid',
+                    borderColor: settings.showRestaurantAddress
+                      ? 'rgba(212, 167, 106, 0.3)'
+                      : 'rgba(139, 90, 43, 0.25)',
+                    boxShadow: settings.showRestaurantAddress
+                      ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                      : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                  }}
+                >
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
                     style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.25)' 
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showRestaurantAddress 
-                        ? 'rgba(212, 167, 106, 0.3)' 
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showRestaurantAddress
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+                      width: '20px',
+                      height: '20px',
+                      transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+                      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
                     }}
-                  >
-                    <div 
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
+                  />
+                </div>
                 <span className="ml-3 text-sm font-medium text-gray-900">
                   {settings.includeQRInInvoice ? 'Enabled' : 'Disabled'}
                 </span>
@@ -2819,27 +2816,37 @@ export default function AdminDashboard({ onExit }) {
   const [users, setUsers] = useState([])
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'admin' })
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-  
+  const [showPasswordChange, setShowPasswordChange] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+
   // Inject CSS styles for view button animations
   useEffect(() => {
     injectViewButtonStyles();
   }, []);
-  
+
   // Fetch all users (only for superadmin)
   const fetchUsers = useCallback(async () => {
     if (user?.username?.toLowerCase() !== 'abg') return;
-    
+
     setIsLoadingUsers(true);
     try {
+      // Use user.id or user._id whichever is available
+      const userId = user.id || user._id;
+      if (!userId) {
+        console.error('User ID is missing:', user);
+        toast.error('User ID not found');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/api/admin/users`, {
         headers: {
-          'Authorization': `Bearer ${user._id}`,
+          'Authorization': `Bearer ${userId}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) throw new Error('Failed to fetch users');
-      
+
       const data = await response.json();
       setUsers(data);
     } catch (error) {
@@ -2849,7 +2856,68 @@ export default function AdminDashboard({ onExit }) {
       setIsLoadingUsers(false);
     }
   }, [user]);
-  
+
+  // Handle password change for logged-in user
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      toast.error('All fields are required');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 4) {
+      toast.error('Password must be at least 4 characters');
+      return;
+    }
+
+    try {
+      // First verify current password
+      const verifyResponse = await fetch(`${API_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: user.username,
+          password: passwordForm.currentPassword
+        })
+      });
+
+      if (!verifyResponse.ok) {
+        toast.error('Current password is incorrect');
+        return;
+      }
+
+      // Update password using the reset endpoint
+      const userId = user.id || user._id;
+      const updateResponse = await fetch(`${API_URL}/api/admin/users/${userId}/reset-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userId}`
+        },
+        body: JSON.stringify({ newPassword: passwordForm.newPassword })
+      });
+
+      const data = await updateResponse.json();
+
+      if (!updateResponse.ok) {
+        throw new Error(data.error || 'Failed to update password');
+      }
+
+      toast.success('Password updated successfully!');
+      setShowPasswordChange(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast.error(error.message || 'Failed to update password');
+    }
+  };
+
   // Handle adding a new user
   const handleAddUser = async (e) => {
     e.preventDefault();
@@ -2859,10 +2927,11 @@ export default function AdminDashboard({ onExit }) {
     }
 
     try {
+      const userId = user.id || user._id;
       const response = await fetch(`${API_URL}/api/admin/users`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${user._id}`,
+          'Authorization': `Bearer ${userId}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(newUser)
@@ -2882,7 +2951,7 @@ export default function AdminDashboard({ onExit }) {
       toast.error(error.message || 'Failed to create user');
     }
   };
-  
+
   // Load users when component mounts and when user changes
   useEffect(() => {
     if (user?.username?.toLowerCase() === 'abg') {
@@ -2910,11 +2979,11 @@ export default function AdminDashboard({ onExit }) {
     return [...receipts]
       .filter(receipt => {
         if (!dateFilter.startDate && !dateFilter.endDate) return true;
-        
+
         const receiptDate = new Date(receipt.createdAt).setHours(0, 0, 0, 0);
         const startDate = dateFilter.startDate ? new Date(dateFilter.startDate).setHours(0, 0, 0, 0) : -Infinity;
         const endDate = dateFilter.endDate ? new Date(dateFilter.endDate).setHours(23, 59, 59, 999) : Infinity;
-        
+
         return receiptDate >= startDate && receiptDate <= endDate;
       });
   }, [receipts, dateFilter]);
@@ -2922,18 +2991,18 @@ export default function AdminDashboard({ onExit }) {
   // Export to CSV function
   const exportToCSV = (receiptsToExport) => {
     const headers = ['Receipt ID', 'Date', 'Table', 'Total (₹)', 'Items'];
-    
+
     const csvContent = [
       headers.join(','),
       ...receiptsToExport.map(receipt => {
-        const tableName = receipt.tableId 
-          ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`) 
+        const tableName = receipt.tableId
+          ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`)
           : 'Takeaway';
-        
-        const items = receipt.items?.map(item => 
+
+        const items = receipt.items?.map(item =>
           `${item.quantity}x ${item.name} (₹${item.price})`
         ).join('; ') || '';
-        
+
         return [
           `"${receipt._id.slice(-6)}"`,
           `"${new Date(receipt.createdAt).toLocaleString()}"`,
@@ -2948,7 +3017,7 @@ export default function AdminDashboard({ onExit }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     const fileName = `receipts_${new Date().toISOString().split('T')[0]}.csv`;
-    
+
     link.href = url;
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
@@ -2999,17 +3068,17 @@ export default function AdminDashboard({ onExit }) {
             dateFilter.startDate ? `From: ${new Date(dateFilter.startDate).toLocaleDateString()}` : '',
             dateFilter.endDate ? `To: ${new Date(dateFilter.endDate).toLocaleDateString()}` : ''
           ].filter(Boolean).join(' ');
-          
+
           doc.text(dateRange, pageWidth / 2, yPos, { align: 'center' });
           yPos += 10;
         }
 
         // Prepare table data
         const tableData = receiptsToExport.map(receipt => {
-          const tableName = receipt.tableId 
-            ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`) 
+          const tableName = receipt.tableId
+            ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`)
             : 'Takeaway';
-          
+
           return [
             receipt._id.slice(-6).toUpperCase(),
             new Date(receipt.createdAt).toLocaleString(),
@@ -3025,14 +3094,14 @@ export default function AdminDashboard({ onExit }) {
           body: tableData,
           startY: yPos,
           margin: { top: yPos },
-          styles: { 
+          styles: {
             fontSize: 8,
             cellPadding: 3,
             overflow: 'linebreak',
             lineWidth: 0.1,
             textColor: [0, 0, 0]
           },
-          headStyles: { 
+          headStyles: {
             fillColor: [59, 130, 246],
             textColor: 255,
             fontStyle: 'bold'
@@ -3044,30 +3113,30 @@ export default function AdminDashboard({ onExit }) {
             3: { cellWidth: 15, cellPadding: 2, halign: 'center' },
             4: { cellWidth: 20, cellPadding: 2, halign: 'right' }
           },
-          didDrawPage: function(data) {
+          didDrawPage: function (data) {
             // Add total at the bottom
             const total = receiptsToExport.reduce((sum, r) => sum + (r.total || 0), 0);
             const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : yPos;
-            
+
             // Save current font settings
             const prevFont = doc.getFont();
             const prevSize = doc.getFontSize();
-            
+
             // Set new font settings
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
-            
+
             // Calculate text width for right alignment
             const text = `Total Sales: ${formatCurrency(total)}`;
             const textWidth = doc.getTextWidth(text);
-            
+
             // Draw the text
             doc.text(
               text,
               pageWidth - margin - textWidth,
               finalY + 10
             );
-            
+
             // Restore previous font settings
             doc.setFont(prevFont.fontName, prevFont.fontStyle);
             doc.setFontSize(prevSize);
@@ -3086,8 +3155,8 @@ export default function AdminDashboard({ onExit }) {
           yPos = 20;
         }
 
-        const tableName = receipt.tableId 
-          ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`) 
+        const tableName = receipt.tableId
+          ? (tableMap[receipt.tableId._id || receipt.tableId] || `Table ${receipt.tableId.tableNumber || 'N/A'}`)
           : (receipt.deliveryType === 'home' ? 'Home Delivery' : 'Takeaway');
 
         const receiptTotal = receipt.total || 0;
@@ -3105,7 +3174,7 @@ export default function AdminDashboard({ onExit }) {
         doc.setFontSize(10);
         doc.text(`Date: ${new Date(receipt.createdAt).toLocaleString()}`, margin, yPos);
         yPos += 5;
-        
+
         doc.text(`Order Type: ${tableName}`, margin, yPos);
         yPos += 10;
 
@@ -3113,29 +3182,29 @@ export default function AdminDashboard({ onExit }) {
         doc.setFont('helvetica', 'bold');
         doc.text('Items Ordered:', margin, yPos);
         yPos += 7;
-        
+
         // Items list
         doc.setFont('helvetica', 'normal');
         receipt.items?.forEach(item => {
           if (!item || !item.name) return; // Skip invalid items
-          
+
           // Handle different possible quantity property names
           const quantity = item.quantity || item.quantityOrdered || 1;
           const price = item.price || 0;
           const itemTotal = quantity * price;
           const itemText = `${quantity} × ${item.name}`;
           const priceText = formatCurrency(itemTotal);
-          
+
           // Split long item names across multiple lines
           const maxWidth = 100; // Reduced max width to accommodate price
           const splitText = doc.splitTextToSize(itemText, maxWidth);
-          
+
           // Add item name (first line)
           doc.text(splitText[0], margin + 5, yPos);
-          
+
           // Add price aligned to the right on the same line as the first line of item text
           doc.text(priceText, pageWidth - margin - 5, yPos, { align: 'right' });
-          
+
           // Handle multi-line item names
           if (splitText.length > 1) {
             for (let i = 1; i < splitText.length; i++) {
@@ -3143,7 +3212,7 @@ export default function AdminDashboard({ onExit }) {
               doc.text(splitText[i], margin + 5, yPos);
             }
           }
-          
+
           // Move down for next item
           yPos += 5;
         });
@@ -3153,29 +3222,29 @@ export default function AdminDashboard({ onExit }) {
         doc.setFont('helvetica', 'bold');
         doc.text('Order Summary:', margin, yPos);
         yPos += 5;
-        
+
         doc.setFont('helvetica', 'normal');
         doc.text(`Subtotal:`, margin + 5, yPos);
         doc.text(formatCurrency(subtotal), pageWidth - margin, yPos, { align: 'right' });
         yPos += 5;
-        
+
         if (tax > 0) {
           doc.text(`Tax (${receipt.taxRate || 5}%):`, margin + 5, yPos);
           doc.text(formatCurrency(tax), pageWidth - margin, yPos, { align: 'right' });
           yPos += 5;
         }
-        
+
         if (discount > 0) {
           doc.text(`Discount:`, margin + 5, yPos);
           doc.text(`-${formatCurrency(discount)}`, pageWidth - margin, yPos, { align: 'right' });
           yPos += 5;
         }
-        
+
         doc.setFont('helvetica', 'bold');
         doc.text(`Total:`, margin + 5, yPos);
         doc.text(formatCurrency(receiptTotal), pageWidth - margin, yPos, { align: 'right' });
         yPos += 10;
-        
+
         // Add separator
         doc.setDrawColor(200);
         doc.line(margin, yPos, pageWidth - margin, yPos);
@@ -3184,7 +3253,7 @@ export default function AdminDashboard({ onExit }) {
 
       // Generate PDF
       addSummaryTable();  // First page with summary table
-      
+
       // Add a new page for detailed receipts
       doc.addPage();
       currentPage = 2;
@@ -3193,7 +3262,7 @@ export default function AdminDashboard({ onExit }) {
       doc.setFontSize(18);
       doc.text('Detailed Receipts', pageWidth / 2, yPos, { align: 'center' });
       yPos = 30;
-      
+
       // Add all receipts
       receiptsToExport.forEach(receipt => addReceipt(receipt));
 
@@ -3203,21 +3272,21 @@ export default function AdminDashboard({ onExit }) {
         doc.setPage(i);
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(8);
-        doc.text(`Page ${i} of ${pageCount}`, 
-                 pageWidth / 2, 287, { align: 'center' });
-        doc.text(`Generated on ${new Date().toLocaleString()}`, 
-                 pageWidth - margin, 287, { align: 'right' });
+        doc.text(`Page ${i} of ${pageCount}`,
+          pageWidth / 2, 287, { align: 'center' });
+        doc.text(`Generated on ${new Date().toLocaleString()}`,
+          pageWidth - margin, 287, { align: 'right' });
       }
 
       // Save the PDF
       doc.save(`BrewBites_Receipts_${new Date().toISOString().split('T')[0]}.pdf`);
-        
+
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please check the console for details.');
     }
   };
-  
+
   // Handle sorting when column headers are clicked
   const handleSort = (key) => {
     setSortConfig(prevConfig => ({
@@ -3225,45 +3294,45 @@ export default function AdminDashboard({ onExit }) {
       direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
     }));
   };
-  
+
   // New state for Site Status (requires a new endpoint if you want to persist it)
   const [siteClosed, setSiteClosed] = useState(false);
 
   // 1. DATA LOADING (Replaces store.getState())
   const loadAllData = useCallback(async (isBackground = false) => {
     // Prevent UI glitches if user is interacting
-    if(isUpdating.current) return;
+    if (isUpdating.current) return;
     try {
       // 2. USE API_URL
       const [menuRes, tableRes, receiptRes, userRes, settingRes] = await Promise.all([
-         fetch(`${API_URL}/api/menu`),
-         fetch(`${API_URL}/api/tables`),
-         fetch(`${API_URL}/api/receipts?status=closed`),
-         fetch(`${API_URL}/api/users`),
-         fetch(`${API_URL}/api/settings`)
+        fetch(`${API_URL}/api/menu`),
+        fetch(`${API_URL}/api/tables`),
+        fetch(`${API_URL}/api/receipts?status=closed`),
+        fetch(`${API_URL}/api/users`),
+        fetch(`${API_URL}/api/settings`)
       ]);
 
       const menuData = await menuRes.json();
       setMenu(processMenuData(menuData)); // Helper to group categories
-      
+
       // Process tables and create a map of _id to table name
       const tablesData = await tableRes.json();
       setTables(tablesData);
-      
+
       // Create a map of table _id to table name
       const tableMapping = {};
       tablesData.forEach(table => {
         tableMapping[table._id] = table.name || `Table ${table.tableNumber || 'N/A'}`;
       });
       setTableMap(tableMapping);
-      
+
       const rData = await receiptRes.json();
       const receiptsData = mapId(rData) || [];
       setReceipts(receiptsData);
       setSalesTotal(receiptsData.reduce((sum, r) => sum + (r.total || 0), 0));
 
       setUsers(await userRes.json());
-      
+
       const sData = await settingRes.json();
       setSiteClosed(sData.siteClosed || false);
       setSettings(sData);
@@ -3273,73 +3342,73 @@ export default function AdminDashboard({ onExit }) {
 
   useEffect(() => {
     loadAllData(); // Initial load
-    
+
     // ✅ 3. ADD: Live Polling Interval
     const interval = setInterval(() => {
-      loadAllData(true); 
-    }, 2000); 
-    
+      loadAllData(true);
+    }, 2000);
+
     return () => clearInterval(interval);
   }, [loadAllData]);
-  
+
   const categories = useMemo(() => Object.keys(menu), [menu])
 
   const [form, setForm] = useState({ id: null, category: '', name: '', description: '', price: '' })
   const [isEditing, setIsEditing] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
-  
+
   // 2. ADD ITEM (API)
   const addItem = async (e) => {
     e.preventDefault()
     const price = parseFloat(form.price)
     if (!form.name || isNaN(price)) return
-    
-    const payload = { 
+
+    const payload = {
       category: form.category,
-      name: form.name, 
-      description: form.description, 
+      name: form.name,
+      description: form.description,
       price: price,
       available: true // New items are available by default
     }
 
     try {
-       // If Editing, we PUT. If Adding, we POST.
-       if (isEditing) {
-         await fetch(`${API_URL}/api/menu/${form.id}`, {
-           method: 'PUT',
-           headers: {'Content-Type': 'application/json'},
-           body: JSON.stringify(payload)
-         });
-       } else {
-         const res = await fetch(`${API_URL}/api/menu`, {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify(payload)
-         })
-         
-         if (!res.ok) throw new Error('Failed to add item')
-         
-         const newItem = await res.json()
-         setMenu(prev => ({
-           ...prev,
-           [form.category]: [...(prev[form.category] || []), newItem]
-         }))
-         
-         resetForm()
-         toast.success('Item added successfully!')
-       }
-       loadAllData();
-    } catch(err) { console.error(err); }
+      // If Editing, we PUT. If Adding, we POST.
+      if (isEditing) {
+        await fetch(`${API_URL}/api/menu/${form.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        const res = await fetch(`${API_URL}/api/menu`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+
+        if (!res.ok) throw new Error('Failed to add item')
+
+        const newItem = await res.json()
+        setMenu(prev => ({
+          ...prev,
+          [form.category]: [...(prev[form.category] || []), newItem]
+        }))
+
+        resetForm()
+        toast.success('Item added successfully!')
+      }
+      loadAllData();
+    } catch (err) { console.error(err); }
   }
-  
+
   // TOGGLE ITEM AVAILABILITY
   const toggleItemAvailability = async (item) => {
     try {
       const newAvailability = item.available === false ? true : false
-      
+
       console.log('Toggling item:', item)
       console.log('New availability:', newAvailability)
-      
+
       // Get the current item data and update availability
       const updatedItem = {
         category: item.category,
@@ -3348,44 +3417,44 @@ export default function AdminDashboard({ onExit }) {
         price: item.price,
         available: newAvailability
       }
-      
+
       console.log('Sending to API:', updatedItem)
-      
+
       const res = await fetch(`${API_URL}/api/menu/${item.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedItem)
       })
-      
+
       console.log('API response status:', res.status)
-      
+
       if (!res.ok) {
         const errorText = await res.text()
         console.error('API error response:', errorText)
         throw new Error(`Failed to update availability: ${res.status} ${errorText}`)
       }
-      
+
       const responseData = await res.json()
       console.log('API response data:', responseData)
-      
+
       // Update local state
       setMenu(prev => {
         const updatedMenu = { ...prev }
         for (const category in updatedMenu) {
-          updatedMenu[category] = updatedMenu[category].map(menuItem => 
+          updatedMenu[category] = updatedMenu[category].map(menuItem =>
             menuItem.id === item.id ? { ...menuItem, available: newAvailability } : menuItem
           )
         }
         return updatedMenu
       })
-      
+
       toast.success(`Item ${newAvailability ? 'available' : 'unavailable'}!`)
     } catch (err) {
       console.error('Toggle availability error:', err)
       toast.error(`Failed to update availability: ${err.message}`)
     }
   }
-  
+
   const editItem = (category, item) => {
     setForm({
       id: item.id, // Using the _id mapped to id
@@ -3396,7 +3465,7 @@ export default function AdminDashboard({ onExit }) {
     })
     setIsEditing(true)
   }
-  
+
   const resetForm = () => {
     setForm({ id: null, category: form.category, name: '', description: '', price: '' })
     setIsEditing(false)
@@ -3404,7 +3473,7 @@ export default function AdminDashboard({ onExit }) {
 
   // 3. DELETE ITEM (API)
   const deleteItem = async (cat, id) => {
-    if(!confirm("Delete item?")) return;
+    if (!confirm("Delete item?")) return;
     await fetch(`${API_URL}/api/menu/${id}`, { method: 'DELETE' });
     loadAllData();
   }
@@ -3414,26 +3483,26 @@ export default function AdminDashboard({ onExit }) {
     const name = prompt('Table name')
     if (!name) return
     await fetch(`${API_URL}/api/tables`, {
-       method: 'POST',
-       headers: {'Content-Type': 'application/json'},
-       body: JSON.stringify({ name })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
     });
     loadAllData();
   }
 
   // 5. DELETE TABLE (API)
   const deleteTable = async (id) => {
-      try {
-        await fetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' });
-        loadAllData();
-      } catch(e) { alert(e.message) }
+    try {
+      await fetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' });
+      loadAllData();
+    } catch (e) { alert(e.message) }
   }
 
   // 6. GENERATE TABLE CODES AND QR CODES
   const generateTableCodes = async () => {
     // Confirm before regenerating all codes
     const confirmMessage = "This will generate NEW table codes and QR codes for ALL tables, replacing existing ones. Customers using old codes will need to scan the new QR codes. Continue?";
-    
+
     if (!confirm(confirmMessage)) {
       return;
     }
@@ -3443,30 +3512,30 @@ export default function AdminDashboard({ onExit }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to generate table codes');
       }
-      
+
       const data = await response.json();
-      
+
       // Track newly generated codes for visual feedback
       const newCodes = new Set(data.tables.map(t => t.tableCode));
       setRecentlyGeneratedCodes(newCodes);
-      
+
       // Clear the highlight after 5 seconds
       setTimeout(() => {
         setRecentlyGeneratedCodes(new Set());
       }, 5000);
-      
+
       // Show detailed success message
       const tableCount = data.tables.length;
       const codesList = data.tables.map(t => `${t.name}: ${t.tableCode}`).join('\n');
-      
+
       alert(`✅ Successfully generated new codes for ${tableCount} table(s)!\n\nNew Table Codes:\n${codesList}\n\nQR codes have been updated automatically.`);
-      
+
       loadAllData(); // Refresh the tables data
-    } catch(e) { 
+    } catch (e) {
       console.error('Error generating table codes:', e);
       alert(`❌ Error generating table codes: ${e.message || 'Unknown error'}`);
     }
@@ -3479,9 +3548,9 @@ export default function AdminDashboard({ onExit }) {
     if (!username || !password) return
     try {
       await fetch(`${API_URL}/api/users`, {
-         method: 'POST',
-         headers: {'Content-Type': 'application/json'},
-         body: JSON.stringify({ username, password, role: 'waiter' })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role: 'waiter' })
       });
       alert('Waiter added');
       loadAllData();
@@ -3494,9 +3563,9 @@ export default function AdminDashboard({ onExit }) {
     if (!username || !password) return
     try {
       await fetch(`${API_URL}/api/users`, {
-         method: 'POST',
-         headers: {'Content-Type': 'application/json'},
-         body: JSON.stringify({ username, password, role: 'chef' })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role: 'chef' })
       });
       alert('Chef added');
       loadAllData();
@@ -3505,9 +3574,9 @@ export default function AdminDashboard({ onExit }) {
 
   // 7. DELETE USER (API)
   const deleteUser = async (id) => {
-    if (confirm('Delete user?')) { 
-        await fetch(`${API_URL}/api/users/${id}`, { method: 'DELETE' });
-        loadAllData();
+    if (confirm('Delete user?')) {
+      await fetch(`${API_URL}/api/users/${id}`, { method: 'DELETE' });
+      loadAllData();
     }
   }
 
@@ -3520,7 +3589,7 @@ export default function AdminDashboard({ onExit }) {
       alert("Password must be at least 4 characters");
       return;
     }
-    
+
     try {
       const response = await fetch(`${API_URL}/api/admin/users/${id}/reset-password`, {
         method: 'PUT',
@@ -3530,13 +3599,13 @@ export default function AdminDashboard({ onExit }) {
         },
         body: JSON.stringify({ newPassword })
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to reset password');
       }
-      
+
       alert(data.message);
     } catch (error) {
       console.error('Error resetting password:', error);
@@ -3549,26 +3618,26 @@ export default function AdminDashboard({ onExit }) {
     if (!confirm('Are you sure you want to delete this receipt? This action cannot be undone.')) {
       return;
     }
-    
+
     try {
-      const response = await fetch(`${API_URL}/api/orders/${receiptId}`, { 
+      const response = await fetch(`${API_URL}/api/orders/${receiptId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete receipt');
       }
-      
+
       // Refresh the receipts list
       loadAllData();
       // Close the modal if it's open
       if (preview) {
         setPreview(null);
       }
-      
+
       // Show success message
       alert('Receipt deleted successfully');
     } catch (error) {
@@ -3594,24 +3663,24 @@ export default function AdminDashboard({ onExit }) {
 
       // Update the local state to reflect the changes
       const updatedReceipt = mapId(await response.json());
-      
+
       // Update the receipts list
-      setReceipts(prevReceipts => 
-        prevReceipts.map(r => 
+      setReceipts(prevReceipts =>
+        prevReceipts.map(r =>
           r.id === updatedReceipt.id ? { ...r, ...updatedReceipt } : r
         )
       );
-      
+
       // Update the preview if it's open
       if (preview && preview.id === updatedReceipt.id) {
         setPreview(updatedReceipt);
       }
-      
+
       // Update sales total
-      setSalesTotal(prevTotal => 
+      setSalesTotal(prevTotal =>
         prevTotal - (preview?.total || 0) + updatedReceipt.total
       );
-      
+
       alert('Receipt updated successfully');
       return true;
     } catch (error) {
@@ -3624,11 +3693,11 @@ export default function AdminDashboard({ onExit }) {
   // 10. COUPON HANDLING FOR RECEIPTS
   const handleCouponApply = async (couponCode) => {
     if (!preview) return;
-    
+
     try {
       // Calculate current subtotal
       const subtotal = preview.items.reduce((s, it) => s + it.price * it.qty, 0);
-      
+
       // Validate coupon with backend
       const response = await fetch(`${API_URL}/api/coupons/validate`, {
         method: 'POST',
@@ -3640,14 +3709,14 @@ export default function AdminDashboard({ onExit }) {
           orderTotal: subtotal
         })
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok || !result.valid) {
         alert(result.error || 'Invalid coupon code');
         return;
       }
-      
+
       // Apply coupon to receipt
       const updatedReceipt = {
         ...preview,
@@ -3655,7 +3724,7 @@ export default function AdminDashboard({ onExit }) {
         discount: result.coupon.discountAmount,
         total: subtotal - result.coupon.discountAmount + (preview.tax || 0)
       };
-      
+
       // Update receipt in backend
       const updateResponse = await fetch(`${API_URL}/api/orders/${preview.id}`, {
         method: 'PUT',
@@ -3668,40 +3737,40 @@ export default function AdminDashboard({ onExit }) {
           total: updatedReceipt.total
         })
       });
-      
+
       if (!updateResponse.ok) {
         throw new Error('Failed to apply coupon');
       }
-      
+
       // Record coupon usage
       await fetch(`${API_URL}/api/coupons/use/${couponCode}`, {
         method: 'POST'
       });
-      
+
       // Update local state
       setPreview(updatedReceipt);
-      setReceipts(prevReceipts => 
-        prevReceipts.map(r => 
+      setReceipts(prevReceipts =>
+        prevReceipts.map(r =>
           r.id === updatedReceipt.id ? { ...r, ...updatedReceipt } : r
         )
       );
-      
+
       alert(`Coupon applied! You saved ₹${result.coupon.discountAmount.toFixed(2)}`);
-      
+
     } catch (error) {
       console.error('Error applying coupon:', error);
       alert('Failed to apply coupon. Please try again.');
     }
   };
-  
+
   const handleCouponRemove = async () => {
     if (!preview || !preview.couponCode) return;
-    
+
     try {
       // Calculate new total without discount
       const subtotal = preview.items.reduce((s, it) => s + it.price * it.qty, 0);
       const newTotal = subtotal + (preview.tax || 0);
-      
+
       // Update receipt to remove coupon
       const updatedReceipt = {
         ...preview,
@@ -3709,7 +3778,7 @@ export default function AdminDashboard({ onExit }) {
         discount: 0,
         total: newTotal
       };
-      
+
       // Update receipt in backend
       const response = await fetch(`${API_URL}/api/orders/${preview.id}`, {
         method: 'PUT',
@@ -3722,21 +3791,21 @@ export default function AdminDashboard({ onExit }) {
           total: newTotal
         })
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to remove coupon');
       }
-      
+
       // Update local state
       setPreview(updatedReceipt);
-      setReceipts(prevReceipts => 
-        prevReceipts.map(r => 
+      setReceipts(prevReceipts =>
+        prevReceipts.map(r =>
           r.id === updatedReceipt.id ? { ...r, ...updatedReceipt } : r
         )
       );
-      
+
       alert('Coupon removed successfully');
-      
+
     } catch (error) {
       console.error('Error removing coupon:', error);
       alert('Failed to remove coupon. Please try again.');
@@ -3750,6 +3819,14 @@ export default function AdminDashboard({ onExit }) {
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-gray-700">Welcome,</span>
           <span className="text-sm font-semibold text-primary">{user?.username}</span>
+          {user?.username === 'AbG' && (
+            <button
+              onClick={() => setShowPasswordChange(true)}
+              className="ml-2 px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-all duration-200"
+            >
+              Change Password
+            </button>
+          )}
         </div>
         <button
           onClick={logout}
@@ -3764,16 +3841,24 @@ export default function AdminDashboard({ onExit }) {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Admin Dashboard</h1>
           <p className="text-gray-600 md:mb-0">Manage your restaurant operations efficiently</p>
         </div>
-        
+
         {/* Desktop Only - Welcome and Logout */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-700">Welcome,</span>
             <span className="text-sm font-semibold text-primary">{user?.username}</span>
+            {user?.username === 'AbG' && (
+              <button
+                onClick={() => setShowPasswordChange(true)}
+                className="ml-2 px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-all duration-200"
+              >
+                Change Password
+              </button>
+            )}
           </div>
-          
+
           <div className="w-px h-8 bg-gray-300"></div>
-          
+
           <button
             className="animated-button group relative inline-flex items-center justify-center"
             onClick={logout}
@@ -3805,17 +3890,17 @@ export default function AdminDashboard({ onExit }) {
               boxShadow: '0 8px 32px rgba(139, 90, 43, 0.15), 0 0 0 2px #8B5A2B'
             }}
           >
-              <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                Logout
-              </span>
-              <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-              <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <style>{`
+            <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '16px', height: '16px', left: '-25%', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M16 17l5-5-5-5M19.8 12H4M14 7l-3.2 2.4c-.5.4-.8.9-.8 1.6v5c0 .7.3 1.2.8 1.6L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              Logout
+            </span>
+            <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#8B5A2B', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+            <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '16px', height: '16px', right: '16px', fill: '#8B5A2B', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              <path d="M8 7l5-5 5 5M13 21V4M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <style>{`
                 .animated-button:hover { 
                   box-shadow: 0 0 0 8px transparent !important; 
                   color: white !important; 
@@ -3867,14 +3952,13 @@ export default function AdminDashboard({ onExit }) {
             const isActive = tab === t.id;
             const buttonColor = isActive ? '#D4A76A' : '#D4A76A';
             const hoverColor = '#3E2723';
-            
+
             return (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${
-                  isActive ? 'active' : ''
-                }`}
+                className={`animated-button group relative inline-flex items-center justify-center flex-shrink-0 ${isActive ? 'active' : ''
+                  }`}
                 style={{
                   '--color': buttonColor,
                   '--hover-color': hoverColor,
@@ -3900,8 +3984,8 @@ export default function AdminDashboard({ onExit }) {
                   boxShadow: `0 0 0 2px ${buttonColor}`,
                   backdropFilter: 'blur(12px)',
                   WebkitBackdropFilter: 'blur(12px)',
-                  background: isActive 
-                    ? hoverColor 
+                  background: isActive
+                    ? hoverColor
                     : 'linear-gradient(135deg, rgba(212, 167, 106, 0.25) 0%, rgba(212, 167, 106, 0.1) 100%)',
                   border: `1px solid rgba(212, 167, 106, 0.3)`,
                   boxShadow: `0 8px 32px rgba(212, 167, 106, 0.15), 0 0 0 2px ${buttonColor}`
@@ -3970,49 +4054,49 @@ export default function AdminDashboard({ onExit }) {
         </div>
       </div>
 
-      {tab==='menu' && (
+      {tab === 'menu' && (
         <div className="grid md:grid-cols-3 gap-6 px-4 md:px-0">
           <Section title="Add / Edit Item" className="h-[600px]">
-            <div style={{ 
+            <div style={{
               maxHeight: 'calc(100% - 40px)', // Account for heading height
               padding: '0 8px' // Add padding for button shadows
             }}>
               <form onSubmit={addItem} className="space-y-4">
-              <div>
-                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Category</label>
-                <div className="relative">
-                  <input
-                    value={form.category}
-                    onChange={e => setForm(f => ({...f, category: e.target.value}))}
-                    onFocus={(e) => {
-                      setShowDropdown(true);
-                      e.target.style.background = 'rgba(253, 249, 243, 0.85)';
-                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                    }}
-                    onBlur={(e) => {
-                      setTimeout(() => setShowDropdown(false), 150);
-                      e.target.style.background = 'rgba(253, 249, 243, 0.7)';
-                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
-                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                    }}
-                    className="w-full px-3 py-2 cursor-pointer transition-all duration-200"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: 'rgba(253, 249, 243, 0.7)',
-                      border: '1px solid rgba(212, 167, 106, 0.2)',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                      color: '#3E2723',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      outline: 'none'
-                    }}
-                    placeholder="Select or type a new category..."
-                    required
-                  />
-                  <style>{`
+                <div>
+                  <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Category</label>
+                  <div className="relative">
+                    <input
+                      value={form.category}
+                      onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                      onFocus={(e) => {
+                        setShowDropdown(true);
+                        e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                        e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                      }}
+                      onBlur={(e) => {
+                        setTimeout(() => setShowDropdown(false), 150);
+                        e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                        e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                        e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                      }}
+                      className="w-full px-3 py-2 cursor-pointer transition-all duration-200"
+                      style={{
+                        backdropFilter: 'blur(20px) saturate(150%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                        background: 'rgba(253, 249, 243, 0.7)',
+                        border: '1px solid rgba(212, 167, 106, 0.2)',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                        color: '#3E2723',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        outline: 'none'
+                      }}
+                      placeholder="Select or type a new category..."
+                      required
+                    />
+                    <style>{`
                     input::placeholder {
                       color: #8B5A2B !important;
                       opacity: 1 !important;
@@ -4046,183 +4130,183 @@ export default function AdminDashboard({ onExit }) {
                       opacity: 1 !important;
                     }
                   `}</style>
-                  {showDropdown && (
-                    <div className="absolute z-50 w-full rounded-md mt-1" style={{ 
-                      maxHeight: '200px', 
-                      overflowY: 'auto',
-                      backdropFilter: 'blur(40px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(40px) saturate(150%)',
-                      background: 'rgba(253, 249, 243, 0.85)',
-                      borderRadius: '15px',
-                      border: '1px solid rgba(212, 167, 106, 0.15)',
-                      boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(212, 167, 106, 0.05)',
-                      padding: '8px 0'
-                    }}>
-                      {categories.filter(cat => cat.toLowerCase().includes(form.category.toLowerCase())).map((c, index) => (
-                        <div
-                          key={c}
-                          className="px-4 py-2 cursor-pointer transition-all duration-200"
-                          onMouseDown={() => {
-                            setForm(f => ({...f, category: c}));
-                            setShowDropdown(false);
-                          }}
-                          style={{ 
-                            color: '#3E2723',
-                            fontSize: '16px', 
-                            fontWeight: '500',
-                            borderBottom: index < categories.filter(cat => cat.toLowerCase().includes(form.category.toLowerCase())).length - 1 ? '1px solid rgba(0, 0, 0, 0.05)' : 'none',
-                            padding: '10px 16px',
-                            backdropFilter: 'blur(10px) saturate(120%)',
-                            WebkitBackdropFilter: 'blur(10px) saturate(120%)',
-                            background: 'rgba(255, 255, 255, 0.05)'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.background = 'rgba(212, 167, 106, 0.15)';
-                            e.target.style.backdropFilter = 'blur(15px) saturate(130%)';
-                            e.target.style.WebkitBackdropFilter = 'blur(15px) saturate(130%)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                            e.target.style.backdropFilter = 'blur(10px) saturate(120%)';
-                            e.target.style.WebkitBackdropFilter = 'blur(10px) saturate(120%)';
-                          }}
-                        >
-                          {c}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    {showDropdown && (
+                      <div className="absolute z-50 w-full rounded-md mt-1" style={{
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        backdropFilter: 'blur(40px) saturate(150%)',
+                        WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+                        background: 'rgba(253, 249, 243, 0.85)',
+                        borderRadius: '15px',
+                        border: '1px solid rgba(212, 167, 106, 0.15)',
+                        boxShadow: '0 4px 24px -1px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(212, 167, 106, 0.05)',
+                        padding: '8px 0'
+                      }}>
+                        {categories.filter(cat => cat.toLowerCase().includes(form.category.toLowerCase())).map((c, index) => (
+                          <div
+                            key={c}
+                            className="px-4 py-2 cursor-pointer transition-all duration-200"
+                            onMouseDown={() => {
+                              setForm(f => ({ ...f, category: c }));
+                              setShowDropdown(false);
+                            }}
+                            style={{
+                              color: '#3E2723',
+                              fontSize: '16px',
+                              fontWeight: '500',
+                              borderBottom: index < categories.filter(cat => cat.toLowerCase().includes(form.category.toLowerCase())).length - 1 ? '1px solid rgba(0, 0, 0, 0.05)' : 'none',
+                              padding: '10px 16px',
+                              backdropFilter: 'blur(10px) saturate(120%)',
+                              WebkitBackdropFilter: 'blur(10px) saturate(120%)',
+                              background: 'rgba(255, 255, 255, 0.05)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = 'rgba(212, 167, 106, 0.15)';
+                              e.target.style.backdropFilter = 'blur(15px) saturate(130%)';
+                              e.target.style.WebkitBackdropFilter = 'blur(15px) saturate(130%)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                              e.target.style.backdropFilter = 'blur(10px) saturate(120%)';
+                              e.target.style.WebkitBackdropFilter = 'blur(10px) saturate(120%)';
+                            }}
+                          >
+                            {c}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Name</label>
-                <input 
-                  value={form.name} 
-                  onChange={e => setForm(f => ({...f, name: e.target.value}))} 
-                  className="w-full px-3 py-2 transition-all duration-200"
-                  style={{
-                    backdropFilter: 'blur(20px) saturate(150%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                    background: 'rgba(253, 249, 243, 0.7)',
-                    border: '1px solid rgba(212, 167, 106, 0.2)',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                    color: '#3E2723',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    outline: 'none'
-                  }}
-                  placeholder="Item name"
-                  required
-                  onFocus={(e) => {
-                    e.target.style.background = 'rgba(253, 249, 243, 0.85)';
-                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.background = 'rgba(253, 249, 243, 0.7)';
-                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
-                    e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Description</label>
-                <input 
-                  value={form.description} 
-                  onChange={e => setForm(f => ({...f, description: e.target.value}))} 
-                  className="w-full px-3 py-2 transition-all duration-200"
-                  style={{
-                    backdropFilter: 'blur(20px) saturate(150%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                    background: 'rgba(253, 249, 243, 0.7)',
-                    border: '1px solid rgba(212, 167, 106, 0.2)',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                    color: '#3E2723',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    outline: 'none'
-                  }}
-                  placeholder="Item description (optional)"
-                  onFocus={(e) => {
-                    e.target.style.background = 'rgba(253, 249, 243, 0.85)';
-                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.background = 'rgba(253, 249, 243, 0.7)';
-                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
-                    e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Price</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0"
-                  value={form.price} 
-                  onChange={e => setForm(f => ({...f, price: e.target.value}))} 
-                  className="w-full px-3 py-2 transition-all duration-200"
-                  style={{
-                    backdropFilter: 'blur(20px) saturate(150%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                    background: 'rgba(253, 249, 243, 0.7)',
-                    border: '1px solid rgba(212, 167, 106, 0.2)',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                    color: '#3E2723',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    outline: 'none'
-                  }}
-                  placeholder="0.00"
-                  required
-                  onFocus={(e) => {
-                    e.target.style.background = 'rgba(253, 249, 243, 0.85)';
-                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.background = 'rgba(253, 249, 243, 0.7)';
-                    e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
-                    e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                  }}
-                />
-              </div>
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="submit"
-                  className="view-button"
-                  style={{
-                    ...animatedButtonStyles.viewButton,
-                    background: 'rgba(212, 167, 106, 0.35)',
-                    border: '1px solid rgba(212, 167, 106, 0.5)',
-                    color: '#3E2723',
-                    padding: '14px 28px',
-                    fontSize: '15px',
-                    minHeight: '50px',
-                    minWidth: '160px'
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                  </svg>
-                  <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>{isEditing ? 'Update Item' : 'Add Item'}</span>
-                  <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#3E2723', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
-                  <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
-                    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-                  </svg>
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Name</label>
+                  <input
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full px-3 py-2 transition-all duration-200"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.7)',
+                      border: '1px solid rgba(212, 167, 106, 0.2)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                      color: '#3E2723',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      outline: 'none'
+                    }}
+                    placeholder="Item name"
+                    required
+                    onFocus={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Description</label>
+                  <input
+                    value={form.description}
+                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                    className="w-full px-3 py-2 transition-all duration-200"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.7)',
+                      border: '1px solid rgba(212, 167, 106, 0.2)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                      color: '#3E2723',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      outline: 'none'
+                    }}
+                    placeholder="Item description (optional)"
+                    onFocus={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-light mb-2" style={{ color: '#6b7280' }}>Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.price}
+                    onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                    className="w-full px-3 py-2 transition-all duration-200"
+                    style={{
+                      backdropFilter: 'blur(20px) saturate(150%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                      background: 'rgba(253, 249, 243, 0.7)',
+                      border: '1px solid rgba(212, 167, 106, 0.2)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)',
+                      color: '#3E2723',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      outline: 'none'
+                    }}
+                    placeholder="0.00"
+                    required
+                    onFocus={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.85)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
+                      e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.background = 'rgba(253, 249, 243, 0.7)';
+                      e.target.style.border = '1px solid rgba(212, 167, 106, 0.2)';
+                      e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(212, 167, 106, 0.05)';
+                    }}
+                  />
+                </div>
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    className="view-button"
+                    style={{
+                      ...animatedButtonStyles.viewButton,
+                      background: 'rgba(212, 167, 106, 0.35)',
+                      border: '1px solid rgba(212, 167, 106, 0.5)',
+                      color: '#3E2723',
+                      padding: '14px 28px',
+                      fontSize: '15px',
+                      minHeight: '50px',
+                      minWidth: '160px'
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" className="arr-2" style={{ position: 'absolute', width: '14px', height: '14px', left: '-25%', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                    <span className="text" style={{ position: 'relative', zIndex: 1, transform: 'translateX(-12px)', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>{isEditing ? 'Update Item' : 'Add Item'}</span>
+                    <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#3E2723', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
+                    <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#3E2723', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+                      <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </form>
             </div>
           </Section>
 
           <Section title="Menu Items" className="h-[600px] overflow-hidden">
-            <div style={{ 
+            <div style={{
               maxHeight: 'calc(100% - 40px)', // Account for heading height
               overflow: 'auto',
               padding: '0 30px 0 10px',
@@ -4234,7 +4318,7 @@ export default function AdminDashboard({ onExit }) {
                     <div className="flex justify-between items-center mb-2" style={{ padding: '0 10px' }}>
                       <h4 className="font-semibold capitalize">{cat}</h4>
                       {isEditing && form.category === cat && (
-                        <button 
+                        <button
                           className="text-sm text-gray-500 hover:text-gray-700"
                           onClick={resetForm}
                         >
@@ -4244,7 +4328,7 @@ export default function AdminDashboard({ onExit }) {
                     </div>
                     <div className="space-y-2" style={{ padding: '0 10px' }}>
                       {menu[cat].map(item => (
-                        <MenuItem 
+                        <MenuItem
                           key={item.id}
                           item={item}
                           showActions={true}
@@ -4264,7 +4348,7 @@ export default function AdminDashboard({ onExit }) {
           </Section>
 
           <Section title="Tips" className="h-[600px] overflow-y-auto">
-            <div className="list-disc pl-5 text-sm text-gray-600 space-y-2" style={{ 
+            <div className="list-disc pl-5 text-sm text-gray-600 space-y-2" style={{
               maxHeight: 'calc(100% - 40px)', // Account for heading height
               overflow: 'auto'
             }}>
@@ -4289,13 +4373,13 @@ export default function AdminDashboard({ onExit }) {
         </div>
       )}
 
-      {tab==='receipts' && (
+      {tab === 'receipts' && (
         <div className="px-4 md:px-0">
           <Section title="Receipts">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <div className="flex items-center gap-4">
                 <div className="relative group">
-                  <button 
+                  <button
                     className="px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg"
                     style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
@@ -4330,9 +4414,9 @@ export default function AdminDashboard({ onExit }) {
                   >
                     Export
                   </button>
-                  <div 
+                  <div
                     className="absolute left-0 mt-1 w-32 rounded-lg shadow-xl py-2 z-50 opacity-0 invisible transition-all duration-300 transform -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0"
-                    style={{ 
+                    style={{
                       backdropFilter: 'blur(20px) saturate(150%)',
                       WebkitBackdropFilter: 'blur(20px) saturate(150%)',
                       background: 'rgba(253, 249, 243, 0.85)',
@@ -4340,7 +4424,7 @@ export default function AdminDashboard({ onExit }) {
                       boxShadow: '0 8px 32px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(212, 167, 106, 0.08)'
                     }}
                   >
-                    <button 
+                    <button
                       onClick={() => exportToCSV(getFilteredReceipts())}
                       className="block w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200"
                       style={{
@@ -4361,7 +4445,7 @@ export default function AdminDashboard({ onExit }) {
                     >
                       Export as CSV
                     </button>
-                    <button 
+                    <button
                       onClick={() => exportToPDF(getFilteredReceipts())}
                       className="block w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200"
                       style={{
@@ -4420,7 +4504,7 @@ export default function AdminDashboard({ onExit }) {
                 Total Sales: <span className="text-green-600">₹{salesTotal.toFixed(2)}</span>
               </div>
             </div>
-            <div 
+            <div
               className="overflow-x-auto"
               style={{
                 backdropFilter: 'blur(20px) saturate(150%)',
@@ -4435,7 +4519,7 @@ export default function AdminDashboard({ onExit }) {
               <table className="w-full min-w-max">
                 <thead>
                   <tr className="border-b" style={{ borderBottomColor: 'rgba(212, 167, 106, 0.2)' }}>
-                    <th 
+                    <th
                       className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('_id')}
                     >
@@ -4448,7 +4532,7 @@ export default function AdminDashboard({ onExit }) {
                         )}
                       </div>
                     </th>
-                    <th 
+                    <th
                       className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('createdAt')}
                     >
@@ -4461,7 +4545,7 @@ export default function AdminDashboard({ onExit }) {
                         )}
                       </div>
                     </th>
-                    <th 
+                    <th
                       className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('tableId.name')}
                     >
@@ -4474,7 +4558,7 @@ export default function AdminDashboard({ onExit }) {
                         )}
                       </div>
                     </th>
-                    <th 
+                    <th
                       className="text-center p-2 cursor-pointer transition-all duration-200 font-semibold text-amber-900 hover:bg-amber-50/50 rounded-lg px-3"
                       onClick={() => handleSort('total')}
                     >
@@ -4493,31 +4577,31 @@ export default function AdminDashboard({ onExit }) {
                 <tbody>
                   {(() => {
                     // First, create a chronological copy for sequential numbering
-                    const chronologicalReceipts = [...getFilteredReceipts()].sort((a, b) => 
+                    const chronologicalReceipts = [...getFilteredReceipts()].sort((a, b) =>
                       new Date(a.createdAt) - new Date(b.createdAt)
                     );
-                    
+
                     // Create a map of receipt ID to sequential order number
                     const orderNumberMap = {};
                     chronologicalReceipts.forEach((receipt, index) => {
                       orderNumberMap[receipt.id] = index + 1;
                     });
-                    
+
                     // Now apply user's selected sorting
                     return chronologicalReceipts
                       .sort((a, b) => {
                         let aValue, bValue;
-                        
+
                         // Handle nested properties
                         if (sortConfig.key === 'tableId.name') {
                           aValue = a.tableId?.name || 'Z';
                           bValue = b.tableId?.name || 'Z';
-                          
+
                           // If both are 'Z' (no table), sort by date
                           if (aValue === 'Z' && bValue === 'Z') {
                             return new Date(b.createdAt) - new Date(a.createdAt);
                           }
-                          
+
                           // If one is 'Z', push it to the end
                           if (aValue === 'Z') return sortConfig.direction === 'asc' ? 1 : -1;
                           if (bValue === 'Z') return sortConfig.direction === 'asc' ? -1 : 1;
@@ -4525,10 +4609,10 @@ export default function AdminDashboard({ onExit }) {
                           aValue = a[sortConfig.key];
                           bValue = b[sortConfig.key];
                         }
-                        
+
                         // Handle different data types
                         if (typeof aValue === 'string' && typeof bValue === 'string') {
-                          return sortConfig.direction === 'asc' 
+                          return sortConfig.direction === 'asc'
                             ? aValue.localeCompare(bValue)
                             : bValue.localeCompare(aValue);
                         } else if (aValue instanceof Date && bValue instanceof Date) {
@@ -4565,124 +4649,125 @@ export default function AdminDashboard({ onExit }) {
                               #{orderNumberMap[r.id]}
                             </span>
                           </td>
-                      <td className="p-3 text-center text-gray-700">{new Date(r.createdAt).toLocaleString()}</td>
-                      <td className="p-3 text-center">
-                        <span style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(254, 243, 199, 0.5)', // Original amber background
-                          border: '1px solid rgba(251, 191, 36, 0.3)', // Amber border
-                          color: '#92400e', // Amber text
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
-                          transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          letterSpacing: '0.025em',
-                          padding: '6px 12px',
-                          display: 'inline-block'
-                        }}>
-                          {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center font-semibold text-green-700">₹{r.total?.toFixed(2) || '0.00'}</td>
-                      <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div 
-                            onClick={() => setPreview(r)}
-                            className="w-8 h-8 flex items-center justify-center cursor-pointer"
-                            style={{
+                          <td className="p-3 text-center text-gray-700">{new Date(r.createdAt).toLocaleString()}</td>
+                          <td className="p-3 text-center">
+                            <span style={{
                               backdropFilter: 'blur(20px) saturate(150%)',
                               WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                              background: 'rgba(59, 130, 246, 0.25)', // More visible for glassmorphism
-                              borderRadius: '50%',
-                              border: '1px solid rgba(59, 130, 246, 0.4)',
-                              color: '#2563eb',
-                              boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
-                              padding: '4px 8px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => {
-                              e.target.style.background = 'rgba(59, 130, 246, 0.25)';
-                              e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
-                              e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
-                            }}
-                            onBlur={(e) => {
-                              e.target.style.background = 'rgba(59, 130, 246, 0.15)';
-                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
-                              e.target.style.boxShadow = 'none';
-                            }}
-                            title="View Receipt"
-                            onMouseEnter={(e) => {
-                              e.target.style.background = 'rgba(59, 130, 246, 0.35)';
-                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
-                              e.target.style.color = '#1d4ed8';
-                              e.target.style.transform = 'scale(1.02)';
-                              setHoveredReceiptId(r.id); // Set hover state for this receipt
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match new base color
-                              e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match new base color
-                              e.target.style.color = '#2563eb';
-                              e.target.style.transform = 'scale(1)';
-                              setHoveredReceiptId(null); // Clear hover state
-                            }}
-                          >
-                            <EyeIcon 
-                              size={16}
-                              color="#1e40af"
-                              strokeWidth={2}
-                              isHovered={hoveredReceiptId === r.id}
-                            />
-                          </div>
-                          <div 
-                            onClick={() => deleteReceipt(r.id)}
-                            className="w-8 h-8 flex items-center justify-center cursor-pointer"
-                            style={{
-                              ...deleteButtonStyles.base,
-                              outline: 'none' // Remove default focus outline
-                            }}
-                            onFocus={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.35)';
-                              e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
-                              e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
-                            }}
-                            onBlur={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
-                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
-                              e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
-                            }}
-                            title="Delete Receipt"
-                            onMouseEnter={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.35)';
-                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
-                              e.target.style.color = '#b91c1c';
-                              e.target.style.transform = 'scale(1.02)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
-                              e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
-                              e.target.style.color = '#dc2626';
-                              e.target.style.transform = 'scale(1)';
-                              e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
-                            }}
-                          >
-                            <TrashIcon 
-                              size={16}
-                              color="#dc2626"
-                              strokeWidth={2}
-                              dangerHover={true}
-                              shakeOnClick={true}
-                            />
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                    )()}
+                              background: 'rgba(254, 243, 199, 0.5)', // Original amber background
+                              border: '1px solid rgba(251, 191, 36, 0.3)', // Amber border
+                              color: '#92400e', // Amber text
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 16px rgba(251, 191, 36, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 0 12px rgba(251, 191, 36, 0.05)',
+                              transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              letterSpacing: '0.025em',
+                              padding: '6px 12px',
+                              display: 'inline-block'
+                            }}>
+                              {r.tableId ? (tableMap[r.tableId._id || r.tableId] || `Table ${r.tableId.tableNumber || 'N/A'}`) : 'Takeaway'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center font-semibold text-green-700">₹{r.total?.toFixed(2) || '0.00'}</td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <div
+                                onClick={() => setPreview(r)}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                                style={{
+                                  backdropFilter: 'blur(20px) saturate(150%)',
+                                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                  background: 'rgba(59, 130, 246, 0.25)', // More visible for glassmorphism
+                                  borderRadius: '50%',
+                                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                                  color: '#2563eb',
+                                  boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                                  padding: '4px 8px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)';
+                                  e.target.style.border = '2px solid rgba(59, 130, 246, 0.6)';
+                                  e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.15)';
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                                  e.target.style.boxShadow = 'none';
+                                }}
+                                title="View Receipt"
+                                onMouseEnter={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.35)';
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
+                                  e.target.style.color = '#1d4ed8';
+                                  e.target.style.transform = 'scale(1.02)';
+                                  setHoveredReceiptId(r.id); // Set hover state for this receipt
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.background = 'rgba(59, 130, 246, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(59, 130, 246, 0.4)'; // Match new base color
+                                  e.target.style.color = '#2563eb';
+                                  e.target.style.transform = 'scale(1)';
+                                  setHoveredReceiptId(null); // Clear hover state
+                                }}
+                              >
+                                <EyeIcon
+                                  size={16}
+                                  color="#1e40af"
+                                  strokeWidth={2}
+                                  isHovered={hoveredReceiptId === r.id}
+                                />
+                              </div>
+                              <div
+                                onClick={() => deleteReceipt(r.id)}
+                                className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                                style={{
+                                  ...deleteButtonStyles.base,
+                                  outline: 'none' // Remove default focus outline
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                                  e.target.style.border = '2px solid rgba(239, 68, 68, 0.6)';
+                                  e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
+                                }}
+                                title="Delete Receipt"
+                                onMouseEnter={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.35)';
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.5)';
+                                  e.target.style.color = '#b91c1c';
+                                  e.target.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.background = 'rgba(239, 68, 68, 0.25)'; // Match new base color
+                                  e.target.style.border = '1px solid rgba(239, 68, 68, 0.4)'; // Match new base color
+                                  e.target.style.color = '#dc2626';
+                                  e.target.style.transform = 'scale(1)';
+                                  e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
+                                }}
+                              >
+                                <TrashIcon
+                                  size={16}
+                                  color="#dc2626"
+                                  strokeWidth={2}
+                                  dangerHover={true}
+                                  shakeOnClick={true}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                  }
+                  )()}
                 </tbody>
               </table>
             </div>
@@ -4694,14 +4779,14 @@ export default function AdminDashboard({ onExit }) {
       {orderingTableId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           {/* Backdrop with blur */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setOrderingTableId(null)} // Click outside to close
           ></div>
 
           {/* Modal Container */}
           <div className="relative bg-white w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-            
+
             {/* Modal Header */}
             <div className="flex justify-between items-center p-4 border-b bg-white z-10">
               <div>
@@ -4712,7 +4797,7 @@ export default function AdminDashboard({ onExit }) {
                   Editing Table ID: {orderingTableId.slice(-4)}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setOrderingTableId(null)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -4724,13 +4809,13 @@ export default function AdminDashboard({ onExit }) {
 
             {/* Modal Body (Waiter Dashboard) */}
             <div className="flex-1 overflow-y-auto bg-gray-50 relative">
-              <WaiterDashboard 
-                embedded={true} 
+              <WaiterDashboard
+                embedded={true}
                 initialTableId={orderingTableId}
                 onExit={() => {
-                   setOrderingTableId(null); // Close modal when they finish/print
-                   loadAllData(); // Refresh Admin view immediately
-                }} 
+                  setOrderingTableId(null); // Close modal when they finish/print
+                  loadAllData(); // Refresh Admin view immediately
+                }}
               />
             </div>
           </div>
@@ -4742,11 +4827,11 @@ export default function AdminDashboard({ onExit }) {
           open={!!preview}
           onClose={() => setPreview(null)}
           receipt={{
-            ...preview, 
+            ...preview,
             ...settings,
             orderNumber: (() => {
               // Calculate the order number using the same logic as the receipts table
-              const chronologicalReceipts = [...getFilteredReceipts()].sort((a, b) => 
+              const chronologicalReceipts = [...getFilteredReceipts()].sort((a, b) =>
                 new Date(a.createdAt) - new Date(b.createdAt)
               );
               const orderNumberMap = {};
@@ -4771,7 +4856,7 @@ export default function AdminDashboard({ onExit }) {
         />
       )}
 
-      {tab==='coupons' && (
+      {tab === 'coupons' && (
         <div className="grid md:grid-cols-2 gap-6 px-4 md:px-0">
           <CouponManager />
         </div>
@@ -4780,7 +4865,7 @@ export default function AdminDashboard({ onExit }) {
       {tab === 'tables' && (
         <Section title="Tables">
           <div className="mb-6 flex items-center gap-3">
-            <button 
+            <button
               onClick={addTable}
               className="view-button flex-shrink-0"
               style={{
@@ -4796,8 +4881,8 @@ export default function AdminDashboard({ onExit }) {
               <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
             </button>
-            
-            <button 
+
+            <button
               onClick={generateTableCodes}
               className="view-button flex-shrink-0"
               style={{
@@ -4818,7 +4903,7 @@ export default function AdminDashboard({ onExit }) {
           {/* Tables List */}
           <div className="overflow-hidden">
             {tables.length === 0 ? (
-              <div 
+              <div
                 className="p-12 text-center"
                 style={{
                   backdropFilter: 'blur(20px) saturate(150%)',
@@ -4832,7 +4917,7 @@ export default function AdminDashboard({ onExit }) {
                 <div className="text-gray-500 text-lg">No tables found. Add your first table to get started.</div>
               </div>
             ) : (
-              <div 
+              <div
                 className="overflow-x-auto"
                 style={{
                   backdropFilter: 'blur(20px) saturate(150%)',
@@ -4893,14 +4978,14 @@ export default function AdminDashboard({ onExit }) {
                     {tables.map(t => {
                       const hasActiveOrder = t.activeOrderId;
                       return (
-                        <tr 
-                          key={t.id || t._id} 
+                        <tr
+                          key={t.id || t._id}
                           className="border-b transition-all duration-200 hover:bg-amber-50/30"
                           style={{ borderBottomColor: 'rgba(212, 167, 106, 0.1)' }}
                         >
                           <td className="p-4">
                             <div className="flex items-center justify-center">
-                              <div 
+                              <div
                                 className="px-4 py-2 rounded-xl transition-all duration-200"
                                 style={{
                                   backdropFilter: 'blur(12px) saturate(120%)',
@@ -4916,12 +5001,11 @@ export default function AdminDashboard({ onExit }) {
                           </td>
                           <td className="p-4">
                             <div className="flex items-center justify-center gap-2">
-                              <span 
-                                className={`inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
-                                  recentlyGeneratedCodes.has(t.tableCode) 
-                                    ? 'text-amber-800' 
-                                    : 'text-amber-700'
-                                }`}
+                              <span
+                                className={`inline-flex items-center px-3 py-1.5 text-xs font-medium transition-all duration-200 ${recentlyGeneratedCodes.has(t.tableCode)
+                                  ? 'text-amber-800'
+                                  : 'text-amber-700'
+                                  }`}
                                 style={{
                                   ...statusBadgeStyles.default,
                                   borderRadius: '9999px', // Make it pill-shaped
@@ -4943,7 +5027,7 @@ export default function AdminDashboard({ onExit }) {
                                 {t.tableCode || 'Not generated'}
                               </span>
                               {t.tableCode && (
-                                <div 
+                                <div
                                   className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all duration-200"
                                   style={{
                                     backdropFilter: 'blur(20px) saturate(150%)',
@@ -4974,7 +5058,7 @@ export default function AdminDashboard({ onExit }) {
                                     e.target.style.transform = 'scale(1)';
                                   }}
                                 >
-                                  <CopyIcon 
+                                  <CopyIcon
                                     size={16}
                                     color="#92400e"
                                     strokeWidth={2}
@@ -5021,7 +5105,7 @@ export default function AdminDashboard({ onExit }) {
                                       }}
                                       title="Click to view QR Code"
                                     >
-                                      <QrcodeIcon 
+                                      <QrcodeIcon
                                         ref={(el) => { qrIconRef = el; }}
                                         size={20}
                                         color="#D4A76A"
@@ -5031,7 +5115,7 @@ export default function AdminDashboard({ onExit }) {
                                   );
                                 })()
                               ) : (
-                                <div 
+                                <div
                                   className="px-4 py-2 text-sm text-gray-500 rounded-lg"
                                   style={{
                                     background: 'rgba(156, 163, 175, 0.1)',
@@ -5047,7 +5131,7 @@ export default function AdminDashboard({ onExit }) {
                           </td>
                           <td className="p-4">
                             <div className="flex items-center justify-center">
-                              <span 
+                              <span
                                 className="text-xs px-3 py-1.5"
                                 style={{
                                   ...(hasActiveOrder ? statusBadgeStyles.preparing : statusBadgeStyles.served)
@@ -5121,7 +5205,7 @@ export default function AdminDashboard({ onExit }) {
                                   }}
                                   title="Take Order"
                                 >
-                                  <UserPlusIcon 
+                                  <UserPlusIcon
                                     size={16}
                                     color="#14532d"
                                     strokeWidth={2}
@@ -5129,7 +5213,7 @@ export default function AdminDashboard({ onExit }) {
                                 </button>
                               )}
 
-                              <div 
+                              <div
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete Table ${t.name}? This action cannot be undone.`)) {
                                     deleteTable(t.id || t._id);
@@ -5166,7 +5250,7 @@ export default function AdminDashboard({ onExit }) {
                                   e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
                                 }}
                               >
-                                <TrashIcon 
+                                <TrashIcon
                                   size={16}
                                   color="#dc2626"
                                   strokeWidth={2}
@@ -5187,11 +5271,11 @@ export default function AdminDashboard({ onExit }) {
         </Section>
       )}
 
-      {tab==='sales' && (
+      {tab === 'sales' && (
         <Section title="Sales Dashboard">
           {/* Key Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div 
+            <div
               className="rounded-lg p-4 border-l-4"
               style={{
                 backdropFilter: 'blur(20px) saturate(150%)',
@@ -5209,8 +5293,8 @@ export default function AdminDashboard({ onExit }) {
                 {receipts.filter(r => r.status === 'closed').length} orders
               </div>
             </div>
-            
-            <div 
+
+            <div
               className="rounded-lg p-4 border-l-4"
               style={{
                 backdropFilter: 'blur(20px) saturate(150%)',
@@ -5228,8 +5312,8 @@ export default function AdminDashboard({ onExit }) {
               </div>
               <div className="text-xs mt-1" style={{ color: '#6b7280' }}>Per order average</div>
             </div>
-            
-            <div 
+
+            <div
               className="rounded-lg p-4 border-l-4"
               style={{
                 backdropFilter: 'blur(20px) saturate(150%)',
@@ -5247,8 +5331,8 @@ export default function AdminDashboard({ onExit }) {
               </div>
               <div className="text-xs mt-1" style={{ color: '#6b7280' }}>All menu items</div>
             </div>
-            
-            <div 
+
+            <div
               className="rounded-lg p-4 border-l-4"
               style={{
                 backdropFilter: 'blur(20px) saturate(150%)',
@@ -5271,7 +5355,7 @@ export default function AdminDashboard({ onExit }) {
           {/* Sales Charts and Analytics */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Top Selling Items */}
-            <div 
+            <div
               className="rounded-lg p-4"
               style={{
                 backdropFilter: 'blur(20px) saturate(150%)',
@@ -5298,11 +5382,11 @@ export default function AdminDashboard({ onExit }) {
                       });
                     }
                   });
-                  
+
                   const topItems = Object.values(itemSales)
                     .sort((a, b) => b.quantity - a.quantity)
                     .slice(0, 5);
-                  
+
                   return topItems.map((item, index) => (
                     <div key={index} className="flex items-center justify-between p-2 rounded transition-all duration-200" style={{
                       backgroundColor: 'transparent',
@@ -5326,7 +5410,7 @@ export default function AdminDashboard({ onExit }) {
             </div>
 
             {/* Recent Orders */}
-            <div 
+            <div
               className="rounded-lg p-4"
               style={{
                 backdropFilter: 'blur(20px) saturate(150%)',
@@ -5358,7 +5442,7 @@ export default function AdminDashboard({ onExit }) {
                           Table {receipt.tableId || 'Unknown'}
                         </div>
                         <div className="text-sm" style={{ color: '#6b7280' }}>
-                          {new Date(receipt.createdAt || receipt.orderTime).toLocaleDateString()} • 
+                          {new Date(receipt.createdAt || receipt.orderTime).toLocaleDateString()} •
                           {receipt.items?.length || 0} items
                         </div>
                         {receipt.couponCode && (
@@ -5378,7 +5462,7 @@ export default function AdminDashboard({ onExit }) {
           </div>
 
           {/* Quick Actions */}
-          <div 
+          <div
             className="rounded-lg p-4"
             style={{
               backdropFilter: 'blur(20px) saturate(150%)',
@@ -5420,7 +5504,7 @@ export default function AdminDashboard({ onExit }) {
                 </svg>
                 Export Sales Report
               </button>
-              
+
               <button
                 onClick={() => setTab('receipts')}
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
@@ -5450,7 +5534,7 @@ export default function AdminDashboard({ onExit }) {
                 </svg>
                 View All Receipts
               </button>
-              
+
               <button
                 onClick={() => setTab('menu')}
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
@@ -5488,7 +5572,7 @@ export default function AdminDashboard({ onExit }) {
       {tab === 'users' && (
         <Section title="Users">
           <div className="mb-6 flex items-center gap-3">
-            <button 
+            <button
               onClick={addWaiter}
               className="view-button flex-shrink-0"
               style={{
@@ -5504,8 +5588,8 @@ export default function AdminDashboard({ onExit }) {
               <span className="circle" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '20px', height: '20px', backgroundColor: '#D4A76A', borderRadius: '50%', opacity: 0, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}></span>
               <svg viewBox="0 0 24 24" className="arr-1" style={{ position: 'absolute', width: '14px', height: '14px', right: '16px', fill: '#D4A76A', zIndex: 9, transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
             </button>
-            
-            <button 
+
+            <button
               onClick={addChef}
               className="view-button flex-shrink-0"
               style={{
@@ -5523,27 +5607,27 @@ export default function AdminDashboard({ onExit }) {
             </button>
 
             {user?.username?.toLowerCase() === 'abg' && (
-              <button 
+              <button
                 onClick={() => {
                   const username = prompt('Admin username');
                   const password = prompt('Admin password');
                   if (!username || !password) return;
-                  
+
                   fetch(`${API_URL}/api/users`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password, role: 'admin' })
                   })
-                  .then(res => res.json())
-                  .then(data => {
-                    if (data.error) throw new Error(data.error);
-                    loadAllData();
-                    toast.success('Admin added successfully');
-                  })
-                  .catch(err => {
-                    console.error('Error adding admin:', err);
-                    toast.error(err.message || 'Failed to add admin');
-                  });
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.error) throw new Error(data.error);
+                      loadAllData();
+                      toast.success('Admin added successfully');
+                    })
+                    .catch(err => {
+                      console.error('Error adding admin:', err);
+                      toast.error(err.message || 'Failed to add admin');
+                    });
                 }}
                 className="animated-button group relative inline-flex items-center justify-center"
                 style={{
@@ -5594,7 +5678,7 @@ export default function AdminDashboard({ onExit }) {
           {/* Users List */}
           <div className="overflow-hidden">
             {isLoadingUsers ? (
-              <div 
+              <div
                 className="p-12 text-center"
                 style={{
                   backdropFilter: 'blur(20px) saturate(150%)',
@@ -5609,7 +5693,7 @@ export default function AdminDashboard({ onExit }) {
                 <p className="mt-2 text-gray-600">Loading users...</p>
               </div>
             ) : users.length === 0 ? (
-              <div 
+              <div
                 className="p-12 text-center"
                 style={{
                   backdropFilter: 'blur(20px) saturate(150%)',
@@ -5623,7 +5707,7 @@ export default function AdminDashboard({ onExit }) {
                 <div className="text-gray-500 text-lg">No users found. Add your first user to get started.</div>
               </div>
             ) : (
-              <div 
+              <div
                 className="divide-y w-full"
                 style={{
                   backdropFilter: 'blur(20px) saturate(150%)',
@@ -5639,9 +5723,9 @@ export default function AdminDashboard({ onExit }) {
                 {users
                   .filter(u => !(u.hidden && user?.username !== 'AbG'))
                   .map((u, index) => {
-                    const canDelete = (user?.username === 'AbG' && u.id !== 'root') || 
-                                    (user?.role === 'admin' && (u.role === 'waiter' || u.role === 'chef'));
-                    
+                    const canDelete = (user?.username === 'AbG' && u.id !== 'root') ||
+                      (user?.role === 'admin' && (u.role === 'waiter' || u.role === 'chef'));
+
                     // Role-based styling with original colors but pill-shaped tags
                     const roleStyles = {
                       admin: 'bg-purple-100 text-purple-800',
@@ -5649,12 +5733,12 @@ export default function AdminDashboard({ onExit }) {
                       waiter: 'bg-green-100 text-green-800',
                       default: 'bg-gray-100 text-gray-800'
                     };
-                    
+
                     const roleStyle = roleStyles[u.role] || roleStyles.default;
-                    
+
                     return (
-                      <div 
-                        key={u.id || u._id} 
+                      <div
+                        key={u.id || u._id}
                         className="p-4 group"
                         style={{
                           borderBottomColor: 'rgba(212, 167, 106, 0.2)',
@@ -5685,12 +5769,12 @@ export default function AdminDashboard({ onExit }) {
                             <div>
                               <h3 className="font-medium text-gray-900">{u.username}</h3>
                               <div className="flex items-center space-x-2 mt-1">
-                                <span 
+                                <span
                                   className="text-xs px-3 py-1.5"
                                   style={{
-                                    ...(u.role === 'admin' ? statusBadgeStyles.preparing : 
-                                     u.role === 'chef' ? statusBadgeStyles.ready : 
-                                     statusBadgeStyles.served)
+                                    ...(u.role === 'admin' ? statusBadgeStyles.preparing :
+                                      u.role === 'chef' ? statusBadgeStyles.ready :
+                                        statusBadgeStyles.served)
                                   }}
                                 >
                                   {u.role}
@@ -5699,10 +5783,10 @@ export default function AdminDashboard({ onExit }) {
                               </div>
                             </div>
                           </div>
-                          
+
                           {canDelete && (
                             <div className="mt-3 sm:mt-0 flex space-x-2">
-                              <div 
+                              <div
                                 onClick={() => resetUserPassword(u.id || u._id, u.username)}
                                 className="w-8 h-8 flex items-center justify-center cursor-pointer"
                                 style={{
@@ -5743,13 +5827,13 @@ export default function AdminDashboard({ onExit }) {
                                   e.target.style.transform = 'scale(1)';
                                 }}
                               >
-                                <FiKey 
+                                <FiKey
                                   size={16}
                                   color="#2563eb"
                                   strokeWidth={2}
                                 />
                               </div>
-                              <div 
+                              <div
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete ${u.username}? This action cannot be undone.`)) {
                                     deleteUser(u.id || u._id);
@@ -5762,7 +5846,7 @@ export default function AdminDashboard({ onExit }) {
                                 }}
                                 title="Delete User"
                               >
-                                <TrashIcon 
+                                <TrashIcon
                                   size={16}
                                   color="#dc2626"
                                   strokeWidth={2}
@@ -5782,13 +5866,13 @@ export default function AdminDashboard({ onExit }) {
         </Section>
       )}
 
-      {tab==='service' && (
+      {tab === 'service' && (
         <Section title="Service (Take Orders)">
-          <WaiterDashboard embedded onExit={()=>{}} />
+          <WaiterDashboard embedded onExit={() => { }} />
         </Section>
       )}
 
-      {tab==='settings' && (
+      {tab === 'settings' && (
         <SettingsPanel onBack={() => setTab('menu')} />
       )}
 
@@ -5807,13 +5891,13 @@ export default function AdminDashboard({ onExit }) {
                 </svg>
               </button>
             </div>
-            
-            <QRCodeDisplay 
+
+            <QRCodeDisplay
               url={qrModal.table.qrCode}
               tableName={qrModal.table.name}
               tableCode={qrModal.table.tableCode}
             />
-            
+
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setQrModal({ open: false, table: null })}
@@ -5825,6 +5909,100 @@ export default function AdminDashboard({ onExit }) {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        open={paymentModal.open}
+        onClose={() => setPaymentModal({ open: false, receipt: null })}
+        receipt={paymentModal.receipt}
+        onPaymentComplete={handlePaymentComplete}
+        tableMap={tableMap}
+        onExit={() => setTab('menu')}
+      />
+
+      {/* Password Change Modal */}
+      {showPasswordChange && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
+              <button
+                onClick={() => {
+                  setShowPasswordChange(false);
+                  setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  minLength="4"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  minLength="4"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordChange(false);
+                    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                  }}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                >
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

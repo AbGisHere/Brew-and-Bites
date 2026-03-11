@@ -1,6 +1,14 @@
 // server/utils/autoSeed.js
 const bcrypt = require('bcryptjs');
-const { Restaurant, User, Menu, Table, Coupon, Settings } = require('../models/Schemas');
+const { getDatabase } = require('../db');
+const {
+    RestaurantSchema,
+    UserSchema,
+    MenuItemSchema,
+    TableSchema,
+    CouponSchema,
+    SettingsSchema
+} = require('../models/Schemas');
 
 // ... (default arrays remain unchanged, we'll map them inside the function)
 
@@ -43,14 +51,46 @@ async function seedDatabase() {
     try {
         console.log('🌱 Checking database for initial data...');
 
+        // Get Database Connections
+        const centralDB = getDatabase();
+        const brewAndBitesDB = getDatabase('brew-and-bites');
+
+        // Register Models on appropriate connections
+        const Restaurant = centralDB.models.Restaurant || centralDB.model('Restaurant', RestaurantSchema);
+        const User = centralDB.models.User || centralDB.model('User', UserSchema);
+
+        const Menu = brewAndBitesDB.models.Menu || brewAndBitesDB.model('Menu', MenuItemSchema);
+        const Table = brewAndBitesDB.models.Table || brewAndBitesDB.model('Table', TableSchema);
+        const Coupon = brewAndBitesDB.models.Coupon || brewAndBitesDB.model('Coupon', CouponSchema);
+        const Settings = brewAndBitesDB.models.Settings || brewAndBitesDB.model('Settings', SettingsSchema);
+
         let defaultRestaurant = await Restaurant.findOne({ name: 'Brew and Bites' });
+        let pastelPoetryRestaurant = await Restaurant.findOne({ name: 'Pastel Poetry' });
+
         if (!defaultRestaurant) {
-            defaultRestaurant = await Restaurant.create({ name: 'Brew and Bites', status: 'active' });
+            defaultRestaurant = await Restaurant.create({
+                name: 'Brew and Bites',
+                status: 'active',
+                slug: 'brew-and-bites',
+                landingPage: 'brew-bites'
+            });
         }
+
+        if (!pastelPoetryRestaurant) {
+            pastelPoetryRestaurant = await Restaurant.create({
+                name: 'Pastel Poetry',
+                status: 'active',
+                slug: 'pastel-poetry',
+                landingPage: 'pastel-poetry'
+            });
+        }
+
         const restId = defaultRestaurant._id;
 
-        // Check if users exist
+        // Check if users exist in central DB
         const userCount = await User.countDocuments();
+
+        // Check if data exists in Brew and Bites DB
         const menuCount = await Menu.countDocuments();
         const tableCount = await Table.countDocuments();
         const couponCount = await Coupon.countDocuments();

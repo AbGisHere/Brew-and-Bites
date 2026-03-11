@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 // 0. RESTAURANTS (Super Admin level)
 const RestaurantSchema = new mongoose.Schema({
     name: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    landingPage: { type: String, enum: ['brew-bites', 'pastel-poetry', 'custom'], default: 'brew-bites' },
+    domain: { type: String, default: null }, // For custom domains like restaurant-name.com
     status: { type: String, enum: ['active', 'suspended'], default: 'active' },
     createdAt: { type: Date, default: Date.now }
 });
@@ -158,6 +161,7 @@ const AccessLogSchema = new mongoose.Schema({
 
 // Export all blueprints so other files can use them
 module.exports = {
+    // Default models (for legacy/fallback)
     Restaurant: mongoose.model('Restaurant', RestaurantSchema),
     User: mongoose.model('User', UserSchema),
     Menu: mongoose.model('Menu', MenuItemSchema),
@@ -165,5 +169,15 @@ module.exports = {
     Coupon: mongoose.model('Coupon', CouponSchema),
     Settings: mongoose.model('Settings', SettingsSchema),
     Order: mongoose.model('Order', OrderSchema),
-    AccessLog: mongoose.model('AccessLog', AccessLogSchema)
+    AccessLog: mongoose.model('AccessLog', AccessLogSchema),
+
+    // Schemas for multi-tenant dynamic model registration
+    RestaurantSchema,
+    UserSchema,
+    MenuItemSchema,
+    TableSchema,
+    CouponSchema,
+    SettingsSchema,
+    OrderSchema,
+    AccessLogSchema
 };

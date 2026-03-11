@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext'
 
-export default function Footer() {
+export default function Footer({ restaurantName = "Brew & Bites" }) {
   const [version, setVersion] = useState('1.7.0');
   const { isDark } = useTheme()
 
@@ -53,7 +53,13 @@ export default function Footer() {
               className="text-2xl font-bold"
               style={{ background: brandGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
             >
-              Brew &amp; Bites
+              {restaurantName.includes('and') ? (
+                <>
+                  {restaurantName.split('and')[0].trim()}
+                  <span style={{ fontSize: '0.8em', margin: '0 4px', fontStyle: 'italic' }}>&amp;</span>
+                  {restaurantName.split('and')[1].trim()}
+                </>
+              ) : restaurantName}
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: brandSubText }}>
               Craft coffee, fresh bites, and cozy vibes in the heart of town.
@@ -101,7 +107,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 flex flex-col items-center space-y-3" style={{ borderTop: `1px solid ${dividerColor}` }}>
           <p className="text-xs" style={{ color: copyrightText }}>
-            © {new Date().getFullYear()} Brew &amp; Bites. All rights reserved.
+            © {new Date().getFullYear()} {restaurantName}. All rights reserved.
           </p>
           <div className="flex items-center gap-3">
             <a

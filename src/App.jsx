@@ -8,15 +8,15 @@ import { registerServiceWorker } from './utils/serviceWorker'
 
 // Smart lazy loading with caching
 const createLazyComponent = (importPath, componentName) => {
-  return lazy(() => 
+  return lazy(() =>
     import(`./components/${importPath}.jsx`).then(module => {
       // Cache the component for future use
       if ('caches' in window) {
         caches.open('brew-bites-admin').then(cache => {
-          cache.put(`/${componentName.toLowerCase()}`, new Response(JSON.stringify({ 
-            cached: true, 
+          cache.put(`/${componentName.toLowerCase()}`, new Response(JSON.stringify({
+            cached: true,
             timestamp: Date.now(),
-            component: componentName 
+            component: componentName
           })))
         })
       }
@@ -35,6 +35,9 @@ const AdminDashboard = createLazyComponent('AdminDashboard', 'AdminDashboard')
 const SuperAdminDashboard = createLazyComponent('SuperAdminDashboard', 'SuperAdminDashboard')
 const WaiterDashboard = createLazyComponent('WaiterDashboard', 'WaiterDashboard')
 const ChefDashboard = createLazyComponent('ChefDashboard', 'ChefDashboard')
+const RestaurantHubPage = createLazyComponent('RestaurantHubPage', 'RestaurantHubPage')
+const CentralHubLandingPage = createLazyComponent('CentralHubLandingPage', 'CentralHubLandingPage')
+const RestaurantLandingPageWrapper = createLazyComponent('RestaurantLandingPageWrapper', 'RestaurantLandingPageWrapper')
 
 // Lazy load landing page components
 const Navbar = createLazyComponent('Navbar', 'Navbar')
@@ -207,15 +210,11 @@ function AppWrapper() {
 }
 
 function App() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [loginOpen, setLoginOpen] = useState(false)
-  const [loginRole, setLoginRole] = useState('admin')
-  const [orderOpen, setOrderOpen] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  
+
   // Smart caching for staff users
   const { cacheStatus, clearCache, getCacheStats, isStaff } = useSmartCache()
 
@@ -257,15 +256,6 @@ function App() {
     registerSW()
   }, [user])
 
-  const handleLogin = (loggedInUser) => {
-    if (loggedInUser.username.toLowerCase() === 'abg') navigate('/superadmin')
-    else if (loggedInUser.role === 'admin') navigate('/admin')
-    else if (loggedInUser.role === 'chef') navigate('/chef')
-    else if (loggedInUser.role === 'waiter') navigate('/waiter')
-  }
-
-  const openAdminLogin = () => { setLoginRole('admin'); setLoginOpen(true) }
-  const openStaffLogin = () => { setLoginRole('staff'); setLoginOpen(true) }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -275,44 +265,29 @@ function App() {
         </div>
       ) : (
         <Routes>
-          {/* LANDING PAGE */}
+          {/* MAIN CENTRAL HUB (localhost:5173/) */}
           <Route path="/" element={
             <Suspense fallback={
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(180deg, #0d0806 0%, #0a0605 100%)' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ width: 40, height: 40, border: '4px solid #D4A76A', borderTop: '4px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                  <p style={{ color: '#D4A76A', marginTop: '20px', fontFamily: 'serif' }}>Loading...</p>
+                  <div style={{ width: 40, height: 40, border: '4px solid rgba(212, 167, 106, 0.3)', borderTop: '4px solid #D4A76A', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                  <p style={{ color: '#D4A76A', marginTop: '20px', fontFamily: 'serif' }}>Loading Gateway...</p>
                 </div>
               </div>
             }>
-              <>
-                <Navbar
-                  isMenuOpen={isMenuOpen}
-                  setIsMenuOpen={setIsMenuOpen}
-                  onAdminLogin={openAdminLogin}
-                  onWaiterLogin={openStaffLogin}
-                />
-                <main className="flex-grow">
-                  <Hero onAdminLogin={openAdminLogin} onWaiterLogin={openStaffLogin} onOrderNow={() => setOrderOpen(true)} />
-                  <Specialties />
-                  <About />
-                  <Gallery />
-                  <Contact />
-                </main>
-                <Footer />
-                <LoginModal
-                  open={loginOpen}
-                  onClose={() => setLoginOpen(false)}
-                  defaultRole={loginRole}
-                  onLoggedIn={handleLogin}
-                />
-                <TableCodeEntry open={orderOpen} onClose={() => setOrderOpen(false)} />
-              </>
+              <CentralHubLandingPage />
             </Suspense>
           } />
 
           <Route path="/superadmin" element={<ProtectedRoute role="admin"><SuperAdminPage /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute role="admin"><AdminPage /></ProtectedRoute>} />
+
+          {/* INDIVIDUAL RESTAURANT LANDING PAGE (localhost:5173/brew-and-bites) */}
+          <Route path="/:restaurantSlug" element={
+            <Suspense fallback={<Loader />}>
+              <RestaurantLandingPageWrapper />
+            </Suspense>
+          } />
+          <Route path="/:restaurantSlug/admin" element={<ProtectedRoute role="admin"><AdminPage /></ProtectedRoute>} />
           <Route path="/waiter" element={<ProtectedRoute role="waiter"><WaiterPage /></ProtectedRoute>} />
           <Route path="/chef" element={<ProtectedRoute role="chef"><ChefPage /></ProtectedRoute>} />
           <Route path="/:tableId/:deviceId" element={<TableDevicePage />} />

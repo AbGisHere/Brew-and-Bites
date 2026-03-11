@@ -80,18 +80,18 @@ function CoffeeBean({
   roastLevel = 3, shapeIdx = 0, matIdx = 0,
   initialRotation = [0, 0, 0],
 }) {
-  const groupRef  = useRef()
-  const elapsed   = useRef(0) // avoids THREE.Clock.getElapsedTime()
-  const initPos   = useMemo(() => [position[0], position[1], position[2]], [])
+  const groupRef = useRef()
+  const elapsed = useRef(0) // avoids THREE.Clock.getElapsedTime()
+  const initPos = useMemo(() => [position[0], position[1], position[2]], [])
 
-  const color      = ROAST_COLORS[roastLevel % ROAST_COLORS.length]
-  const [sw, sd]   = SHAPES[shapeIdx % SHAPES.length]
-  const mat        = MATS[matIdx % MATS.length]
-  const s          = beanScale
-  const bR         = 0.30
+  const color = ROAST_COLORS[roastLevel % ROAST_COLORS.length]
+  const [sw, sd] = SHAPES[shapeIdx % SHAPES.length]
+  const mat = MATS[matIdx % MATS.length]
+  const s = beanScale
+  const bR = 0.30
 
   const rotDir = shapeIdx % 2 === 0 ? 1 : -1
-  const phase  = initPos[0] * 1.9 + initPos[2] * 0.7
+  const phase = initPos[0] * 1.9 + initPos[2] * 0.7
 
   // delta-based time — no THREE.Clock calls from our code
   useFrame((_, delta) => {
@@ -134,8 +134,8 @@ function Scene({ mouseX, mouseY, isDark }) {
 
   useFrame(() => {
     if (!sceneRef.current) return
-    sceneRef.current.rotation.y += (mouseX  *  0.10 - sceneRef.current.rotation.y) * 0.03
-    sceneRef.current.rotation.x += (-mouseY * 0.06  - sceneRef.current.rotation.x) * 0.03
+    sceneRef.current.rotation.y += (mouseX * 0.10 - sceneRef.current.rotation.y) * 0.03
+    sceneRef.current.rotation.x += (-mouseY * 0.06 - sceneRef.current.rotation.x) * 0.03
   })
 
   const beans = useMemo(() =>
@@ -145,27 +145,27 @@ function Scene({ mouseX, mouseY, isDark }) {
         (Math.random() - 0.5) * 10,
         (Math.random() - 0.5) * 7 - 0.5,
       ],
-      speed:           0.14 + Math.random() * 0.42,
-      beanScale:       0.45 + Math.random() * 1.40,
-      roastLevel:      Math.floor(Math.random() * 7),
-      shapeIdx:        i % SHAPES.length,
-      matIdx:          Math.floor(Math.random() * MATS.length),
+      speed: 0.14 + Math.random() * 0.42,
+      beanScale: 0.45 + Math.random() * 1.40,
+      roastLevel: Math.floor(Math.random() * 7),
+      shapeIdx: i % SHAPES.length,
+      matIdx: Math.floor(Math.random() * MATS.length),
       initialRotation: [
         Math.random() * Math.PI * 2,
         Math.random() * Math.PI * 2,
         Math.random() * Math.PI * 2,
       ],
     }))
-  , [])
+    , [])
 
   return (
     <>
       <ambientLight intensity={isDark ? 0.18 : 0.75} color={isDark ? '#D4A76A' : '#FFF3E0'} />
-      <pointLight position={[ 5,  5,  5]} intensity={isDark ? 3.5 : 2.0} color="#D4A76A" />
-      <pointLight position={[-6,  3,  3]} intensity={isDark ? 2.0 : 1.1} color="#FF8C42" />
-      <pointLight position={[ 0, -5,  2]} intensity={isDark ? 1.1 : 0.4} color="#8B5A2B" />
-      <pointLight position={[ 2,  3,  7]} intensity={isDark ? 1.6 : 0.8} color="#FFB347" />
-      <pointLight position={[-4, -2,  4]} intensity={isDark ? 0.9 : 0.3} color="#D4A76A" />
+      <pointLight position={[5, 5, 5]} intensity={isDark ? 3.5 : 2.0} color="#D4A76A" />
+      <pointLight position={[-6, 3, 3]} intensity={isDark ? 2.0 : 1.1} color="#FF8C42" />
+      <pointLight position={[0, -5, 2]} intensity={isDark ? 1.1 : 0.4} color="#8B5A2B" />
+      <pointLight position={[2, 3, 7]} intensity={isDark ? 1.6 : 0.8} color="#FFB347" />
+      <pointLight position={[-4, -2, 4]} intensity={isDark ? 0.9 : 0.3} color="#D4A76A" />
       <Environment preset={isDark ? 'sunset' : 'dawn'} background={false} />
       <group ref={sceneRef}>
         {isDark && (
@@ -188,17 +188,16 @@ function Scene({ mouseX, mouseY, isDark }) {
   )
 }
 
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-export default function Hero({ onAdminLogin, onWaiterLogin, onOrderNow }) {
+export default function Hero({ onAdminLogin, onWaiterLogin, onOrderNow, restaurantName = "Brew & Bites" }) {
   const { isDark } = useTheme()
-  const [mouse, setMouse]     = useState({ x: 0, y: 0 })
+  const [mouse, setMouse] = useState({ x: 0, y: 0 })
   const [mounted, setMounted] = useState(false)
 
   // Use plain window scroll — avoids motion warning about container position.
   // Hero is h-screen (100vh), so scrollY 0→innerHeight covers start→end of section.
   const { scrollY } = useScroll()
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800
-  const textY       = useTransform(scrollY, [0, vh],        [0, -100])
+  const textY = useTransform(scrollY, [0, vh], [0, -100])
   const textOpacity = useTransform(scrollY, [0, vh * 0.75], [1, 0])
 
   useEffect(() => {
@@ -209,14 +208,14 @@ export default function Hero({ onAdminLogin, onWaiterLogin, onOrderNow }) {
   useEffect(() => {
     // Mouse on desktop
     const onMouse = (e) => setMouse({
-      x: (e.clientX / window.innerWidth  - 0.5) * 2,
+      x: (e.clientX / window.innerWidth - 0.5) * 2,
       y: (e.clientY / window.innerHeight - 0.5) * 2,
     })
     // Touch on mobile — use tilt from finger position
     const onTouch = (e) => {
       const t = e.touches[0]
       setMouse({
-        x: (t.clientX / window.innerWidth  - 0.5) * 2,
+        x: (t.clientX / window.innerWidth - 0.5) * 2,
         y: (t.clientY / window.innerHeight - 0.5) * 2,
       })
     }
@@ -235,6 +234,23 @@ export default function Hero({ onAdminLogin, onWaiterLogin, onOrderNow }) {
   const goldGrad = isDark
     ? 'linear-gradient(135deg, #D4A76A, #FF8C42)'
     : 'linear-gradient(135deg, #8B5A2B, #D4A76A)'
+
+  // Parse restaurant name for styling
+  let namePart1 = restaurantName
+  let namePart2 = ''
+  let hasAnd = false
+
+  if (restaurantName.toLowerCase().includes(' and ')) {
+    const parts = restaurantName.split(/ and /i)
+    namePart1 = parts[0]
+    namePart2 = parts[1]
+    hasAnd = true
+  } else if (restaurantName.includes(' & ')) {
+    const parts = restaurantName.split(/ & /)
+    namePart1 = parts[0]
+    namePart2 = parts[1]
+    hasAnd = true
+  }
 
   return (
     <section id="home" className="relative h-screen overflow-hidden" style={{ background: bg }}>
@@ -276,8 +292,8 @@ export default function Hero({ onAdminLogin, onWaiterLogin, onOrderNow }) {
             style={{ color: isDark ? '#D4A76A' : '#8B5A2B' }}
           >
             {/* Short on mobile, full on sm+ */}
-            <span className="sm:hidden">Specialty Coffee · Est. 2015</span>
-            <span className="hidden sm:inline">Specialty Coffee &amp; Kitchen · Est. 2015</span>
+            <span className="sm:hidden">Specialty Center · Est. 2015</span>
+            <span className="hidden sm:inline">Specialty Center &amp; Kitchen · Est. 2015</span>
           </span>
         </motion.div>
 
@@ -288,20 +304,28 @@ export default function Hero({ onAdminLogin, onWaiterLogin, onOrderNow }) {
           transition={{ duration: 0.85, delay: 0.2 }}
           style={{ lineHeight: 0.88, marginBottom: '2rem' }}
         >
-          <div style={{ fontSize: 'clamp(48px, 12vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', color: isDark ? '#F5DEB3' : '#1a0805' }}>
-            BREW
-          </div>
-          <div style={{
-            fontSize: 'clamp(24px, 5.5vw, 68px)', fontWeight: 300, paddingLeft: '2vw',
-            letterSpacing: '0.06em',
-            background: goldGrad,
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}>
-            &amp;
-          </div>
-          <div style={{ fontSize: 'clamp(48px, 12vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', paddingLeft: '3.5vw', color: isDark ? '#F5DEB3' : '#1a0805' }}>
-            BITES
-          </div>
+          {hasAnd ? (
+            <>
+              <div style={{ fontSize: 'clamp(48px, 12vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', color: isDark ? '#F5DEB3' : '#1a0805', textTransform: 'uppercase' }}>
+                {namePart1}
+              </div>
+              <div style={{
+                fontSize: 'clamp(24px, 5.5vw, 68px)', fontWeight: 300, paddingLeft: '2vw',
+                letterSpacing: '0.06em',
+                background: goldGrad,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              }}>
+                &amp;
+              </div>
+              <div style={{ fontSize: 'clamp(48px, 12vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', paddingLeft: '3.5vw', color: isDark ? '#F5DEB3' : '#1a0805', textTransform: 'uppercase' }}>
+                {namePart2}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 'clamp(48px, 12vw, 144px)', fontWeight: 900, letterSpacing: '-0.03em', color: isDark ? '#F5DEB3' : '#1a0805', textTransform: 'uppercase', lineHeight: 1 }}>
+              {restaurantName}
+            </div>
+          )}
         </motion.div>
 
         {/* Tagline */}

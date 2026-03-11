@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const connectDB = require('./db');
+const { getDatabase } = require('./db');
 // Import the Schemas we created in Step 4
 // New (FIXED)
 const { Restaurant, User, Menu, Table, Coupon, Settings, Order, AccessLog } = require('./models/Schemas');
@@ -13,12 +13,19 @@ const { seedDatabase } = require('./utils/autoSeed');
 
 const app = express();
 // Use the PORT environment variable provided by the render host, defaulting to 5001 only if not set.
-const PORT = process.env.PORT || 5001;
 
 // 1. Connect to DB and auto-seed
 const initializeDatabase = async () => {
     try {
-        await connectDB();
+        // Connect to central database for Super Admin functionality
+        const centralDB = getDatabase();
+        await centralDB;
+        console.log('✅ Central database connected');
+
+        // Register Restaurant model with central connection
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const User = centralDB.model('User', require('./models/Schemas').UserSchema);
+
         // Wait a bit for connection to establish before seeding
         setTimeout(async () => {
             await seedDatabase();
@@ -39,31 +46,56 @@ app.use(cors({
 })); // Allow React to talk to us
 app.use(express.json()); // Allow reading JSON bodies
 
+// --- ROUTE PARAMETERS ---
+app.param('restaurantSlug', (req, res, next, restaurantSlug) => {
+    req.params.restaurantSlug = restaurantSlug;
+    next();
+});
+
 // --- Multi-Restaurant Context Middleware ---
 app.use(async (req, res, next) => {
     try {
         let restId = req.headers['x-restaurant-id'];
+        let restaurantSlug = req.params.restaurantSlug; // From URL like /brew-and-bites/admin
 
-        // Let superadmin routes pass without enforcing a single restaurant context if they don't provide it
+        // Handle Super Admin routes that don't need restaurant context
         if (req.path.startsWith('/api/superadmin')) {
             return next();
         }
 
-        if (!restId) {
+        // If we have a restaurant slug in URL, get restaurant info from central DB
+        if (restaurantSlug) {
+            const centralDB = getDatabase();
+            const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+            const restaurant = await Restaurant.findOne({ slug: restaurantSlug });
+
+            if (restaurant) {
+                restId = restaurant._id.toString();
+                // Connect to specific restaurant database for data operations
+                req.restaurantDB = getDatabase(restaurantSlug);
+            } else {
+                return res.status(404).json({ error: 'Restaurant not found' });
+            }
+        } else if (restId) {
+            // Use provided restaurant ID and connect to appropriate database
+            req.restaurantDB = getDatabase(); // Will use routing logic to determine DB
+        } else {
             // Fallback for public routes or legacy clients: Default to Brew and Bites
+            const centralDB = getDatabase();
+            const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
             const defaultRest = await Restaurant.findOne({ name: 'Brew and Bites' });
             if (defaultRest) {
                 restId = defaultRest._id.toString();
+                req.restaurantDB = getDatabase('brew-and-bites');
             }
         }
 
         if (restId) {
             // Check suspension status
+            const centralDB = getDatabase();
+            const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
             const restaurant = await Restaurant.findById(restId);
-            if (!restaurant) {
-                return res.status(404).json({ error: 'Restaurant not found' });
-            }
-            if (restaurant.status === 'suspended') {
+            if (restaurant && restaurant.status === 'suspended') {
                 return res.status(403).json({ error: 'This restaurant is currently suspended.' });
             }
         }
@@ -187,7 +219,7 @@ app.post('/api/log-access', async (req, res) => {
         const { pageType, userId, tableId, deviceId, deviceInfo } = req.body;
 
         // Create access log entry
-        const accessLog = await AccessLog.create({
+        const accessLog = await (req.restaurantDB ? (req.restaurantDB.models.AccessLog || req.restaurantDB.model('AccessLog', require('./models/Schemas').AccessLogSchema)) : getDatabase().model('AccessLog', require('./models/Schemas').AccessLogSchema)).create({
             restaurantId: req.restaurantId,
             pageType,
             userId,
@@ -216,7 +248,7 @@ app.get('/api/access-logs', async (req, res) => {
 
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-        const user = await User.findById(decoded.userId);
+        const user = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(decoded.userId);
 
         if (!user || user.role !== 'admin') {
             return res.status(403).json({ error: 'Admin access required' });
@@ -233,7 +265,7 @@ app.get('/api/access-logs', async (req, res) => {
             if (endDate) filter.createdAt.$lte = new Date(endDate);
         }
 
-        const logs = await AccessLog.find(filter)
+        const logs = await (req.restaurantDB ? (req.restaurantDB.models.AccessLog || req.restaurantDB.model('AccessLog', require('./models/Schemas').AccessLogSchema)) : getDatabase().model('AccessLog', require('./models/Schemas').AccessLogSchema)).find(filter)
             .sort({ createdAt: -1 })
             .limit(parseInt(limit))
             .populate('userId', 'username role');
@@ -258,20 +290,20 @@ app.get('/api/seed', async (req, res) => {
 
 // C. GET MENU ROUTE
 app.get('/api/menu', async (req, res) => {
-    const items = await Menu.find({ restaurantId: req.restaurantId });
+    const items = await (req.restaurantDB ? (req.restaurantDB.models.Menu || req.restaurantDB.model('Menu', require('./models/Schemas').MenuItemSchema)) : getDatabase().model('Menu', require('./models/Schemas').MenuItemSchema)).find({ restaurantId: req.restaurantId });
     res.json(items);
 });
 
 // D. GET TABLES
 app.get('/api/tables', async (req, res) => {
-    const tables = await Table.find({ restaurantId: req.restaurantId });
+    const tables = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).find({ restaurantId: req.restaurantId });
     res.json(tables);
 });
 
 // D.1 GET TABLE BY CODE
 app.get('/api/tables/by-code/:code', async (req, res) => {
     try {
-        const table = await Table.findOne({ tableCode: req.params.code });
+        const table = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOne({ tableCode: req.params.code });
         if (!table) {
             return res.status(404).json({ error: "Invalid table code" });
         }
@@ -284,7 +316,7 @@ app.get('/api/tables/by-code/:code', async (req, res) => {
 // D.2 GENERATE TABLE CODES AND QR CODES
 app.post('/api/tables/generate-codes', async (req, res) => {
     try {
-        const tables = await Table.find();
+        const tables = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).find();
 
         // Generate unique 6-digit codes and QR codes for ALL tables
         for (const table of tables) {
@@ -294,7 +326,7 @@ app.post('/api/tables/generate-codes', async (req, res) => {
             // Generate unique 6-digit code
             while (!isUnique) {
                 code = Math.floor(100000 + Math.random() * 900000).toString();
-                const existingTable = await Table.findOne({ tableCode: code, _id: { $ne: table._id } });
+                const existingTable = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOne({ tableCode: code, _id: { $ne: table._id } });
                 if (!existingTable) {
                     isUnique = true;
                 }
@@ -315,7 +347,7 @@ app.post('/api/tables/generate-codes', async (req, res) => {
 
 // E. GET USERS (Only for testing! Don't keep this in production)
 app.get('/api/users', async (req, res) => {
-    const users = await User.find({ restaurantId: req.restaurantId });
+    const users = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).find({ restaurantId: req.restaurantId });
     res.json(users);
 });
 
@@ -324,11 +356,16 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // 1. Get site settings
-        const settings = await Settings.findOne() || { siteClosed: false };
+        // Since login can happen globally (from Central Hub), we always check the Central Database for users.
+        // Or if users are per-tenant, we should check centralDB first for SuperAdmins
+        const { getDatabase } = require('./db');
+        const centralDb = await getDatabase();
+        const User = centralDb.model('User', require('./models/Schemas').UserSchema);
 
-        // 2. Search for the user
-        const user = await User.findOne({
+        let userDbModels = req.dbModels; // if restaurant context exists
+
+        // Search for the user globally initially
+        let user = await User.findOne({
             username: { $regex: new RegExp("^" + username + "$", "i") }
         });
 
@@ -336,21 +373,28 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ message: "User not found" });
         }
 
-        // 3. SECURE PASSWORD CHECK (Bcrypt)
+        // SECURE PASSWORD CHECK (Bcrypt)
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid password" });
         }
 
-        // 4. Check if site is closed - only allow super admin (AbG) to log in
-        if (settings.siteClosed && user.username.toLowerCase() !== 'abg') {
-            return res.status(403).json({
-                message: "The site is currently closed. Contact the Owner/Creator"
-            });
+        // If a user belongs to a restaurant and requires checking settings
+        if (user.restaurantId) {
+            const restaurantDb = await getDatabase(user.restaurantId.toString());
+            const Settings = restaurantDb.model('Settings', require('./models/Schemas').SettingsSchema);
+            const settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).findOne() || { siteClosed: false };
+
+            // Check if site is closed - only allow super admin (AbG) to log in
+            if (settings.siteClosed && user.username.toLowerCase() !== 'abg') {
+                return res.status(403).json({
+                    message: "The site is currently closed. Contact the Owner/Creator"
+                });
+            }
         }
 
-        // 5. Success!
+        // Success!
         res.json({
             id: user._id,
             username: user.username,
@@ -359,6 +403,7 @@ app.post('/api/login', async (req, res) => {
         });
 
     } catch (error) {
+        console.error("Login Error:", error);
         res.status(500).json({ error: "Server error during login" });
     }
 });
@@ -376,8 +421,18 @@ const verifySuperAdmin = async (req, res, next) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
         const token = authHeader.split(' ')[1];
+
+        // Validate token
+        if (!token || token === 'undefined' || token === 'null') {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        const { getDatabase } = require('./db');
+        const centralDb = await getDatabase();
+        const User = centralDb.model('User', require('./models/Schemas').UserSchema);
+
         // In this setup, token is just the user ID for admins
-        const user = await User.findById(token);
+        const user = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
         if (!user || user.username.toLowerCase() !== 'abg') {
             return res.status(403).json({ error: 'Forbidden. Super Admin only.' });
         }
@@ -391,22 +446,34 @@ const verifySuperAdmin = async (req, res, next) => {
 // List all restaurants
 app.get('/api/superadmin/restaurants', verifySuperAdmin, async (req, res) => {
     try {
-        const restaurants = await Restaurant.find().sort({ createdAt: -1 });
-        // Let's also aggregate earnings for each
-        const results = [];
-        for (let r of restaurants) {
-            const orders = await Order.find({ restaurantId: r._id, status: 'closed' });
-            const totalEarnings = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-            results.push({
-                _id: r._id,
-                name: r.name,
-                status: r.status,
-                createdAt: r.createdAt,
-                earnings: totalEarnings
-            });
-        }
-        res.json(results);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const restaurants = await Restaurant.find({}).sort({ createdAt: -1 });
+        res.json(restaurants);
+    } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Restaurant Hub - Get all restaurants for main landing page
+app.get('/api/restaurants', async (req, res) => {
+    try {
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const restaurants = await Restaurant.find({ status: 'active' }).sort({ createdAt: -1 });
+
+        // Add slug if not present (for backward compatibility)
+        const restaurantsWithSlugs = restaurants.map(rest => ({
+            ...rest.toObject(),
+            slug: rest.slug || rest.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        }));
+
+        res.json(restaurantsWithSlugs);
+    } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // Add a new restaurant
@@ -414,7 +481,13 @@ app.post('/api/superadmin/restaurants', verifySuperAdmin, async (req, res) => {
     try {
         const { name } = req.body;
         if (!name) return res.status(400).json({ error: 'Name is required' });
-        const newRest = await Restaurant.create({ name });
+
+        // Generate slug from name
+        const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const newRest = await Restaurant.create({ name, slug });
         res.json(newRest);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -422,6 +495,8 @@ app.post('/api/superadmin/restaurants', verifySuperAdmin, async (req, res) => {
 // Toggle restaurant status
 app.put('/api/superadmin/restaurants/:id/toggle', verifySuperAdmin, async (req, res) => {
     try {
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
         const restaurant = await Restaurant.findById(req.params.id);
         if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
 
@@ -431,12 +506,74 @@ app.put('/api/superadmin/restaurants/:id/toggle', verifySuperAdmin, async (req, 
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Delete a restaurant
+app.delete('/api/superadmin/restaurants/:id', verifySuperAdmin, async (req, res) => {
+    try {
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const restaurant = await Restaurant.findById(req.params.id);
+        if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+
+        // Delete the restaurant's database if it exists
+        if (restaurant.slug) {
+            const restaurantDB = getDatabase(restaurant.slug);
+            await restaurantDB.dropDatabase();
+            console.log(`🗑️ Deleted database for restaurant: ${restaurant.slug}`);
+        }
+
+        // Delete restaurant from central database
+        await Restaurant.findByIdAndDelete(req.params.id);
+
+        res.json({ message: 'Restaurant deleted successfully' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Edit a restaurant
+app.put('/api/superadmin/restaurants/:id', verifySuperAdmin, async (req, res) => {
+    try {
+        const { name, landingPage, domain } = req.body;
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const restaurant = await Restaurant.findById(req.params.id);
+
+        if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+
+        // Update fields
+        if (name) restaurant.name = name;
+        if (landingPage) restaurant.landingPage = landingPage;
+        if (domain !== undefined) restaurant.domain = domain;
+
+        // Update slug if name changed
+        if (name && name !== restaurant.name) {
+            restaurant.slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        }
+
+        await restaurant.save();
+        res.json(restaurant);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Get analytics/overview
 app.get('/api/superadmin/analytics', verifySuperAdmin, async (req, res) => {
     try {
-        const totalOrders = await Order.countDocuments();
-        const closedOrders = await Order.find({ status: 'closed' });
-        const totalEarnings = closedOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+
+        const restaurants = await Restaurant.find();
+        let totalEarnings = 0;
+        let totalOrders = 0;
+
+        for (const rest of restaurants) {
+            if (rest.slug) {
+                const restaurantDB = getDatabase(rest.slug);
+                const Order = restaurantDB.models.Order || restaurantDB.model('Order', require('./models/Schemas').OrderSchema);
+
+                const closedOrders = await Order.find({ status: 'closed' });
+                totalEarnings += closedOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+                totalOrders += await Order.countDocuments();
+            }
+        }
+
         const activeRestaurants = await Restaurant.countDocuments({ status: 'active' });
         const suspendedRestaurants = await Restaurant.countDocuments({ status: 'suspended' });
         res.json({
@@ -460,13 +597,21 @@ app.get('/api/admin/users', async (req, res) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const user = await User.findById(token);
+
+        // Validate token
+        if (!token || token === 'undefined' || token === 'null') {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        const centralDb = getDatabase();
+        const User = centralDb.model('User', require('./models/Schemas').UserSchema);
+        const user = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
 
         if (!user || user.username.toLowerCase() !== 'abg') {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        const users = await User.find({}, { password: 0 });
+        const users = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).find({}, { password: 0 });
         res.json(users);
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -483,7 +628,13 @@ app.post('/api/admin/users', async (req, res) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const currentUser = await User.findById(token);
+
+        // Validate token
+        if (!token || token === 'undefined' || token === 'null') {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        const currentUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
 
         if (!currentUser || currentUser.username.toLowerCase() !== 'abg') {
             return res.status(403).json({ error: 'Forbidden' });
@@ -496,7 +647,7 @@ app.post('/api/admin/users', async (req, res) => {
         }
 
         // Check if user already exists
-        const existingUser = await User.findOne({ username });
+        const existingUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findOne({ username });
         if (existingUser) {
             return res.status(400).json({ error: 'Username already exists' });
         }
@@ -505,7 +656,7 @@ app.post('/api/admin/users', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
-        const newUser = await User.create({
+        const newUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).create({
             username,
             password: hashedPassword,
             role,
@@ -532,7 +683,13 @@ app.put('/api/admin/users/:id/reset-password', async (req, res) => {
         }
 
         const requesterId = authHeader.split(' ')[1];
-        const requester = await User.findById(requesterId);
+
+        // Validate token
+        if (!requesterId || requesterId === 'undefined' || requesterId === 'null') {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        const requester = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(requesterId);
 
         // Basic check: Must be at least an admin (or superadmin)
         if (!requester || (requester.role !== 'admin' && requester.username !== 'AbG')) {
@@ -540,7 +697,7 @@ app.put('/api/admin/users/:id/reset-password', async (req, res) => {
         }
 
         // 2. Identify the Target
-        const targetUser = await User.findById(req.params.id);
+        const targetUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(req.params.id);
         if (!targetUser) {
             return res.status(404).json({ error: 'Target user not found' });
         }
@@ -584,7 +741,7 @@ app.put('/api/admin/users/:id/reset-password', async (req, res) => {
 // Add new item
 app.post('/api/menu', async (req, res) => {
     try {
-        const newItem = await Menu.create({ ...req.body, restaurantId: req.restaurantId });
+        const newItem = await (req.restaurantDB ? (req.restaurantDB.models.Menu || req.restaurantDB.model('Menu', require('./models/Schemas').MenuItemSchema)) : getDatabase().model('Menu', require('./models/Schemas').MenuItemSchema)).create({ ...req.body, restaurantId: req.restaurantId });
         res.json(newItem);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -593,7 +750,7 @@ app.post('/api/menu', async (req, res) => {
 app.put('/api/menu/:id', async (req, res) => {
     try {
         // Ensure we only edit items belonging to this restaurant
-        const updatedItem = await Menu.findOneAndUpdate(
+        const updatedItem = await (req.restaurantDB ? (req.restaurantDB.models.Menu || req.restaurantDB.model('Menu', require('./models/Schemas').MenuItemSchema)) : getDatabase().model('Menu', require('./models/Schemas').MenuItemSchema)).findOneAndUpdate(
             { _id: req.params.id, restaurantId: req.restaurantId },
             req.body,
             { new: true }
@@ -605,7 +762,7 @@ app.put('/api/menu/:id', async (req, res) => {
 // Delete item
 app.delete('/api/menu/:id', async (req, res) => {
     try {
-        await Menu.findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
+        await (req.restaurantDB ? (req.restaurantDB.models.Menu || req.restaurantDB.model('Menu', require('./models/Schemas').MenuItemSchema)) : getDatabase().model('Menu', require('./models/Schemas').MenuItemSchema)).findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
         res.json({ message: "Deleted" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -621,7 +778,7 @@ app.post('/api/tables', async (req, res) => {
         while (!isUnique) {
             code = Math.floor(100000 + Math.random() * 900000).toString();
             // Ensure code is globally unique across all restaurants to make joining easy
-            const existingTable = await Table.findOne({ tableCode: code });
+            const existingTable = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOne({ tableCode: code });
             if (!existingTable) {
                 isUnique = true;
             }
@@ -630,7 +787,7 @@ app.post('/api/tables', async (req, res) => {
         // Generate dynamic URL using the frontend URL from settings or fallback to localhost
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-        const newTable = await Table.create({
+        const newTable = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).create({
             restaurantId: req.restaurantId,
             name,
             tableCode: code,
@@ -642,7 +799,7 @@ app.post('/api/tables', async (req, res) => {
 
 app.delete('/api/tables/:id', async (req, res) => {
     try {
-        await Table.findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
+        await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
         res.json({ message: "Deleted" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -655,7 +812,7 @@ app.post('/api/users', async (req, res) => {
         // Hash the password before creating
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = await User.create({
+        const newUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).create({
             restaurantId: req.restaurantId,
             username,
             password: hashedPassword,
@@ -668,14 +825,14 @@ app.post('/api/users', async (req, res) => {
 
 app.delete('/api/users/:id', async (req, res) => {
     try {
-        await User.findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
+        await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
         res.json({ message: "Deleted" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 4. COUPONS
 app.get('/api/coupons', async (req, res) => {
-    const coupons = await Coupon.find({ restaurantId: req.restaurantId });
+    const coupons = await (req.restaurantDB ? (req.restaurantDB.models.Coupon || req.restaurantDB.model('Coupon', require('./models/Schemas').CouponSchema)) : getDatabase().model('Coupon', require('./models/Schemas').CouponSchema)).find({ restaurantId: req.restaurantId });
     res.json(coupons);
 });
 
@@ -710,12 +867,12 @@ app.post('/api/coupons', async (req, res) => {
         }
 
         // Check if coupon code already exists for this restaurant
-        const existingCoupon = await Coupon.findOne({ code: code.toUpperCase(), restaurantId: req.restaurantId });
+        const existingCoupon = await (req.restaurantDB ? (req.restaurantDB.models.Coupon || req.restaurantDB.model('Coupon', require('./models/Schemas').CouponSchema)) : getDatabase().model('Coupon', require('./models/Schemas').CouponSchema)).findOne({ code: code.toUpperCase(), restaurantId: req.restaurantId });
         if (existingCoupon) {
             return res.status(400).json({ error: 'Coupon code already exists' });
         }
 
-        const newCoupon = await Coupon.create({
+        const newCoupon = await (req.restaurantDB ? (req.restaurantDB.models.Coupon || req.restaurantDB.model('Coupon', require('./models/Schemas').CouponSchema)) : getDatabase().model('Coupon', require('./models/Schemas').CouponSchema)).create({
             restaurantId: req.restaurantId,
             code: code.toUpperCase(),
             type,
@@ -765,7 +922,7 @@ app.put('/api/coupons/:code', async (req, res) => {
             }
         }
 
-        const updatedCoupon = await Coupon.findOneAndUpdate(
+        const updatedCoupon = await (req.restaurantDB ? (req.restaurantDB.models.Coupon || req.restaurantDB.model('Coupon', require('./models/Schemas').CouponSchema)) : getDatabase().model('Coupon', require('./models/Schemas').CouponSchema)).findOneAndUpdate(
             { code: req.params.code, restaurantId: req.restaurantId },
             {
                 type,
@@ -793,7 +950,7 @@ app.put('/api/coupons/:code', async (req, res) => {
 
 app.delete('/api/coupons/:code', async (req, res) => {
     try {
-        await Coupon.findOneAndDelete({ code: req.params.code, restaurantId: req.restaurantId });
+        await (req.restaurantDB ? (req.restaurantDB.models.Coupon || req.restaurantDB.model('Coupon', require('./models/Schemas').CouponSchema)) : getDatabase().model('Coupon', require('./models/Schemas').CouponSchema)).findOneAndDelete({ code: req.params.code, restaurantId: req.restaurantId });
         res.json({ message: "Deleted" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -806,7 +963,7 @@ app.post('/api/coupons/validate', async (req, res) => {
             return res.status(400).json({ error: 'Coupon code is required' });
         }
 
-        const coupon = await Coupon.findOne({ code: code.toUpperCase(), restaurantId: req.restaurantId });
+        const coupon = await (req.restaurantDB ? (req.restaurantDB.models.Coupon || req.restaurantDB.model('Coupon', require('./models/Schemas').CouponSchema)) : getDatabase().model('Coupon', require('./models/Schemas').CouponSchema)).findOne({ code: code.toUpperCase(), restaurantId: req.restaurantId });
         if (!coupon) {
             return res.status(404).json({ error: 'Invalid coupon code' });
         }
@@ -894,7 +1051,7 @@ app.post('/api/coupons/validate', async (req, res) => {
 
 app.post('/api/coupons/use/:code', async (req, res) => {
     try {
-        const coupon = await Coupon.findOne({ code: req.params.code.toUpperCase(), restaurantId: req.restaurantId });
+        const coupon = await (req.restaurantDB ? (req.restaurantDB.models.Coupon || req.restaurantDB.model('Coupon', require('./models/Schemas').CouponSchema)) : getDatabase().model('Coupon', require('./models/Schemas').CouponSchema)).findOne({ code: req.params.code.toUpperCase(), restaurantId: req.restaurantId });
         if (!coupon) {
             return res.status(404).json({ error: 'Coupon not found' });
         }
@@ -912,7 +1069,7 @@ app.post('/api/coupons/use/:code', async (req, res) => {
 // 4.1 MIGRATION: Add invoice settings fields to existing settings
 app.get('/api/migrate/settings', async (req, res) => {
     try {
-        const settings = await Settings.findOne({ restaurantId: req.restaurantId });
+        const settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).findOne({ restaurantId: req.restaurantId });
         if (settings) {
             // Add existing tax fields if they don't exist
             if (settings.taxEnabled === undefined) {
@@ -988,7 +1145,7 @@ app.get('/api/migrate/settings', async (req, res) => {
             res.json({ message: 'Settings migrated successfully', settings });
         } else {
             // Create default settings if none exist
-            const newSettings = await Settings.create({
+            const newSettings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).create({
                 restaurantId: req.restaurantId,
                 autoSubmitToChef: true,
                 siteClosed: false,
@@ -1029,9 +1186,9 @@ app.get('/api/migrate/settings', async (req, res) => {
 app.get('/api/settings', async (req, res) => {
     try {
         // Get the settings document for this restaurant, or create default if none exists
-        let settings = await Settings.findOne({ restaurantId: req.restaurantId });
+        let settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).findOne({ restaurantId: req.restaurantId });
         if (!settings) {
-            settings = await Settings.create({
+            settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).create({
                 restaurantId: req.restaurantId,
                 autoSubmitToChef: true,
                 siteClosed: false,
@@ -1072,7 +1229,7 @@ app.get('/api/settings', async (req, res) => {
 
         // Get user from token
         const token = authHeader.split(' ')[1];
-        const currentUser = await User.findById(token);
+        const currentUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
         if (!currentUser) {
             const { _id, ...publicSettings } = settings.toObject();
             return res.json(publicSettings);
@@ -1099,7 +1256,7 @@ app.put('/api/settings', async (req, res) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const currentUser = await User.findById(token);
+        const currentUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
         if (!currentUser) {
             return res.status(401).json({ error: 'Invalid token' });
         }
@@ -1113,7 +1270,7 @@ app.put('/api/settings', async (req, res) => {
         const isSuperAdmin = currentUser.username.toLowerCase() === 'abg';
 
         // Get current settings
-        let settings = await Settings.findOne({ restaurantId: req.restaurantId }) || new Settings({
+        let settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).findOne({ restaurantId: req.restaurantId }) || new Settings({
             restaurantId: req.restaurantId,
             autoSubmitToChef: true,
             siteClosed: false,
@@ -1151,7 +1308,7 @@ app.put('/api/settings', async (req, res) => {
         }
 
         // Update settings for this restaurant
-        settings = await Settings.findOneAndUpdate(
+        settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).findOneAndUpdate(
             { restaurantId: req.restaurantId },
             { $set: update },
             { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -1170,7 +1327,7 @@ app.get('/api/receipts', async (req, res) => {
         const status = req.query.status; // e.g., ?status=open
         const filter = { restaurantId: req.restaurantId };
         if (status) filter.status = status;
-        const orders = await Order.find(filter);
+        const orders = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).find(filter);
         res.json(orders);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1180,7 +1337,7 @@ app.get('/api/orders', async (req, res) => {
     try {
         // Fetch all orders regardless of status
         // The frontend handles filtering (Active vs Completed)
-        const orders = await Order.find({ restaurantId: req.restaurantId });
+        const orders = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).find({ restaurantId: req.restaurantId });
         res.json(orders);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -1190,7 +1347,7 @@ app.get('/api/orders', async (req, res) => {
 // GET INDIVIDUAL ORDER (Required for order status polling)
 app.get('/api/orders/:id', async (req, res) => {
     try {
-        const order = await Order.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
+        const order = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).findOne({ _id: req.params.id, restaurantId: req.restaurantId });
         if (!order) {
             return res.status(404).json({ error: "Order not found" });
         }
@@ -1205,12 +1362,12 @@ app.post('/api/orders/start', async (req, res) => {
     const { tableId, customerId } = req.body;
     try {
         // Check if table exists
-        const table = await Table.findOne({ _id: tableId, restaurantId: req.restaurantId });
+        const table = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOne({ _id: tableId, restaurantId: req.restaurantId });
         if (!table) return res.status(404).json({ error: "Table not found" });
 
         // If table already has an active order, return it
         if (table.activeOrderId) {
-            const existingOrder = await Order.findOne({ _id: table.activeOrderId, restaurantId: req.restaurantId });
+            const existingOrder = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).findOne({ _id: table.activeOrderId, restaurantId: req.restaurantId });
             if (existingOrder && existingOrder.status === 'open') {
                 // If customerId provided and order has no customer, associate it
                 if (customerId && !existingOrder.customerId) {
@@ -1222,7 +1379,7 @@ app.post('/api/orders/start', async (req, res) => {
         }
 
         // Create new order with timing info
-        const newOrder = await Order.create({
+        const newOrder = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).create({
             restaurantId: req.restaurantId,
             tableId: tableId, // Storing the Table ID string
             customerId: customerId || null,
@@ -1246,7 +1403,7 @@ app.post('/api/orders/start', async (req, res) => {
 app.put('/api/orders/:id', async (req, res) => {
     try {
         const { items, couponCode, discount, foodStatus } = req.body;
-        const order = await Order.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
+        const order = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).findOne({ _id: req.params.id, restaurantId: req.restaurantId });
         if (!order) return res.status(404).json({ error: "Order not found" });
 
         // Update fields if provided
@@ -1295,7 +1452,7 @@ app.put('/api/orders/:id', async (req, res) => {
         }
 
         // Get current settings for tax
-        const settings = await Settings.findOne({ restaurantId: req.restaurantId }) || { taxEnabled: false, taxRate: 0 };
+        const settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).findOne({ restaurantId: req.restaurantId }) || { taxEnabled: false, taxRate: 0 };
 
         // Calculate tax if enabled
         let taxAmount = 0;
@@ -1315,11 +1472,11 @@ app.put('/api/orders/:id', async (req, res) => {
 // 4. CLOSE ORDER
 app.post('/api/orders/:id/close', async (req, res) => {
     try {
-        const order = await Order.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
+        const order = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).findOne({ _id: req.params.id, restaurantId: req.restaurantId });
         if (!order) return res.status(404).json({ error: "Order not found" });
 
         // Get current settings for tax
-        const settings = await Settings.findOne({ restaurantId: req.restaurantId }) || { taxEnabled: false, taxRate: 0 };
+        const settings = await (req.restaurantDB ? (req.restaurantDB.models.Settings || req.restaurantDB.model('Settings', require('./models/Schemas').SettingsSchema)) : getDatabase().model('Settings', require('./models/Schemas').SettingsSchema)).findOne({ restaurantId: req.restaurantId }) || { taxEnabled: false, taxRate: 0 };
 
         // Calculate tax if enabled
         const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -1341,7 +1498,7 @@ app.post('/api/orders/:id/close', async (req, res) => {
         await order.save();
 
         // Then update the table
-        await Table.findOneAndUpdate(
+        await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOneAndUpdate(
             { activeOrderId: order._id, restaurantId: req.restaurantId },
             { $set: { activeOrderId: null } }
         );
@@ -1353,20 +1510,20 @@ app.post('/api/orders/:id/close', async (req, res) => {
 // Delete receipt endpoint
 app.delete('/api/orders/:id', async (req, res) => {
     try {
-        const order = await Order.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
+        const order = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).findOne({ _id: req.params.id, restaurantId: req.restaurantId });
         if (!order) {
             return res.status(404).json({ error: "Receipt not found" });
         }
 
         // If it's an open order, make sure to clear the table reference
         if (order.status === 'open') {
-            await Table.findOneAndUpdate(
+            await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOneAndUpdate(
                 { activeOrderId: order._id, restaurantId: req.restaurantId },
                 { $set: { activeOrderId: null } }
             );
         }
 
-        await Order.findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
+        await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).findOneAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
         res.json({ message: "Receipt deleted successfully" });
     } catch (error) {
         console.error("Error deleting receipt:", error);
@@ -1382,16 +1539,16 @@ app.post('/api/orders/join', async (req, res) => {
             return res.status(400).json({ error: 'tableId and guest.name are required' })
         }
 
-        const table = await Table.findOne({ _id: tableId, restaurantId: req.restaurantId })
+        const table = await (req.restaurantDB ? (req.restaurantDB.models.Table || req.restaurantDB.model('Table', require('./models/Schemas').TableSchema)) : getDatabase().model('Table', require('./models/Schemas').TableSchema)).findOne({ _id: tableId, restaurantId: req.restaurantId })
         if (!table) return res.status(404).json({ error: 'Table not found' })
 
         // Get or create an active order for this table
         let order = null
         if (table.activeOrderId) {
-            order = await Order.findOne({ _id: table.activeOrderId, restaurantId: req.restaurantId })
+            order = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).findOne({ _id: table.activeOrderId, restaurantId: req.restaurantId })
         }
         if (!order || order.status !== 'open') {
-            order = await Order.create({
+            order = await (req.restaurantDB ? (req.restaurantDB.models.Order || req.restaurantDB.model('Order', require('./models/Schemas').OrderSchema)) : getDatabase().model('Order', require('./models/Schemas').OrderSchema)).create({
                 restaurantId: req.restaurantId,
                 tableId,
                 status: 'open',
@@ -1426,7 +1583,186 @@ app.post('/api/orders/join', async (req, res) => {
     }
 })
 
-// Start Server
+// --- DYNAMIC RESTAURANT ROUTES ---
+// Restaurant-specific admin routes
+app.get(`/:restaurantSlug/admin`, async (req, res) => {
+    try {
+        // This will be handled by the middleware above
+        res.json({ message: 'Restaurant admin access' });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Fallback to admin for backward compatibility
+app.get('/admin', async (req, res) => {
+    try {
+        // Redirect to first active restaurant or show selection
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const firstRestaurant = await Restaurant.findOne({ status: 'active' });
+
+        if (firstRestaurant) {
+            res.redirect(`/${firstRestaurant.slug}/admin`);
+        } else {
+            res.json({ message: 'No active restaurants found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Restaurant landing page
+app.get(`/:restaurantSlug`, async (req, res) => {
+    try {
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const restaurant = await Restaurant.findOne({ slug: req.params.restaurantSlug });
+
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurant not found' });
+        }
+
+        // Return restaurant info with landing page template
+        res.json({
+            restaurant: {
+                name: restaurant.name,
+                slug: restaurant.slug,
+                landingPage: restaurant.landingPage || 'brew-bites',
+                status: restaurant.status
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Restaurant landing page with template rendering
+app.get(`/:restaurantSlug/view`, async (req, res) => {
+    try {
+        const centralDB = getDatabase();
+        const Restaurant = centralDB.model('Restaurant', require('./models/Schemas').RestaurantSchema);
+        const restaurant = await Restaurant.findOne({ slug: req.params.restaurantSlug });
+
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurant not found' });
+        }
+
+        // Return HTML based on landing page template
+        const landingPage = restaurant.landingPage || 'brew-bites';
+
+        if (landingPage === 'pastel-poetry') {
+            // Serve Pastel Poetry template
+            res.send(generatePastelPoetryHTML(restaurant));
+        } else {
+            // Redirect to React app for other templates
+            res.redirect(`/${restaurant.slug}`);
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Helper function to generate Pastel Poetry HTML
+const generatePastelPoetryHTML = (restaurant) => {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${restaurant.name} - Creative Haven</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Georgia', serif; 
+            line-height: 1.6; 
+            color: #666; 
+            background: linear-gradient(135deg, #FFE5E5 0%, #FCE7F3 100%);
+            min-height: 100vh;
+        }
+        .header { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px); 
+            padding: 20px 0; 
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .hero { 
+            padding: 80px 20px; 
+            text-align: center; 
+            position: relative;
+        }
+        .hero-content { 
+            background: rgba(255, 255, 255, 0.9); 
+            border-radius: 20px; 
+            padding: 60px 40px; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.2);
+        }
+        .cta-button { 
+            background: #8B5A2B; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 8px; 
+            font-size: 18px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 42px; font-weight: 300; color: #8B5A2B; margin: 0; text-shadow: 2px 2px 4px rgba(139, 69, 19, 0.1);">
+                    🎨 ${restaurant.name}
+                </h1>
+                <p style="font-size: 16px; color: #666; margin: 8px 0 0 16px; font-style: italic;">
+                    Where every moment is a brushstroke of creativity
+                </p>
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <button class="cta-button" onclick="window.location.href='/${restaurant.slug}/admin'">
+                    🎨 Admin Portal
+                </button>
+                <button class="cta-button" onclick="window.location.href='/'">
+                    🏠 All Restaurants
+                </button>
+            </div>
+        </div>
+    </header>
+    <section class="hero">
+        <div class="hero-content">
+            <h2 style="font-size: 32px; font-weight: 300; color: #8B5A2B; margin: 0 0 20px; text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.1);">
+                Welcome to Your Creative Haven
+            </h2>
+            <p style="font-size: 18px; line-height: 1.6; color: #666; margin: 0 0 30px;">
+                Indulge in our handcrafted pastries and artisanal beverages, where each bite tells a story and every sip inspires creativity.
+            </p>
+            <button class="cta-button" onclick="window.location.href='/${restaurant.slug}/order'">
+                🎨 Begin Your Experience
+            </button>
+        </div>
+    </section>
+    <footer style="background: #8B5A2B; color: #FCE7F3; padding: 40px 20px; text-align: center;">
+        <p style="margin: 0; font-size: 14px;">
+            © 2024 ${restaurant.name}. Crafted with creativity and passion.
+        </p>
+    </footer>
+</body>
+</html>
+    `;
+};
+
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

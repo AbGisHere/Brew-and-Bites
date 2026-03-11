@@ -3,7 +3,7 @@ import { FiMenu, FiX, FiSun, FiMoon } from 'react-icons/fi'
 import { Link } from 'react-scroll'
 import { useTheme } from '../context/ThemeContext'
 
-export default function Navbar({ isMenuOpen, setIsMenuOpen, onAdminLogin, onWaiterLogin }) {
+export default function Navbar({ isMenuOpen, setIsMenuOpen, onAdminLogin, onWaiterLogin, restaurantName = "Brew & Bites" }) {
   const [scrolled, setScrolled] = useState(false)
   const { isDark, toggleTheme } = useTheme()
 
@@ -61,16 +61,16 @@ export default function Navbar({ isMenuOpen, setIsMenuOpen, onAdminLogin, onWait
 
   const headerStyle = scrolled
     ? {
-        background: headerBgScrolled,
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: `1px solid ${headerBorderScrolled}`,
-        padding: '10px 0',
-      }
+      background: headerBgScrolled,
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      borderBottom: `1px solid ${headerBorderScrolled}`,
+      padding: '10px 0',
+    }
     : {
-        background: 'transparent',
-        padding: '18px 0',
-      }
+      background: 'transparent',
+      padding: '18px 0',
+    }
 
   return (
     <header
@@ -93,7 +93,13 @@ export default function Navbar({ isMenuOpen, setIsMenuOpen, onAdminLogin, onWait
             filter: logoGlow,
           }}
         >
-          Brew &amp; Bites
+          {restaurantName.includes('and') ? (
+            <>
+              {restaurantName.split('and')[0].trim()}
+              <span style={{ fontSize: '0.8em', margin: '0 4px', fontStyle: 'italic' }}>&amp;</span>
+              {restaurantName.split('and')[1].trim()}
+            </>
+          ) : restaurantName}
         </Link>
 
         {/* Desktop nav */}

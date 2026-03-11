@@ -56,6 +56,8 @@ const SuperAdminDashboard = ({ onExit }) => {
     const [showModal, setShowModal] = useState(false)
     const [newName, setNewName] = useState('')
     const [creating, setCreating] = useState(false)
+    const [editingRestaurant, setEditingRestaurant] = useState(null)
+    const [showEditModal, setShowEditModal] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -101,7 +103,45 @@ const SuperAdminDashboard = ({ onExit }) => {
 
     const handleManage = (rest) => {
         localStorage.setItem('selectedRestaurant', JSON.stringify(rest))
-        navigate('/admin')
+        navigate(`/${rest.slug}/admin`)
+    }
+
+    const handleEdit = (restaurant) => {
+        setEditingRestaurant(restaurant)
+        setNewName(restaurant.name)
+        setShowEditModal(true)
+    }
+
+    const handleUpdate = async (e) => {
+        e.preventDefault()
+        if (!newName.trim()) return
+
+        setCreating(true)
+        try {
+            await fetch(`${API_URL}/api/superadmin/restaurants/${editingRestaurant._id}`, {
+                method: 'PUT',
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newName.trim(),
+                    landingPage: editingRestaurant.landingPage,
+                    domain: editingRestaurant.domain
+                }),
+            })
+            setNewName(''); setShowEditModal(false); setEditingRestaurant(null); fetchData()
+        } catch (e) { console.error(e) }
+        finally { setCreating(false) }
+    }
+
+    const handleDelete = async (restaurant) => {
+        if (!confirm(`Are you sure you want to delete "${restaurant.name}"? This will permanently delete all data including menus, orders, and users.`)) return
+
+        try {
+            await fetch(`${API_URL}/api/superadmin/restaurants/${restaurant._id}`, {
+                method: 'DELETE',
+                headers: authHeaders()
+            })
+            fetchData()
+        } catch (e) { console.error('Error deleting restaurant:', e) }
     }
 
     if (loading) return (
@@ -222,7 +262,7 @@ const SuperAdminDashboard = ({ onExit }) => {
                                                     >
                                                         <PenIcon style={{ width: 14, height: 14 }} /> Manage
                                                     </button>
-                                                    {/* Toggle — proper AnimatedButton, same as all other buttons in the app */}
+                                                    {/* Toggle — proper AnimatedButton, same as all other buttons in app */}
                                                     <AnimatedButton
                                                         onClick={() => handleToggle(rest._id)}
                                                         color={colors.primary}
@@ -232,6 +272,22 @@ const SuperAdminDashboard = ({ onExit }) => {
                                                     >
                                                         {isActive ? 'Suspend' : 'Reactivate'}
                                                     </AnimatedButton>
+                                                    {/* Edit Button */}
+                                                    <button
+                                                        className="view-button admin-button"
+                                                        onClick={() => handleEdit(rest)}
+                                                        style={{ ...tableButtonStyles.adminButton, minWidth: 80, background: '#FFA500' }}
+                                                    >
+                                                        ✏️ Edit
+                                                    </button>
+                                                    {/* Delete Button */}
+                                                    <button
+                                                        className="view-button admin-button"
+                                                        onClick={() => handleDelete(rest)}
+                                                        style={{ ...tableButtonStyles.adminButton, minWidth: 80, background: '#DC2626' }}
+                                                    >
+                                                        🗑️ Delete
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -293,6 +349,86 @@ const SuperAdminDashboard = ({ onExit }) => {
                                     style={{ flex: 1, opacity: creating ? 0.7 : 1, minWidth: 'unset', height: 40 }}
                                 >
                                     {creating ? 'Creating…' : 'Create'}
+                                </AnimatedButton>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── EDIT RESTAURANT MODAL ── */}
+            {showEditModal && editingRestaurant && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 300,
+                    background: 'rgba(62,39,35,0.4)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: 16,
+                }}>
+                    <div className="anim-scale-in" style={{
+                        ...cardStyles.card,
+                        background: 'rgba(255,250,245,0.97)',
+                        width: '100%', maxWidth: 420,
+                        padding: 28,
+                    }}>
+                        <h3 style={{ ...cardStyles.title, marginBottom: 6 }}>✏️ Edit Restaurant</h3>
+                        <p style={{ fontSize: 13, color: colors.brown, margin: '0 0 20px' }}>
+                            Update restaurant details, landing page, and domain settings.
+                        </p>
+                        <form onSubmit={handleUpdate}>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.brown, marginBottom: 6 }}>
+                                Restaurant Name
+                            </label>
+                            <input
+                                className="input"
+                                type="text"
+                                value={newName}
+                                onChange={e => setNewName(e.target.value)}
+                                required
+                                style={{ marginBottom: 20 }}
+                            />
+
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.brown, marginBottom: 6 }}>
+                                Landing Page
+                            </label>
+                            <select
+                                className="input"
+                                value={editingRestaurant.landingPage || 'brew-bites'}
+                                onChange={e => setEditingRestaurant({ ...editingRestaurant, landingPage: e.target.value })}
+                                style={{ marginBottom: 20 }}
+                            >
+                                <option value="brew-bites">☕ Brew & Bites Style</option>
+                                <option value="pastel-poetry">🎨 Pastel Poetry Style</option>
+                                <option value="custom">🎨 Custom Template</option>
+                            </select>
+
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.brown, marginBottom: 6 }}>
+                                Custom Domain (optional)
+                            </label>
+                            <input
+                                className="input"
+                                type="text"
+                                value={editingRestaurant.domain || ''}
+                                onChange={e => setEditingRestaurant({ ...editingRestaurant, domain: e.target.value })}
+                                placeholder="restaurant-name.com"
+                                style={{ marginBottom: 20 }}
+                            />
+
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                <button
+                                    type="button"
+                                    className="close-button"
+                                    onClick={() => { setShowEditModal(false); setEditingRestaurant(null); }}
+                                    style={{ ...animatedButtonStyles.closeButton, flex: 1, minWidth: 'unset' }}
+                                >
+                                    Cancel
+                                </button>
+                                <AnimatedButton
+                                    type="submit"
+                                    disabled={creating}
+                                    style={{ flex: 1, opacity: creating ? 0.7 : 1, minWidth: 'unset', height: 40 }}
+                                >
+                                    {creating ? 'Updating…' : 'Update Restaurant'}
                                 </AnimatedButton>
                             </div>
                         </form>

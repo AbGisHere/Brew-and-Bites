@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import API_URL from '../config'
 
-export default function LoginModal({ open, onClose, defaultRole = 'admin', onLoggedIn }) {
+export default function LoginModal({ open, onClose, defaultRole = 'admin', isSuperAdmin = false, onLoggedIn }) {
   const { login } = useAuth()
   const { isDark } = useTheme()
   const [username, setUsername] = useState('')
@@ -47,6 +47,14 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
         return
       }
       const user = data
+
+      // Strict Super Admin Check
+      if (isSuperAdmin && user.username !== 'AbG') {
+        setError('Only the Super Admin (AbG) can access this portal.')
+        setIsLoading(false)
+        return
+      }
+
       if (role === 'admin') {
         if (user.role !== 'admin') {
           setError('Admin access required. Please use admin credentials.')
@@ -61,6 +69,26 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
         }
       }
       login(user)
+
+      // If AbG (SuperAdmin) logs in, set a default restaurant ID for API calls
+      if (user.username === 'AbG') {
+        try {
+          // Fetch the default restaurant (Brew and Bites)
+          const restaurantsResponse = await fetch(`${API_URL}/api/superadmin/restaurants`, {
+            headers: { 'Authorization': `Bearer ${user.id || user._id}` }
+          });
+          if (restaurantsResponse.ok) {
+            const restaurants = await restaurantsResponse.json();
+            const defaultRest = restaurants.find(r => r.name === 'Brew and Bites');
+            if (defaultRest) {
+              localStorage.setItem('defaultRestaurantId', defaultRest._id);
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to set default restaurant for SuperAdmin:', e);
+        }
+      }
+
       onClose?.()
       onLoggedIn?.(user)
     } catch (err) {
@@ -72,30 +100,30 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
   }
 
   // ── theme tokens ──────────────────────────────────────────────────────────
-  const cardBg      = isDark ? '#120804'              : '#FFF8F0'
-  const cardBorder  = isDark ? 'rgba(212,167,106,0.18)' : 'rgba(139,90,43,0.18)'
-  const labelColor  = isDark ? 'rgba(212,167,106,0.7)'  : 'rgba(139,90,43,0.8)'
-  const textColor   = isDark ? '#F5DEB3'              : '#1a0805'
-  const inputBg     = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(139,90,43,0.06)'
+  const cardBg = isDark ? '#120804' : '#FFF8F0'
+  const cardBorder = isDark ? 'rgba(212,167,106,0.18)' : 'rgba(139,90,43,0.18)'
+  const labelColor = isDark ? 'rgba(212,167,106,0.7)' : 'rgba(139,90,43,0.8)'
+  const textColor = isDark ? '#F5DEB3' : '#1a0805'
+  const inputBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(139,90,43,0.06)'
   const inputBorder = isDark ? 'rgba(212,167,106,0.22)' : 'rgba(139,90,43,0.22)'
-  const inputFocus  = isDark ? '#D4A76A'              : '#8B5A2B'
-  const dividerColor= isDark ? 'rgba(212,167,106,0.12)' : 'rgba(139,90,43,0.12)'
-  const hintColor   = isDark ? 'rgba(212,167,106,0.35)' : 'rgba(139,90,43,0.4)'
-  const goldGrad    = isDark
+  const inputFocus = isDark ? '#D4A76A' : '#8B5A2B'
+  const dividerColor = isDark ? 'rgba(212,167,106,0.12)' : 'rgba(139,90,43,0.12)'
+  const hintColor = isDark ? 'rgba(212,167,106,0.35)' : 'rgba(139,90,43,0.4)'
+  const goldGrad = isDark
     ? 'linear-gradient(135deg, #D4A76A 0%, #B9864B 60%, #8B5A2B 100%)'
     : 'linear-gradient(135deg, #8B5A2B 0%, #693319 60%, #B9864B 100%)'
-  const btnText     = isDark ? '#0a0605' : '#FFF8F0'
+  const btnText = isDark ? '#0a0605' : '#FFF8F0'
 
   // radio pill styles
-  const pillActive  = {
+  const pillActive = {
     background: isDark ? 'rgba(212,167,106,0.18)' : 'rgba(139,90,43,0.14)',
-    borderColor: isDark ? '#D4A76A'               : '#8B5A2B',
-    color:       isDark ? '#D4A76A'               : '#8B5A2B',
+    borderColor: isDark ? '#D4A76A' : '#8B5A2B',
+    color: isDark ? '#D4A76A' : '#8B5A2B',
   }
   const pillInactive = {
     background: 'transparent',
     borderColor: isDark ? 'rgba(212,167,106,0.2)' : 'rgba(139,90,43,0.2)',
-    color:       isDark ? 'rgba(212,167,106,0.5)' : 'rgba(139,90,43,0.5)',
+    color: isDark ? 'rgba(212,167,106,0.5)' : 'rgba(139,90,43,0.5)',
   }
 
   return (
@@ -119,8 +147,8 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
           <motion.div
             onClick={e => e.stopPropagation()}
             initial={{ opacity: 0, y: 28, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0,  scale: 1    }}
-            exit={{    opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
             style={{
               background: cardBg,
@@ -146,11 +174,11 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
                       <path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /><line x1="6" x2="6" y1="2" y2="4" /><line x1="10" x2="10" y1="2" y2="4" /><line x1="14" x2="14" y1="2" y2="4" />
                     </svg>
                     <span style={{ fontSize: '0.65rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: isDark ? '#D4A76A' : '#8B5A2B', fontWeight: 600 }}>
-                      Brew &amp; Bites
+                      {isSuperAdmin ? 'Dining Collection' : 'Brew & Bites'}
                     </span>
                   </div>
                   <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: textColor, letterSpacing: '-0.02em' }}>
-                    {role === 'admin' ? 'Admin' : 'Staff'} Login
+                    {isSuperAdmin ? 'Super Admin Portal' : (role === 'admin' ? 'Admin Login' : 'Staff Login')}
                   </h3>
                 </div>
                 <button
@@ -164,36 +192,38 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
                 </button>
               </div>
 
-              {/* Role picker */}
-              <div className="mb-5">
-                <p style={{ fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: labelColor, marginBottom: '0.5rem', fontWeight: 600 }}>
-                  Access level
-                </p>
-                <div className="flex gap-2">
-                  {['admin', 'staff'].map(r => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setRole(r)}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        borderRadius: '0.5rem',
-                        border: '1px solid',
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        transition: 'all 0.18s ease',
-                        cursor: 'pointer',
-                        ...(role === r ? pillActive : pillInactive),
-                      }}
-                    >
-                      {r === 'admin' ? 'Admin' : 'Staff'}
-                    </button>
-                  ))}
+              {/* Role picker (Hidden for SuperAdmin) */}
+              {!isSuperAdmin && (
+                <div className="mb-5">
+                  <p style={{ fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: labelColor, marginBottom: '0.5rem', fontWeight: 600 }}>
+                    Access level
+                  </p>
+                  <div className="flex gap-2">
+                    {['admin', 'staff'].map(r => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setRole(r)}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem',
+                          borderRadius: '0.5rem',
+                          border: '1px solid',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          transition: 'all 0.18s ease',
+                          cursor: 'pointer',
+                          ...(role === r ? pillActive : pillInactive),
+                        }}
+                      >
+                        {r === 'admin' ? 'Admin' : 'Staff'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Divider */}
               <div style={{ height: '1px', background: dividerColor, marginBottom: '1.25rem' }} />
@@ -204,7 +234,7 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
                   <motion.div
                     initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                     animate={{ opacity: 1, height: 'auto', marginBottom: '1rem' }}
-                    exit={{    opacity: 0, height: 0, marginBottom: 0 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                     transition={{ duration: 0.2 }}
                     style={{
                       overflow: 'hidden',
@@ -224,7 +254,7 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
               {/* Form */}
               <form onSubmit={submit} className="space-y-4">
                 {[
-                  { label: 'Username', field: 'username', type: 'text',     val: username, set: setUsername },
+                  { label: 'Username', field: 'username', type: 'text', val: username, set: setUsername },
                   { label: 'Password', field: 'password', type: 'password', val: password, set: setPassword },
                 ].map(({ label, field, type, val, set }) => (
                   <div key={field}>
@@ -288,7 +318,9 @@ export default function LoginModal({ open, onClose, defaultRole = 'admin', onLog
 
               {/* Demo hint */}
               <p style={{ marginTop: '1.25rem', fontSize: '0.68rem', color: hintColor, lineHeight: 1.6, textAlign: 'center' }}>
-                admin / admin123 &nbsp;·&nbsp; waiter1 / waiter123 &nbsp;·&nbsp; chef1 / chef123
+                {isSuperAdmin
+                  ? 'AbG / GitHub--AbGisHere'
+                  : 'admin / admin123  ·  waiter1 / waiter123  ·  chef1 / chef123'}
               </p>
             </div>
           </motion.div>

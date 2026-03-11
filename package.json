@@ -29,6 +29,7 @@
     "three": "^0.183.1"
   },
   "devDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.59.0",
     "@vitejs/plugin-react": "^5.1.2",
     "vite": "^7.2.7"
   }

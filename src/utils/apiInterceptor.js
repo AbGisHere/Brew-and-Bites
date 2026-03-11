@@ -45,6 +45,13 @@ window.fetch = async (...args) => {
                     // If it's Super Admin (AbG), they might not have one, so we don't send one until they select
                     if (user && user.restaurantId) {
                         config.headers['x-restaurant-id'] = user.restaurantId;
+                    } else if (user && user.username === 'AbG') {
+                        // For SuperAdmin, try to get the default restaurant
+                        // This allows API calls to work when AbG is logged in but hasn't selected a restaurant yet
+                        const defaultRestaurantId = localStorage.getItem('defaultRestaurantId');
+                        if (defaultRestaurantId) {
+                            config.headers['x-restaurant-id'] = defaultRestaurantId;
+                        }
                     }
                 } catch (e) {
                     console.error('Failed to parse user from localStorage', e);

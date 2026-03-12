@@ -278,6 +278,21 @@ export default function ReceiptModal({ open, onClose, receipt, canEdit = false, 
                             {receipt.showEmail && receipt.email && <div>✉️ {receipt.email}</div>}
                         </div>
                     )}
+                    {receipt.showRestaurantTiming && (
+                      <div className="mt-1 font-medium text-amber-800">
+                        {receipt.detailedTimings ? (
+                          (() => {
+                            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                            const today = days[new Date().getDay()];
+                            const timing = receipt.detailedTimings[today];
+                            if (timing?.closed) return <div className="text-red-500 font-bold uppercase tracking-wider text-[10px]">Closed Today</div>;
+                            return <div className="flex items-center gap-1">🕒 <span className="text-[11px]">Today: {timing?.open} - {timing?.close}</span></div>;
+                          })()
+                        ) : (
+                          receipt.restaurantTiming && <div className="flex items-center gap-1">🕒 <span className="text-[11px]">{receipt.restaurantTiming}</span></div>
+                        )}
+                      </div>
+                    )}
                   </div>
               </div>
             </div>

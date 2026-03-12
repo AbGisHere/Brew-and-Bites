@@ -44,7 +44,15 @@ const defaultSettings = {
     autoSubmitToChef: true,
     siteClosed: false,
     taxEnabled: false,
-    taxRate: 0
+    taxRate: 0,
+    restaurantDescription: 'Craft coffee, fresh bites, and cozy vibes in the heart of town.',
+    socialMediaLinks: {
+        facebook: '',
+        twitter: '',
+        instagram: '',
+        linkedin: ''
+    },
+    appVersion: '1.7.0'
 };
 
 async function seedDatabase() {

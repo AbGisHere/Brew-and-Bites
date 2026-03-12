@@ -158,8 +158,18 @@ app.get('/', (req, res) => {
 });
 
 // Version endpoint
-app.get('/api/version', (req, res) => {
-    res.json({ version: '1.4.2' });
+app.get('/api/version', async (req, res) => {
+    try {
+        const restId = req.headers['x-restaurant-id'] || null;
+        if (restId) {
+            const Settings = getDatabase('brew-and-bites').models.Settings || getDatabase('brew-and-bites').model('Settings', SettingsSchema);
+            const settings = await Settings.findOne({ restaurantId: restId });
+            return res.json({ version: settings?.appVersion || '1.7.0' });
+        }
+        res.json({ version: '1.7.0' });
+    } catch (error) {
+        res.json({ version: '1.7.0' });
+    }
 });
 
 // --- Customer demo OTP auth ---
@@ -432,7 +442,13 @@ const verifySuperAdmin = async (req, res, next) => {
         const User = centralDb.model('User', require('./models/Schemas').UserSchema);
 
         // In this setup, token is just the user ID for admins
-        const user = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
+        let user = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
+        
+        // If not found in current restaurant DB, check the central DB (for SuperAdmins)
+        if (!user && req.restaurantDB) {
+            user = await (await getDatabase()).model('User', require('./models/Schemas').UserSchema).findById(token);
+        }
+
         if (!user || user.username.toLowerCase() !== 'abg') {
             return res.status(403).json({ error: 'Forbidden. Super Admin only.' });
         }
@@ -1098,6 +1114,12 @@ app.get('/api/migrate/settings', async (req, res) => {
             if (settings.restaurantAddress === undefined) {
                 settings.restaurantAddress = '';
             }
+            if (settings.showRestaurantTiming === undefined) {
+                settings.showRestaurantTiming = true;
+            }
+            if (settings.restaurantTiming === undefined) {
+                settings.restaurantTiming = '';
+            }
             if (settings.showContactNumber === undefined) {
                 settings.showContactNumber = true;
             }
@@ -1205,6 +1227,8 @@ app.get('/api/settings', async (req, res) => {
                 restaurantName: '',
                 showRestaurantAddress: true,
                 restaurantAddress: '',
+                showRestaurantTiming: true,
+                restaurantTiming: '',
                 showContactNumber: true,
                 contactNumber: '',
                 showEmail: true,
@@ -1262,7 +1286,13 @@ app.put('/api/settings', async (req, res) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const currentUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
+        let currentUser = await (req.restaurantDB ? (req.restaurantDB.models.User || req.restaurantDB.model('User', require('./models/Schemas').UserSchema)) : getDatabase().model('User', require('./models/Schemas').UserSchema)).findById(token);
+        
+        // If not found in current restaurant DB, check the central DB (for SuperAdmins)
+        if (!currentUser && req.restaurantDB) {
+            currentUser = await (await getDatabase()).model('User', require('./models/Schemas').UserSchema).findById(token);
+        }
+
         if (!currentUser) {
             return res.status(401).json({ error: 'Invalid token' });
         }
@@ -1287,6 +1317,17 @@ app.put('/api/settings', async (req, res) => {
             restaurantName: '',
             showRestaurantAddress: true,
             restaurantAddress: '',
+            showRestaurantTiming: true,
+            restaurantTiming: '',
+            detailedTimings: {
+                monday: { open: '09:00', close: '22:00', closed: false },
+                tuesday: { open: '09:00', close: '22:00', closed: false },
+                wednesday: { open: '09:00', close: '22:00', closed: false },
+                thursday: { open: '09:00', close: '22:00', closed: false },
+                friday: { open: '09:00', close: '22:00', closed: false },
+                saturday: { open: '09:00', close: '22:00', closed: false },
+                sunday: { open: '09:00', close: '22:00', closed: false }
+            },
             showContactNumber: true,
             contactNumber: '',
             showEmail: true,

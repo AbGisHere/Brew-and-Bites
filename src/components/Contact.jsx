@@ -1,15 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useInView } from '../hooks/useInView'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', date: '', time: '', guests: '2', message: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [settings, setSettings] = useState({})
   const { isDark } = useTheme()
   const [headerRef, headerVisible] = useInView()
   const [formRef, formVisible] = useInView()
   const [infoRef, infoVisible] = useInView()
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const restId = localStorage.getItem('defaultRestaurantId');
+        const response = await fetch(`${API_URL}/api/settings`, {
+          headers: { 'x-restaurant-id': restId || '' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
 
@@ -80,7 +102,27 @@ export default function Contact() {
   const infoItems = [
     {
       title: 'Opening Hours',
-      lines: ['Mon – Fri: 7:00 AM – 8:00 PM', 'Sat – Sun: 8:00 AM – 9:00 PM'],
+      lines: (() => {
+        const timings = settings.detailedTimings || {};
+        const days = [
+          { key: 'monday', label: 'Mon – Fri', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] },
+          { key: 'weekend', label: 'Sat – Sun', days: ['saturday', 'sunday'] }
+        ];
+
+        return days.map(({ label, days: dayGroup }) => {
+          const isOpen = dayGroup.some(day => !timings[day]?.closed);
+          if (!isOpen) return null;
+
+          const openTimes = dayGroup
+            .filter(day => !timings[day]?.closed)
+            .map(day => `${timings[day]?.open || '09:00'} - ${timings[day]?.close || '22:00'}`);
+
+          const uniqueTimes = [...new Set(openTimes)];
+          return uniqueTimes.length === 1 ? `${label}: ${uniqueTimes[0]}` : 
+            uniqueTimes.length > 1 ? `${label}: ${uniqueTimes[0]} / ${uniqueTimes[1]}` : 
+            `${label}: ${settings.restaurantTiming || '7:00 AM – 8:00 PM'}`;
+        }).filter(Boolean);
+      })(),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
@@ -90,7 +132,9 @@ export default function Contact() {
     },
     {
       title: 'Our Location',
-      lines: ['123 Coffee Street', 'Brewtown, CA 90210'],
+      lines: settings.restaurantAddress ? 
+        settings.restaurantAddress.split('\n') : 
+        ['123 Coffee Street', 'Brewtown, CA 90210'],
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -100,7 +144,7 @@ export default function Contact() {
     },
     {
       title: 'Phone',
-      lines: ['+91 99999 99999'],
+      lines: [settings.contactNumber || '+91 99999 99999'],
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -109,7 +153,7 @@ export default function Contact() {
     },
     {
       title: 'Email',
-      lines: ['hello@brewandbites.com'],
+      lines: [settings.email || 'hello@brewandbites.com'],
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

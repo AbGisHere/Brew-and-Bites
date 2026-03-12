@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { Section, cardStyles } from '../styles/shared/CardStyles'
 import { AnimatedButton, animatedButtonStyles, tableButtonStyles, statusBadgeStyles, colors } from '../styles/shared/SharedButtonStyles'
 import PenIcon from './icons/PenIcon'
+import TrashIcon from './icons/TrashIcon'
 import API_URL from '../config'
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
@@ -290,21 +291,101 @@ const SuperAdminDashboard = ({ onExit }) => {
                                                         {isActive ? 'Suspend' : 'Reactivate'}
                                                     </AnimatedButton>
                                                     {/* Edit Button */}
-                                                    <button
-                                                        className="view-button admin-button"
+                                                    <div
                                                         onClick={() => handleEdit(rest)}
-                                                        style={{ ...tableButtonStyles.adminButton, minWidth: 80, background: '#FFA500' }}
+                                                        className="w-8 h-8 flex items-center justify-center cursor-pointer edit-btn"
+                                                        style={{
+                                                            backdropFilter: 'blur(20px) saturate(150%)',
+                                                            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                                            background: 'rgba(212, 167, 106, 0.25)',
+                                                            borderRadius: '50%',
+                                                            border: '1px solid rgba(212, 167, 106, 0.4)',
+                                                            color: colors.primaryDark,
+                                                            boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                                                            padding: '4px 8px',
+                                                            fontSize: '12px',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s ease',
+                                                            outline: 'none'
+                                                        }}
+                                                        onFocus={(e) => {
+                                                            e.target.style.background = 'rgba(212, 167, 106, 0.35)';
+                                                            e.target.style.border = '2px solid rgba(212, 167, 106, 0.6)';
+                                                            e.target.style.boxShadow = '0 0 0 2px rgba(212, 167, 106, 0.2)';
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            e.target.style.background = 'rgba(212, 167, 106, 0.25)';
+                                                            e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                                                            e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
+                                                        }}
+                                                        title="Edit"
+                                                        onMouseEnter={(e) => {
+                                                            e.target.style.background = 'rgba(212, 167, 106, 0.35)';
+                                                            e.target.style.border = '1px solid rgba(212, 167, 106, 0.5)';
+                                                            e.target.style.color = colors.brownDark;
+                                                            e.target.style.transform = 'scale(1.02)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.target.style.background = 'rgba(212, 167, 106, 0.25)';
+                                                            e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
+                                                            e.target.style.color = colors.primaryDark;
+                                                            e.target.style.transform = 'scale(1)';
+                                                        }}
                                                     >
-                                                        ✏️ Edit
-                                                    </button>
+                                                        <PenIcon
+                                                            size={16}
+                                                            color={colors.primaryDark}
+                                                            strokeWidth={2}
+                                                        />
+                                                    </div>
                                                     {/* Delete Button */}
-                                                    <button
-                                                        className="view-button admin-button"
+                                                    <div
                                                         onClick={() => handleDelete(rest)}
-                                                        style={{ ...tableButtonStyles.adminButton, minWidth: 80, background: '#DC2626' }}
+                                                        className="w-8 h-8 flex items-center justify-center cursor-pointer delete-btn"
+                                                        style={{
+                                                            backdropFilter: 'blur(20px) saturate(150%)',
+                                                            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                                                            background: 'rgba(139, 90, 43, 0.25)',
+                                                            borderRadius: '50%',
+                                                            border: '1px solid rgba(139, 90, 43, 0.4)',
+                                                            color: colors.brownDark,
+                                                            boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                                                            padding: '4px 8px',
+                                                            fontSize: '12px',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s ease',
+                                                            outline: 'none'
+                                                        }}
+                                                        onFocus={(e) => {
+                                                            e.target.style.background = 'rgba(139, 90, 43, 0.35)';
+                                                            e.target.style.border = '2px solid rgba(139, 90, 43, 0.6)';
+                                                            e.target.style.boxShadow = '0 0 0 2px rgba(139, 90, 43, 0.2)';
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            e.target.style.background = 'rgba(139, 90, 43, 0.25)';
+                                                            e.target.style.border = '1px solid rgba(139, 90, 43, 0.4)';
+                                                            e.target.style.boxShadow = 'inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)';
+                                                        }}
+                                                        title="Delete"
+                                                        onMouseEnter={(e) => {
+                                                            e.target.style.background = 'rgba(139, 90, 43, 0.35)';
+                                                            e.target.style.border = '1px solid rgba(139, 90, 43, 0.5)';
+                                                            e.target.style.color = '#3E2723';
+                                                            e.target.style.transform = 'scale(1.02)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.target.style.background = 'rgba(139, 90, 43, 0.25)';
+                                                            e.target.style.border = '1px solid rgba(139, 90, 43, 0.4)';
+                                                            e.target.style.color = colors.brownDark;
+                                                            e.target.style.transform = 'scale(1)';
+                                                        }}
                                                     >
-                                                        🗑️ Delete
-                                                    </button>
+                                                        <TrashIcon
+                                                            size={16}
+                                                            color={colors.brownDark}
+                                                            strokeWidth={2}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>

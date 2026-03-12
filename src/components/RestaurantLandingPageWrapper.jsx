@@ -10,7 +10,7 @@ import Footer from './Footer'
 import Loader from './Loader'
 import LoginModal from './LoginModal'
 import TableCodeEntry from './TableCodeEntry'
-import PastelPoetryLanding from './PastelPoetryLanding'
+import PastelPoetryLandingNew from './PastelPoetryLandingNew'
 import API_URL from '../config'
 
 const RestaurantLandingPageWrapper = () => {
@@ -87,7 +87,7 @@ const RestaurantLandingPageWrapper = () => {
     if (restaurant.landingPage === 'pastel-poetry') {
         return (
             <>
-                <PastelPoetryLanding restaurant={restaurant} />
+                <PastelPoetryLandingNew restaurant={restaurant} />
                 <LoginModal
                     open={loginOpen}
                     onClose={() => setLoginOpen(false)}

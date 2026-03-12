@@ -1280,7 +1280,24 @@ function SettingsPanel({ onBack }) {
     autoSubmitToChef: true,
     showOrderTime: true,
     showOrderDate: true,
-    showOrderID: false
+    showOrderID: false,
+    restaurantName: '',
+    restaurantTiming: '',
+    contactNumber: '',
+    email: '',
+    restaurantAddress: '',
+    gstNumber: '',
+    fssaiNumber: '',
+    restaurantLogo: '',
+    detailedTimings: {
+      monday: { open: '09:00', close: '22:00', closed: false },
+      tuesday: { open: '09:00', close: '22:00', closed: false },
+      wednesday: { open: '09:00', close: '22:00', closed: false },
+      thursday: { open: '09:00', close: '22:00', closed: false },
+      friday: { open: '09:00', close: '22:00', closed: false },
+      saturday: { open: '09:00', close: '22:00', closed: false },
+      sunday: { open: '09:00', close: '22:00', closed: false }
+    }
   })
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
@@ -1288,11 +1305,15 @@ function SettingsPanel({ onBack }) {
   const { user } = useAuth()
   const isSuperAdmin = user && user.username.toLowerCase() === 'abg'
 
-  // 1. Fetch Settings
   useEffect(() => {
-    fetch(`${API_URL}/api/settings`)
+    const restId = localStorage.getItem('defaultRestaurantId');
+    fetch(`${API_URL}/api/settings`, {
+      headers: { 'x-restaurant-id': restId || '' }
+    })
       .then(res => res.json())
-      .then(setSettings)
+      .then(fetchedSettings => {
+        setSettings(prev => ({ ...prev, ...fetchedSettings }));
+      })
       .catch(err => console.error(err));
   }, []);
 
@@ -1306,7 +1327,7 @@ function SettingsPanel({ onBack }) {
       if (!token) {
         throw new Error('Not authenticated');
       }
-      const user = JSON.parse(token);
+      const rawUser = JSON.parse(token);
 
       // Check if payload might be too large due to logo
       let settingsToSave = { ...settings };
@@ -1322,7 +1343,8 @@ function SettingsPanel({ onBack }) {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.id}`
+            'Authorization': `Bearer ${rawUser.id || rawUser._id}`,
+            'x-restaurant-id': localStorage.getItem('defaultRestaurantId') || ''
           },
           body: JSON.stringify(settingsToSave)
         });
@@ -1340,7 +1362,8 @@ function SettingsPanel({ onBack }) {
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user.id}`
+                'Authorization': `Bearer ${rawUser.id || rawUser._id}`,
+                'x-restaurant-id': localStorage.getItem('defaultRestaurantId') || ''
               },
               body: JSON.stringify({ restaurantLogo: logoToSave })
             });
@@ -1367,7 +1390,8 @@ function SettingsPanel({ onBack }) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}`
+          'Authorization': `Bearer ${rawUser.id || rawUser._id}`,
+          'x-restaurant-id': localStorage.getItem('defaultRestaurantId') || ''
         },
         body: JSON.stringify(settingsToSave)
       });
@@ -1422,6 +1446,38 @@ function SettingsPanel({ onBack }) {
     const newSettings = { ...settings, showOrderID: e.target.checked }
     setSettings(newSettings)
   }
+
+  // Enhanced toggle component creator
+  const createEnhancedToggle = (isChecked, onChange, activeColor = 'rgba(212, 167, 106, 0.25)', inactiveColor = 'rgba(139, 90, 43, 0.15)') => (
+    <div
+      className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
+      style={{
+        backdropFilter: 'blur(20px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+        background: isChecked
+          ? activeColor
+          : inactiveColor,
+        border: '1px solid',
+        borderColor: isChecked
+          ? activeColor.replace('0.25', '0.3')
+          : inactiveColor.replace('0.15', '0.25'),
+        boxShadow: isChecked
+          ? `0 2px 12px -1px ${activeColor.replace('0.25', '0.2')}, inset 0 1px 0 0 rgba(255, 255, 255, 0.2)`
+          : `0 2px 12px -1px ${inactiveColor.replace('0.15', '0.15')}, inset 0 1px 0 0 rgba(255, 255, 255, 0.15)`
+      }}
+    >
+      <div
+        className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+        style={{
+          width: '20px',
+          height: '20px',
+          transform: isChecked ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+        }}
+      />
+    </div>
+  )
 
   const handleLogoUpload = (e) => {
     const file = e.target.files[0]
@@ -1492,6 +1548,7 @@ function SettingsPanel({ onBack }) {
       <div className="flex gap-2 mb-6">
         {[
           { id: 'general', label: 'General' },
+          { id: 'information', label: 'Information' },
           { id: 'invoice', label: 'Invoice' }
         ].map(t => {
           const isActive = settingsTab === t.id;
@@ -1615,97 +1672,463 @@ function SettingsPanel({ onBack }) {
                   checked={settings.autoSubmitToChef}
                   onChange={handleToggleAutoSubmit}
                 />
-                <div
-                  className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                  style={{
-                    backdropFilter: 'blur(20px) saturate(150%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                    background: settings.autoSubmitToChef
-                      ? 'rgba(212, 167, 106, 0.25)'
-                      : 'rgba(139, 90, 43, 0.15)',
-                    border: '1px solid',
-                    borderColor: settings.autoSubmitToChef
-                      ? 'rgba(212, 167, 106, 0.3)'
-                      : 'rgba(139, 90, 43, 0.25)',
-                    boxShadow: settings.autoSubmitToChef
-                      ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                      : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                  }}
-                >
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      transform: settings.autoSubmitToChef ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                    }}
-                  />
-                </div>
+                {createEnhancedToggle(settings.autoSubmitToChef, handleToggleAutoSubmit)}
                 <span className="ml-3 text-sm font-medium text-gray-900">
                   {settings.autoSubmitToChef ? 'Auto-Submit' : 'Manual Submit'}
                 </span>
               </label>
             </div>
 
-            {isSuperAdmin && (
-              <div className="flex items-center justify-between p-4 rounded-lg border-l-4" style={{
-                background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
-                border: '1px solid rgba(212, 167, 106, 0.2)',
-                borderLeftColor: '#D4A76A',
-                borderLeftWidth: '4px',
-                boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
-              }}>
-                <div>
-                  <h4 className="font-medium" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Website Status</h4>
-                  <p className="text-sm" style={{ color: '#8B5A2B', lineHeight: '1.5' }}>
-                    {settings.siteClosed
-                      ? 'Website is currently CLOSED. Only super admin can log in.'
-                      : 'Website is OPEN for all users to log in.'}
+            {/* Tax Settings */}
+            <div className="p-6 rounded-lg" style={{
+              background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
+              border: '1px solid rgba(212, 167, 106, 0.2)',
+              boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+            }}>
+              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Tax Settings</h4>
+              <div className="flex items-center justify-between p-4 bg-white/60 rounded-xl border border-amber-100 mb-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-sm text-amber-900">Enable Tax</h5>
+                  <p className="text-xs text-amber-700">
+                    {settings.taxEnabled ? 'Tax calculation is active for all orders.' : 'Tax calculation is disabled.'}
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    checked={settings.siteClosed || false}
-                    onChange={handleToggleSiteStatus}
+                    checked={settings.taxEnabled}
+                    onChange={handleToggleTax}
                   />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.siteClosed
-                        ? 'rgba(239, 68, 68, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.siteClosed
-                        ? 'rgba(239, 68, 68, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.siteClosed
-                        ? '0 2px 12px -1px rgba(239, 68, 68, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
+                  {createEnhancedToggle(settings.taxEnabled, handleToggleTax)}
+                </label>
+              </div>
+
+              {settings.taxEnabled && (
+                <div className="p-4 bg-white/60 rounded-xl border border-amber-100">
+                  <label className="block text-sm font-medium text-amber-900 mb-2">Tax Rate (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={settings.taxRate || 0}
+                    onChange={handleTaxRateChange}
+                    className="w-full px-4 py-3 rounded-xl border border-amber-200 bg-amber-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              )}
+            </div>
+            {/* Website Status (Super Admin Only) */}
+            {isSuperAdmin && (
+              <div className="p-6 rounded-lg mt-4" style={{
+                background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
+                border: '1px solid rgba(212, 167, 106, 0.2)',
+                boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+              }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Website Status</h4>
+                    <p className="text-sm" style={{ color: '#8B5A2B', lineHeight: '1.5' }}>
+                      {settings.siteClosed
+                        ? 'Website is currently CLOSED. Only super admin can log in.'
+                        : 'Website is OPEN for all users to log in.'}
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={settings.siteClosed || false}
+                      onChange={handleToggleSiteStatus}
+                    />
+                    {createEnhancedToggle(settings.siteClosed || false, handleToggleSiteStatus, 'rgba(220, 38, 38, 0.25)', 'rgba(139, 90, 43, 0.15)')}
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+      {/* Information Settings */}
+      {settingsTab === 'information' && (
+        <Section title="Restaurant Information">
+          <div className="space-y-6">
+            <div className="p-6 rounded-lg" style={{
+              background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
+              border: '1px solid rgba(212, 167, 106, 0.2)',
+              boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+            }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Brand Info */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-amber-900">Restaurant Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 transition-all duration-200"
+                      placeholder="Your Restaurant Name"
+                      value={settings.restaurantName || ''}
+                      onChange={(e) => setSettings({ ...settings, restaurantName: e.target.value })}
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.siteClosed ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '12px',
+                        color: '#3E2723',
+                        outline: 'none'
                       }}
                     />
                   </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.siteClosed ? 'Site Closed' : 'Site Open'}
-                  </span>
-                </label>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-amber-900">Weekly Schedule</label>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
+                        <div key={day} className="flex items-center gap-3 p-3 bg-white/40 rounded-xl border border-amber-100/50">
+                          <span className="w-24 text-sm font-bold text-amber-900 capitalize">{day}</span>
+                          <div className="flex items-center gap-2 flex-1">
+                            {!settings.detailedTimings?.[day]?.closed ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="time"
+                                  value={settings.detailedTimings?.[day]?.open || '09:00'}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    detailedTimings: {
+                                      ...settings.detailedTimings,
+                                      [day]: { ...settings.detailedTimings?.[day], open: e.target.value }
+                                    }
+                                  })}
+                                  className="bg-white/80 border border-amber-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-amber-500 transition-colors"
+                                  style={{ color: '#3E2723' }}
+                                />
+                                <span className="text-amber-600 font-medium">to</span>
+                                <input
+                                  type="time"
+                                  value={settings.detailedTimings?.[day]?.close || '22:00'}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    detailedTimings: {
+                                      ...settings.detailedTimings,
+                                      [day]: { ...settings.detailedTimings?.[day], close: e.target.value }
+                                    }
+                                  })}
+                                  className="bg-white/80 border border-amber-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-amber-500 transition-colors"
+                                  style={{ color: '#3E2723' }}
+                                />
+                              </div>
+                            ) : (
+                              <span className="text-red-500 text-sm font-bold px-2 italic">Closed All Day</span>
+                            )}
+                          </div>
+                          <label className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              checked={settings.detailedTimings?.[day]?.closed || false}
+                              onChange={(e) => setSettings({
+                                ...settings,
+                                detailedTimings: {
+                                  ...settings.detailedTimings,
+                                  [day]: { ...settings.detailedTimings?.[day], closed: e.target.checked }
+                                }
+                              })}
+                              className="w-4 h-4 accent-amber-600 cursor-pointer"
+                            />
+                            <span className="text-xs font-semibold text-amber-800 group-hover:text-amber-600 transition-colors">Closed</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Add custom scrollbar styles */}
+                    <style>{`
+                      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                      .custom-scrollbar::-webkit-scrollbar-track { background: rgba(212, 167, 106, 0.05); border-radius: 10px; }
+                      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(212, 167, 106, 0.2); border-radius: 10px; }
+                      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(212, 167, 106, 0.4); }
+                    `}</style>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-amber-900">Timing Note (Fallback)</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 transition-all duration-200"
+                      placeholder="e.g. 7:00 AM – 8:00 PM (used if schedule is hidden)"
+                      value={settings.restaurantTiming || ''}
+                      onChange={(e) => setSettings({ ...settings, restaurantTiming: e.target.value })}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '12px',
+                        color: '#3E2723',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Logo Upload */}
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-amber-900">Restaurant Logo</label>
+                  <div className="p-4 bg-white/50 rounded-xl border border-dashed border-amber-300 flex flex-col items-center gap-3">
+                    {settings.restaurantLogo ? (
+                      <div className="relative group">
+                        <img
+                          src={settings.restaurantLogo}
+                          alt="Preview"
+                          className="h-24 w-auto object-contain rounded-lg border bg-white p-2"
+                        />
+                        <button 
+                          onClick={() => setSettings({ ...settings, restaurantLogo: '' })}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 bg-amber-50 rounded-lg flex items-center justify-center text-amber-400">
+                        <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="block w-full text-xs text-gray-500 file:mr-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200"
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-amber-900">Contact Number</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 transition-all duration-200"
+                    placeholder="+91 98765 43210"
+                    value={settings.contactNumber || ''}
+                    onChange={(e) => setSettings({ ...settings, contactNumber: e.target.value })}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '12px',
+                      color: '#3E2723',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-amber-900">Email Address</label>
+                  <input
+                    type="email"
+                    className="w-full px-4 py-3 transition-all duration-200"
+                    placeholder="hello@restaurant.com"
+                    value={settings.email || ''}
+                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '12px',
+                      color: '#3E2723',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-sm font-semibold mb-2 text-amber-900">Restaurant Address</label>
+                <textarea
+                  className="w-full px-4 py-3 transition-all duration-200 resize-none"
+                  rows={3}
+                  placeholder="Street, Area, City, State, PIN"
+                  value={settings.restaurantAddress || ''}
+                  onChange={(e) => setSettings({ ...settings, restaurantAddress: e.target.value })}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    border: '1px solid rgba(212, 167, 106, 0.3)',
+                    borderRadius: '12px',
+                    color: '#3E2723',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {/* Restaurant Description */}
+              <div className="mt-6">
+                <label className="block text-sm font-semibold mb-2 text-amber-900">Restaurant Description</label>
+                <textarea
+                  className="w-full px-4 py-3 transition-all duration-200 resize-none"
+                  rows={3}
+                  placeholder="Brief description of your restaurant for the footer"
+                  value={settings.restaurantDescription || ''}
+                  onChange={(e) => setSettings({ ...settings, restaurantDescription: e.target.value })}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    border: '1px solid rgba(212, 167, 106, 0.3)',
+                    borderRadius: '12px',
+                    color: '#3E2723',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {/* App Version */}
+              <div className="mt-6">
+                <label className="block text-sm font-semibold mb-2 text-amber-900">App Version</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 transition-all duration-200"
+                  placeholder="1.7.0"
+                  value={settings.appVersion || ''}
+                  onChange={(e) => setSettings({ ...settings, appVersion: e.target.value })}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    border: '1px solid rgba(212, 167, 106, 0.3)',
+                    borderRadius: '12px',
+                    color: '#3E2723',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {/* Social Media Links */}
+              <div className="mt-6">
+                <label className="block text-sm font-semibold mb-4 text-amber-900">Social Media Links</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium mb-2 text-amber-700">Facebook</label>
+                    <input
+                      type="url"
+                      className="w-full px-4 py-2 transition-all duration-200"
+                      placeholder="https://facebook.com/yourrestaurant"
+                      value={settings.socialMediaLinks?.facebook || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialMediaLinks: {
+                          ...settings.socialMediaLinks,
+                          facebook: e.target.value
+                        }
+                      })}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '8px',
+                        color: '#3E2723',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-2 text-amber-700">Twitter</label>
+                    <input
+                      type="url"
+                      className="w-full px-4 py-2 transition-all duration-200"
+                      placeholder="https://twitter.com/yourrestaurant"
+                      value={settings.socialMediaLinks?.twitter || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialMediaLinks: {
+                          ...settings.socialMediaLinks,
+                          twitter: e.target.value
+                        }
+                      })}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '8px',
+                        color: '#3E2723',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-2 text-amber-700">Instagram</label>
+                    <input
+                      type="url"
+                      className="w-full px-4 py-2 transition-all duration-200"
+                      placeholder="https://instagram.com/yourrestaurant"
+                      value={settings.socialMediaLinks?.instagram || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialMediaLinks: {
+                          ...settings.socialMediaLinks,
+                          instagram: e.target.value
+                        }
+                      })}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '8px',
+                        color: '#3E2723',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-2 text-amber-700">LinkedIn</label>
+                    <input
+                      type="url"
+                      className="w-full px-4 py-2 transition-all duration-200"
+                      placeholder="https://linkedin.com/company/yourrestaurant"
+                      value={settings.socialMediaLinks?.linkedin || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialMediaLinks: {
+                          ...settings.socialMediaLinks,
+                          linkedin: e.target.value
+                        }
+                      })}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px solid rgba(212, 167, 106, 0.3)',
+                        borderRadius: '8px',
+                        color: '#3E2723',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-amber-900">GST Number</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 transition-all duration-200 uppercase"
+                    placeholder="22AAAAA0000A1Z5"
+                    value={settings.gstNumber || ''}
+                    onChange={(e) => setSettings({ ...settings, gstNumber: e.target.value.toUpperCase() })}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '12px',
+                      color: '#3E2723',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-amber-900">FSSAI Number</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 transition-all duration-200"
+                    placeholder="12345678901234"
+                    value={settings.fssaiNumber || ''}
+                    onChange={(e) => setSettings({ ...settings, fssaiNumber: e.target.value })}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      border: '1px solid rgba(212, 167, 106, 0.3)',
+                      borderRadius: '12px',
+                      color: '#3E2723',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </Section>
       )}
@@ -1714,952 +2137,76 @@ function SettingsPanel({ onBack }) {
       {settingsTab === 'invoice' && (
         <Section title="Invoice Settings">
           <div className="space-y-4">
-            {/* Restaurant Information */}
+            {/* Restaurant Visibility - Consolidated Toggles */}
             <div className="p-6 rounded-lg" style={{
               background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
               border: '1px solid rgba(212, 167, 106, 0.2)',
               boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
             }}>
-              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Restaurant Information</h4>
-              <p className="mb-4" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
-                Configure restaurant details that appear on invoices.
+              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Invoice Visibility Options</h4>
+              <p className="mb-6" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
+                Select which restaurant details to display on your invoices.
               </p>
 
-              {/* Restaurant Logo */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Logo</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    Upload your restaurant logo to display on invoices.
-                  </p>
-                  {settings.restaurantLogo && (
-                    <div className="mt-3">
-                      <img
-                        src={settings.restaurantLogo}
-                        alt="Restaurant Logo"
-                        className="h-16 w-auto max-w-32 object-contain border rounded"
-                      />
-                    </div>
-                  )}
-                  <div className="mt-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-                    />
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showRestaurantLogo || false}
-                    onChange={(e) => setSettings({ ...settings, showRestaurantLogo: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantLogo
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showRestaurantLogo
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showRestaurantLogo
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showRestaurantLogo ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showRestaurantLogo ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Restaurant Name */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Name</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showRestaurantName
-                      ? 'Restaurant name will be displayed on invoices.'
-                      : 'Restaurant name will not be displayed on invoices.'}
-                  </p>
-                  {settings.showRestaurantName && (
-                    <div className="mt-3">
+              <div className="space-y-3">
+                {[
+                  { key: 'showRestaurantLogo', label: 'Show Brand Logo' },
+                  { key: 'showRestaurantName', label: 'Show Restaurant Name' },
+                  { key: 'showRestaurantTiming', label: 'Show Timing' },
+                  { key: 'showRestaurantAddress', label: 'Show Address' },
+                  { key: 'showContactNumber', label: 'Show Contact Number' },
+                  { key: 'showEmail', label: 'Show Email' },
+                  { key: 'showGSTNumber', label: 'Show GST Number' },
+                  { key: 'showFSSAINumber', label: 'Show FSSAI Number' }
+                ].map(item => (
+                  <div key={item.key} className="flex items-center justify-between p-4 rounded-xl border border-amber-100 bg-white/60">
+                    <span className="font-medium text-amber-900">{item.label}</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
                       <input
-                        type="text"
-                        className="w-full px-4 py-3 transition-all duration-200"
-                        placeholder="Your Restaurant Name"
-                        value={settings.restaurantName || ''}
-                        onChange={(e) => setSettings({ ...settings, restaurantName: e.target.value })}
-                        style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(253, 249, 243, 0.8)',
-                          border: '1px solid rgba(212, 167, 106, 0.3)',
-                          borderRadius: '16px',
-                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                          color: '#3E2723',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                        }}
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={settings[item.key] || false}
+                        onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
                       />
-                    </div>
-                  )}
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showRestaurantName || false}
-                    onChange={(e) => setSettings({ ...settings, showRestaurantName: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantName
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showRestaurantName
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showRestaurantName
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showRestaurantName ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
+                      {createEnhancedToggle(settings[item.key] || false, (e) => setSettings({ ...settings, [item.key]: e.target.checked }))}
+                    </label>
                   </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showRestaurantName ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Restaurant Address */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Restaurant Address</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showRestaurantAddress
-                      ? 'Restaurant address will be displayed on invoices.'
-                      : 'Restaurant address will not be displayed on invoices.'}
-                  </p>
-                  {settings.showRestaurantAddress && (
-                    <div className="mt-3">
-                      <textarea
-                        className="w-full px-4 py-3 transition-all duration-200 resize-none"
-                        rows={3}
-                        placeholder="Your restaurant address"
-                        value={settings.restaurantAddress || ''}
-                        onChange={(e) => setSettings({ ...settings, restaurantAddress: e.target.value })}
-                        style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(253, 249, 243, 0.8)',
-                          border: '1px solid rgba(212, 167, 106, 0.3)',
-                          borderRadius: '16px',
-                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                          color: '#3E2723',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showRestaurantAddress || false}
-                    onChange={(e) => setSettings({ ...settings, showRestaurantAddress: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showRestaurantAddress
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showRestaurantAddress ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Contact Number */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Contact Number</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showContactNumber
-                      ? 'Phone number will be displayed on invoices.'
-                      : 'Phone number will not be displayed on invoices.'}
-                  </p>
-                  {settings.showContactNumber && (
-                    <div className="mt-3">
-                      <input
-                        type="text"
-                        value={settings.contactNumber}
-                        onChange={(e) => setSettings({ ...settings, contactNumber: e.target.value })}
-                        className="w-full px-4 py-3 transition-all duration-200"
-                        placeholder="+91 98765 43210"
-                        style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(253, 249, 243, 0.8)',
-                          border: '1px solid rgba(212, 167, 106, 0.3)',
-                          borderRadius: '16px',
-                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                          color: '#3E2723',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showContactNumber || false}
-                    onChange={(e) => setSettings({ ...settings, showContactNumber: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showContactNumber
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showContactNumber
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showContactNumber
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showContactNumber ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showContactNumber ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Email */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Email</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showEmail
-                      ? 'Email will be displayed on invoices.'
-                      : 'Email will not be displayed on invoices.'}
-                  </p>
-                  {settings.showEmail && (
-                    <div className="mt-3">
-                      <input
-                        type="email"
-                        className="w-full px-4 py-3 transition-all duration-200"
-                        placeholder="billing@example.com"
-                        value={settings.email || ''}
-                        onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                        style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(253, 249, 243, 0.8)',
-                          border: '1px solid rgba(212, 167, 106, 0.3)',
-                          borderRadius: '16px',
-                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                          color: '#3E2723',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showEmail || false}
-                    onChange={(e) => setSettings({ ...settings, showEmail: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showEmail
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showEmail
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showEmail
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showEmail ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showEmail ? 'Show' : 'Hide'}
-                  </span>
-                </label>
+                ))}
               </div>
             </div>
 
-            {/* Order Information */}
+            {/* Order Visibility Options */}
             <div className="p-6 rounded-lg" style={{
               background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
               border: '1px solid rgba(212, 167, 106, 0.2)',
               boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
             }}>
-              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Order Information</h4>
-              <p className="mb-4" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
-                Configure what order details to display on receipts.
+              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Receipt Visibility Options</h4>
+              <p className="mb-6" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
+                Control which order details appear on your printed receipts.
               </p>
 
-              {/* Order Time */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order Time</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showOrderTime
-                      ? 'Order time will be displayed on receipts.'
-                      : 'Order time will not be displayed on receipts.'}
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showOrderTime || false}
-                    onChange={(e) => setSettings({ ...settings, showOrderTime: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showOrderTime
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showOrderTime
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showOrderTime
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showOrderTime ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showOrderTime ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Order Date */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order Date</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showOrderDate
-                      ? 'Order date will be displayed on receipts.'
-                      : 'Order date will not be displayed on receipts.'}
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showOrderDate || false}
-                    onChange={(e) => setSettings({ ...settings, showOrderDate: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showOrderDate
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showOrderDate
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showOrderDate
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showOrderDate ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showOrderDate ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Order ID */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Order ID</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showOrderID
-                      ? 'Sequential Order ID will be displayed on receipts.'
-                      : 'Order ID will not be displayed on receipts.'}
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showOrderID || false}
-                    onChange={handleToggleOrderID}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showOrderID
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showOrderID
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showOrderID
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showOrderID ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showOrderID ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Tax and Regulatory Information */}
-            <div className="p-6 rounded-lg" style={{
-              background: 'linear-gradient(135deg, rgba(253, 249, 243, 0.9) 0%, rgba(253, 249, 243, 0.7) 100%)',
-              border: '1px solid rgba(212, 167, 106, 0.2)',
-              boxShadow: '0 4px 20px rgba(212, 167, 106, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
-            }}>
-              <h4 className="font-medium mb-4" style={{ color: '#3E2723', fontSize: '18px', fontWeight: '600' }}>Tax & Regulatory Information</h4>
-              <p className="mb-4" style={{ color: '#8B5A2B', fontSize: '14px', lineHeight: '1.5' }}>
-                Configure tax and regulatory details for compliance.
-              </p>
-
-              {/* Tax Settings */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>Tax Settings</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.taxEnabled
-                      ? `Tax is ENABLED at ${settings.taxRate || 0}%`
-                      : 'Tax is currently DISABLED'}
-                  </p>
-                  {settings.taxEnabled && (
-                    <div className="mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tax Rate (%)
-                      </label>
+              <div className="space-y-3">
+                {[
+                  { key: 'showOrderTime', label: 'Show Order Time' },
+                  { key: 'showOrderDate', label: 'Show Order Date' },
+                  { key: 'showOrderID', label: 'Show Order ID' },
+                  { key: 'includeQRInInvoice', label: 'Include QR Code' }
+                ].map(item => (
+                  <div key={item.key} className="flex items-center justify-between p-4 rounded-xl border border-amber-100 bg-white/60">
+                    <span className="font-medium text-amber-900">{item.label}</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
                       <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={settings.taxRate || 0}
-                        onChange={handleTaxRateChange}
-                        className="w-24 px-3 py-2 transition-all duration-200"
-                        style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(253, 249, 243, 0.8)',
-                          border: '1px solid rgba(212, 167, 106, 0.3)',
-                          borderRadius: '12px',
-                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                          color: '#3E2723',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                        }}
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={settings[item.key] || false}
+                        onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
                       />
-                    </div>
-                  )}
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.taxEnabled || false}
-                    onChange={handleToggleTax}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showRestaurantAddress
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
+                      {createEnhancedToggle(settings[item.key] || false, (e) => setSettings({ ...settings, [item.key]: e.target.checked }))}
+                    </label>
                   </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.taxEnabled ? 'Enabled' : 'Disabled'}
-                  </span>
-                </label>
+                ))}
               </div>
-
-              {/* GST Number */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>GST Number</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showGSTNumber
-                      ? 'GST number will be displayed on invoices.'
-                      : 'GST number will not be displayed on invoices.'}
-                  </p>
-                  {settings.showGSTNumber && (
-                    <div className="mt-3">
-                      <input
-                        type="text"
-                        className="w-full px-4 py-3 transition-all duration-200"
-                        placeholder="GSTIN Number (e.g., 07AAAPL1234C1ZV)"
-                        value={settings.gstNumber || ''}
-                        onChange={(e) => setSettings({ ...settings, gstNumber: e.target.value.toUpperCase() })}
-                        style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(253, 249, 243, 0.8)',
-                          border: '1px solid rgba(212, 167, 106, 0.3)',
-                          borderRadius: '16px',
-                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                          color: '#3E2723',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showGSTNumber || false}
-                    onChange={(e) => setSettings({ ...settings, showGSTNumber: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showRestaurantAddress
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showGSTNumber ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-
-              {/* FSSAI Number */}
-              <div className="flex items-center justify-between p-4 rounded-lg border mb-4" style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(212, 167, 106, 0.15)',
-                boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-              }}>
-                <div className="flex-1">
-                  <h5 className="font-medium text-sm" style={{ color: '#3E2723', fontWeight: '600' }}>FSSAI Number</h5>
-                  <p className="text-xs" style={{ color: '#8B5A2B' }}>
-                    {settings.showFSSAINumber
-                      ? 'FSSAI license number will be displayed on invoices.'
-                      : 'FSSAI license number will not be displayed on invoices.'}
-                  </p>
-                  {settings.showFSSAINumber && (
-                    <div className="mt-3">
-                      <input
-                        type="text"
-                        className="w-full px-4 py-3 transition-all duration-200"
-                        placeholder="FSSAI License Number (e.g., 12345678901234)"
-                        value={settings.fssaiNumber || ''}
-                        onChange={(e) => setSettings({ ...settings, fssaiNumber: e.target.value })}
-                        style={{
-                          backdropFilter: 'blur(20px) saturate(150%)',
-                          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                          background: 'rgba(253, 249, 243, 0.8)',
-                          border: '1px solid rgba(212, 167, 106, 0.3)',
-                          borderRadius: '16px',
-                          boxShadow: '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)',
-                          color: '#3E2723',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.9)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.4)';
-                          e.target.style.boxShadow = '0 6px 20px rgba(212, 167, 106, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 16px rgba(212, 167, 106, 0.08)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.background = 'rgba(253, 249, 243, 0.8)';
-                          e.target.style.border = '1px solid rgba(212, 167, 106, 0.3)';
-                          e.target.style.boxShadow = '0 4px 16px rgba(212, 167, 106, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(212, 167, 106, 0.05)';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.showFSSAINumber || false}
-                    onChange={(e) => setSettings({ ...settings, showFSSAINumber: e.target.checked })}
-                  />
-                  <div
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                    style={{
-                      backdropFilter: 'blur(20px) saturate(150%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                      background: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.25)'
-                        : 'rgba(139, 90, 43, 0.15)',
-                      border: '1px solid',
-                      borderColor: settings.showRestaurantAddress
-                        ? 'rgba(212, 167, 106, 0.3)'
-                        : 'rgba(139, 90, 43, 0.25)',
-                      boxShadow: settings.showRestaurantAddress
-                        ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                        : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                    }}
-                  >
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    {settings.showFSSAINumber ? 'Show' : 'Hide'}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-
-            {/* Additional Options */}
-            <div className="flex items-center justify-between p-4 rounded-lg" style={{
-              background: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(212, 167, 106, 0.15)',
-              boxShadow: '0 2px 8px rgba(212, 167, 106, 0.05)'
-            }}>
-              <div>
-                <h4 className="font-medium" style={{ color: '#3E2723', fontWeight: '600' }}>Include QR Code in Invoice</h4>
-                <p className="text-sm" style={{ color: '#8B5A2B' }}>
-                  {settings.includeQRInInvoice
-                    ? 'QR code will be included in printed invoices for easy payment.'
-                    : 'QR code will not be included in printed invoices.'}
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={settings.includeQRInInvoice || false}
-                  onChange={(e) => setSettings({ ...settings, includeQRInInvoice: e.target.checked })}
-                />
-                <div
-                  className="relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out"
-                  style={{
-                    backdropFilter: 'blur(20px) saturate(150%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-                    background: settings.showRestaurantAddress
-                      ? 'rgba(212, 167, 106, 0.25)'
-                      : 'rgba(139, 90, 43, 0.15)',
-                    border: '1px solid',
-                    borderColor: settings.showRestaurantAddress
-                      ? 'rgba(212, 167, 106, 0.3)'
-                      : 'rgba(139, 90, 43, 0.25)',
-                    boxShadow: settings.showRestaurantAddress
-                      ? '0 2px 12px -1px rgba(212, 167, 106, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
-                      : '0 2px 12px -1px rgba(139, 90, 43, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
-                  }}
-                >
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 left-[2px] bg-white rounded-full transition-all duration-300 ease-in-out shadow-sm"
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      transform: settings.showRestaurantAddress ? 'translateX(19px) translateY(-50%)' : 'translateX(-1px) translateY(-50%)',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)',
-                      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                    }}
-                  />
-                </div>
-                <span className="ml-3 text-sm font-medium text-gray-900">
-                  {settings.includeQRInInvoice ? 'Enabled' : 'Disabled'}
-                </span>
-              </label>
             </div>
           </div>
         </Section>

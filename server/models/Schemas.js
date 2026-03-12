@@ -76,12 +76,33 @@ const SettingsSchema = new mongoose.Schema({
     restaurantName: { type: String, default: '' },
     showRestaurantAddress: { type: Boolean, default: true },
     restaurantAddress: { type: String, default: '' },
+    showRestaurantTiming: { type: Boolean, default: true },
+    restaurantTiming: { type: String, default: '' },
+    detailedTimings: {
+        monday: { open: { type: String, default: '09:00' }, close: { type: String, default: '22:00' }, closed: { type: Boolean, default: false } },
+        tuesday: { open: { type: String, default: '09:00' }, close: { type: String, default: '22:00' }, closed: { type: Boolean, default: false } },
+        wednesday: { open: { type: String, default: '09:00' }, close: { type: String, default: '22:00' }, closed: { type: Boolean, default: false } },
+        thursday: { open: { type: String, default: '09:00' }, close: { type: String, default: '22:00' }, closed: { type: Boolean, default: false } },
+        friday: { open: { type: String, default: '09:00' }, close: { type: String, default: '22:00' }, closed: { type: Boolean, default: false } },
+        saturday: { open: { type: String, default: '09:00' }, close: { type: String, default: '22:00' }, closed: { type: Boolean, default: false } },
+        sunday: { open: { type: String, default: '09:00' }, close: { type: String, default: '22:00' }, closed: { type: Boolean, default: false } }
+    },
     showContactNumber: { type: Boolean, default: true },
     contactNumber: { type: String, default: '' },
     showEmail: { type: Boolean, default: true },
     email: { type: String, default: '' },
     showRestaurantLogo: { type: Boolean, default: true },
     restaurantLogo: { type: String, default: '' }, // Base64 encoded image or URL
+
+    // Footer Information
+    restaurantDescription: { type: String, default: 'Craft coffee, fresh bites, and cozy vibes in the heart of town.' },
+    socialMediaLinks: {
+        facebook: { type: String, default: '' },
+        twitter: { type: String, default: '' },
+        instagram: { type: String, default: '' },
+        linkedin: { type: String, default: '' }
+    },
+    appVersion: { type: String, default: '1.7.0' },
 
     // Tax & Regulatory Information (with show/hide toggles)
     showGSTNumber: { type: Boolean, default: false },
